@@ -54,7 +54,7 @@ $env:APP_BOOTSTRAP_ADMIN_DISPLAY_NAME='시스템 관리자'
 
 ## 로그인과 API 인증
 
-서버 시작에는 Base64로 인코딩한 32바이트 이상의 JWT secret이 필요합니다. 운영 환경에서는 매번 생성하지 말고 secret manager에서 동일한 값을 주입해야 하며 저장소나 로그에 기록하면 안 됩니다.
+서버 시작에는 Base64로 인코딩한 32바이트 이상의 JWT secret이 필요합니다. 저장소 루트에서 실행하면 Spring Boot가 Git에서 제외된 `.env` 파일을 선택적으로 읽습니다. 운영 환경에서는 `.env` 대신 secret manager에서 동일한 값을 환경 변수로 주입해야 하며 저장소나 로그에 기록하면 안 됩니다.
 
 ```powershell
 $body = @{ email = 'admin@example.com'; password = '<관리자 비밀번호>' } | ConvertTo-Json

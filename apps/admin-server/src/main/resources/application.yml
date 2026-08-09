@@ -1,6 +1,8 @@
 spring:
   application:
     name: ino-admin-server
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/ino_admin}
     username: ${DB_USERNAME:ino_admin}
