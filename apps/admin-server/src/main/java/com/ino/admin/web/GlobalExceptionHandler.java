@@ -1,6 +1,7 @@
 package com.ino.admin.web;
 
 import com.ino.admin.core.BusinessException;
+import com.ino.admin.identity.AuthenticationFailedException;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Clock;
 import java.time.Instant;
@@ -54,6 +55,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     ResponseEntity<ApiError> handleBusiness(BusinessException exception) {
         return response(HttpStatus.BAD_REQUEST, exception.code(), exception.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(AuthenticationFailedException.class)
+    ResponseEntity<ApiError> handleAuthenticationFailed(AuthenticationFailedException exception) {
+        return response(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", exception.getMessage(), List.of());
     }
 
     @ExceptionHandler(Exception.class)

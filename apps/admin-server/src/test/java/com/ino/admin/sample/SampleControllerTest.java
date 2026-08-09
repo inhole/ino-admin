@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 import com.ino.admin.config.ApplicationConfig;
 import com.ino.admin.web.GlobalExceptionHandler;
@@ -22,7 +23,7 @@ class SampleControllerTest {
 
     @Test
     void returnsSamplesWithTraceId() throws Exception {
-        mockMvc.perform(get("/api/v1/samples").header("X-Trace-Id", "test-trace"))
+        mockMvc.perform(get("/api/v1/samples").with(jwt()).header("X-Trace-Id", "test-trace"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Trace-Id", "test-trace"))
                 .andExpect(jsonPath("$.content", hasSize(3)))
@@ -31,7 +32,7 @@ class SampleControllerTest {
 
     @Test
     void returnsStandardErrorForInvalidPagination() throws Exception {
-        mockMvc.perform(get("/api/v1/samples").queryParam("size", "0").header("X-Trace-Id", "validation-trace"))
+        mockMvc.perform(get("/api/v1/samples").with(jwt()).queryParam("size", "0").header("X-Trace-Id", "validation-trace"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.traceId").value("validation-trace"))

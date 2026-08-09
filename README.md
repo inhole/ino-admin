@@ -13,6 +13,11 @@ Spring Boot 4.1 / Java 25 / React 기반 관리자 starter입니다. 현재 범�
 ```powershell
 Copy-Item .env.example .env
 docker compose --env-file .env -f infra/compose.yaml up -d
+$jwtBytes = New-Object byte[] 32
+$jwtRng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$jwtRng.GetBytes($jwtBytes)
+$jwtRng.Dispose()
+$env:APP_JWT_SECRET = [Convert]::ToBase64String($jwtBytes)
 ./gradlew.bat :apps:admin-server:bootRun
 ```
 
@@ -46,6 +51,18 @@ $env:APP_BOOTSTRAP_ADMIN_DISPLAY_NAME='시스템 관리자'
 비밀번호는 12~128자이며 대문자·소문자·숫자·특수문자를 포함해야 합니다. 서버는 BCrypt hash만 저장하고 비밀번호를 로그에 출력하지 않습니다. 생성 후 `APP_BOOTSTRAP_ADMIN_ENABLED`를 `false`로 되돌리고 비밀번호 환경 변수를 제거하십시오. 같은 이메일로 다시 실행하면 계정을 중복 생성하지 않습니다.
 
 운영 환경에서의 secret 주입과 실패 복구 절차는 [초기 관리자 Bootstrap 운영 문서](docs/operations/admin-bootstrap.md)를 참고하십시오.
+
+## 로그인과 API 인증
+
+서버 시작에는 Base64로 인코딩한 32바이트 이상의 JWT secret이 필요합니다. 운영 환경에서는 매번 생성하지 말고 secret manager에서 동일한 값을 주입해야 하며 저장소나 로그에 기록하면 안 됩니다.
+
+```powershell
+$body = @{ email = 'admin@example.com'; password = '<관리자 비밀번호>' } | ConvertTo-Json
+$login = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/v1/auth/login -ContentType 'application/json' -Body $body
+Invoke-RestMethod -Uri http://localhost:8080/api/v1/auth/me -Headers @{ Authorization = "Bearer $($login.accessToken)" }
+```
+
+access token의 기본 만료 시간은 15분입니다. `/api/v1/auth/login`, health와 OpenAPI 경로를 제외한 API는 유효한 bearer token이 필요합니다.
 
 ## 검증
 
