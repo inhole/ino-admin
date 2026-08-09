@@ -31,6 +31,22 @@ npm run dev
 
 `application.yml`의 로컬 기본값은 `.env.example`과 일치합니다. 공유 환경에서는 `DB_PASSWORD` 및 MinIO 자격 증명을 반드시 별도로 설정하십시오.
 
+## 초기 관리자 생성
+
+초기 관리자 계정은 migration에 포함되지 않습니다. 서버를 최초 한 번 실행할 때만 환경 변수로 bootstrap을 활성화합니다.
+
+```powershell
+$env:APP_BOOTSTRAP_ADMIN_ENABLED='true'
+$env:APP_BOOTSTRAP_ADMIN_EMAIL='admin@example.com'
+$env:APP_BOOTSTRAP_ADMIN_PASSWORD='<강한 임시 비밀번호>'
+$env:APP_BOOTSTRAP_ADMIN_DISPLAY_NAME='시스템 관리자'
+./gradlew.bat :apps:admin-server:bootRun
+```
+
+비밀번호는 12~128자이며 대문자·소문자·숫자·특수문자를 포함해야 합니다. 서버는 BCrypt hash만 저장하고 비밀번호를 로그에 출력하지 않습니다. 생성 후 `APP_BOOTSTRAP_ADMIN_ENABLED`를 `false`로 되돌리고 비밀번호 환경 변수를 제거하십시오. 같은 이메일로 다시 실행하면 계정을 중복 생성하지 않습니다.
+
+운영 환경에서의 secret 주입과 실패 복구 절차는 [초기 관리자 Bootstrap 운영 문서](docs/operations/admin-bootstrap.md)를 참고하십시오.
+
 ## 검증
 
 ```powershell

@@ -28,6 +28,13 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+app:
+  bootstrap-admin:
+    enabled: ${APP_BOOTSTRAP_ADMIN_ENABLED:false}
+    email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
+    password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
+    display-name: ${APP_BOOTSTRAP_ADMIN_DISPLAY_NAME:시스템 관리자}
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{traceId:-}] %logger{36} - %msg%n"
