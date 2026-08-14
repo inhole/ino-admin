@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Server } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ApiClientError, getSamples } from "@/api/client";
+import { ApiClientError } from "@/api/client";
+import { getSamples } from "@/features/dashboard/api/dashboardApi";
 import { LoadingPanel, PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

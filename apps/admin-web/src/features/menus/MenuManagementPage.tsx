@@ -2,12 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ApiClientError,
   createMenu,
   getMenus,
   updateMenu,
   type ManagedMenu,
-} from "@/api/client";
+} from "@/features/menus/api/menusApi";
+import { ApiClientError } from "@/api/client";
 import { FormField, LoadingPanel, PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

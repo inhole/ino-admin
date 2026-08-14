@@ -3,13 +3,13 @@ import { Download, FileUp, Trash2 } from "lucide-react";
 import { useState, type ChangeEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ApiClientError,
   deleteFile,
   downloadFile,
   getMyFiles,
   uploadFile,
   type StoredFileSummary,
-} from "@/api/client";
+} from "@/features/files/api/filesApi";
+import { ApiClientError } from "@/api/client";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {

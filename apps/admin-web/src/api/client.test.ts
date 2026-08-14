@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { getSamples, login } from './client'
+import { getSamples } from '@/features/dashboard/api/dashboardApi'
+import { login } from '@/features/auth/api/authApi'
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })

@@ -3,7 +3,7 @@ import { File, KeyRound, LayoutDashboard, LogOut, Menu, Users } from "lucide-rea
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { getMyMenus } from "@/api/client";
+import { getMyMenus } from "@/features/menus/api/menusApi";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

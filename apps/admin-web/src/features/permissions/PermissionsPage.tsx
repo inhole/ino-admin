@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ApiClientError,
   createRole,
   getAvailablePermissions,
   getPermissionCatalog,
   updateRolePermissions,
   updateRoleStatus,
-} from "@/api/client";
+} from "@/features/permissions/api/permissionsApi";
+import { ApiClientError } from "@/api/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
