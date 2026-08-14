@@ -884,23 +884,19 @@ redis      MVP 이후 cache/rate limit용, 선택
 
 ## 15. Git 브랜치, 커밋, PR 규칙
 
+세부 운영 절차와 자동 검증 규칙은 [`docs/development/branch-strategy.md`](../docs/development/branch-strategy.md)를 기준으로 한다.
+
 ### 15.1 브랜치
 
 - 기본 브랜치: `main`, 항상 배포 가능 상태 유지
 - 짧은 feature branch 사용
-- 형식: `feat/auth-login`, `fix/file-path-validation`, `refactor/extract-common-file`, `docs/project-plan`
+- 사람 브랜치 형식: `feat/auth-login`, `fix/file-path-validation`, `refactor/extract-common-file`, `docs/project-plan`
+- Codex 브랜치 형식: `codex/auth-login`
 - 장기 `develop` 브랜치는 두지 않는다.
 
-### 15.2 Conventional Commits
+### 15.2 커밋 규칙
 
-```text
-feat(auth): add refresh token rotation
-fix(file): reject path traversal filenames
-refactor(audit): extract audit publisher port
-test(rbac): cover viewer access denial
-docs(api): document validation errors
-chore(ci): add frontend typecheck job
-```
+커밋과 PR 제목은 [`docs/development/commit-convention.md`](../docs/development/commit-convention.md)의 `type: 한글 변경사항` 형식을 사용한다.
 
 - 한 커밋은 하나의 논리적 변경만 포함한다.
 - 생성 파일과 수동 변경은 가능하면 분리한다.
