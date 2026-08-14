@@ -7,7 +7,10 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
 tasks.withType<JavaCompile>().configureEach { options.release = 25 }
 
 dependencyManagement {
-    imports { mavenBom("org.springframework.boot:spring-boot-dependencies:4.1.0") }
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:4.1.0")
+        mavenBom("software.amazon.awssdk:bom:2.46.11")
+    }
 }
 
 dependencies {
@@ -17,6 +20,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot")
     implementation("org.springframework.data:spring-data-jpa")
     implementation("jakarta.persistence:jakarta.persistence-api")
+    implementation("software.amazon.awssdk:s3:2.46.11")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.mockito:mockito-core")
