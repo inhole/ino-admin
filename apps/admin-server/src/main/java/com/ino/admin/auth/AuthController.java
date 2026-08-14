@@ -1,6 +1,7 @@
 package com.ino.admin.auth;
 
 import com.ino.admin.identity.LoginService;
+import com.ino.admin.identity.PasswordChangeService;
 import com.ino.admin.identity.RefreshTokenService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -11,6 +12,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,10 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final LoginService loginService;
     private final RefreshTokenService refreshTokenService;
+    private final PasswordChangeService passwordChangeService;
 
-    public AuthController(LoginService loginService, RefreshTokenService refreshTokenService) {
+    public AuthController(LoginService loginService, RefreshTokenService refreshTokenService,
+            PasswordChangeService passwordChangeService) {
         this.loginService = loginService;
         this.refreshTokenService = refreshTokenService;
+        this.passwordChangeService = passwordChangeService;
     }
 
     @PostMapping("/login")
@@ -48,11 +53,20 @@ public class AuthController {
         return loginService.currentUser(UUID.fromString(jwt.getSubject()));
     }
 
+    @PutMapping("/password")
+    void changePassword(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PasswordChangeRequest request) {
+        passwordChangeService.change(UUID.fromString(jwt.getSubject()), request.currentPassword(), request.newPassword());
+    }
+
     record LoginRequest(
             @NotBlank @Email @Size(max = 320) String email,
             @NotBlank @Size(max = 128) String password
     ) {}
 
     record RefreshRequest(@NotBlank @Size(max = 512) String refreshToken) {}
+    record PasswordChangeRequest(
+            @NotBlank @Size(max = 128) String currentPassword,
+            @NotBlank @Size(min = 12, max = 128) String newPassword
+    ) {}
     record LoginResponse(String accessToken, String tokenType, long expiresIn, String refreshToken) {}
 }

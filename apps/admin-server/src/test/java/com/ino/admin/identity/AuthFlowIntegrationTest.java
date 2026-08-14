@@ -3,6 +3,7 @@ package com.ino.admin.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -98,6 +99,41 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void changesPasswordAndRevokesAllRefreshTokens() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        var firstLogin = login(PASSWORD);
+        var secondLogin = login(PASSWORD);
+        String accessToken = JsonPath.read(firstLogin.getResponse().getContentAsString(), "$.accessToken");
+        String firstRefresh = JsonPath.read(firstLogin.getResponse().getContentAsString(), "$.refreshToken");
+        String secondRefresh = JsonPath.read(secondLogin.getResponse().getContentAsString(), "$.refreshToken");
+
+        mockMvc.perform(put("/api/v1/auth/password")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"currentPassword":"Login-Password-2026!","newPassword":"Changed-Password-2026!"}
+                                """))
+                .andExpect(status().isOk());
+
+        assertInvalidRefreshToken(firstRefresh);
+        assertInvalidRefreshToken(secondRefresh);
+        assertInvalidCredentials(EMAIL, PASSWORD);
+        login("Changed-Password-2026!");
+    }
+
+    @Test
+    void rejectsWrongCurrentReusedAndWeakPasswords() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        var login = login(PASSWORD);
+        String accessToken = JsonPath.read(login.getResponse().getContentAsString(), "$.accessToken");
+
+        assertPasswordChangeError(accessToken, "Wrong-Password-2026!", "Changed-Password-2026!", "INVALID_CURRENT_PASSWORD");
+        assertPasswordChangeError(accessToken, PASSWORD, PASSWORD, "PASSWORD_REUSE_NOT_ALLOWED");
+        assertPasswordChangeError(accessToken, PASSWORD, "password-without-required-classes", "PASSWORD_POLICY_VIOLATION");
+        login(PASSWORD);
+    }
+
+    @Test
     void returnsSameUnauthorizedErrorForUnknownEmailAndWrongPassword() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
 
@@ -162,12 +198,26 @@ class AuthFlowIntegrationTest {
     }
 
     private String loginAndGetRefreshToken() throws Exception {
-        var result = mockMvc.perform(post("/api/v1/auth/login")
+        var result = login(PASSWORD);
+        return JsonPath.read(result.getResponse().getContentAsString(), "$.refreshToken");
+    }
+
+    private org.springframework.test.web.servlet.MvcResult login(String password) throws Exception {
+        return mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + EMAIL + "\",\"password\":\"" + PASSWORD + "\"}"))
+                        .content("{\"email\":\"" + EMAIL + "\",\"password\":\"" + password + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn();
-        return JsonPath.read(result.getResponse().getContentAsString(), "$.refreshToken");
+    }
+
+    private void assertPasswordChangeError(String accessToken, String currentPassword, String newPassword, String code)
+            throws Exception {
+        mockMvc.perform(put("/api/v1/auth/password")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"" + currentPassword + "\",\"newPassword\":\"" + newPassword + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(code));
     }
 
     private void assertInvalidRefreshToken(String refreshToken) throws Exception {
