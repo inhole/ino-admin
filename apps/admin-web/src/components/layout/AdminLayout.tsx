@@ -1,20 +1,38 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { File, KeyRound, LayoutDashboard, LogOut, Menu, Users } from "lucide-react";
+import { RiArrowDownSLine, RiUserLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { getMyMenus, menuKeys } from "@/features/menus";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import {
-  Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset,
+  Sidebar, SidebarContent, SidebarHeader, SidebarInset,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSkeleton,
   SidebarProvider, SidebarRail, SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/hook/useAuth";
-import { ThemeSelector } from "@/features/settings";
+import { ThemeMenu } from "@/features/settings";
 
 const iconMap = {
   users: Users,
@@ -42,6 +60,11 @@ export function AdminLayout() {
     queryFn: getMyMenus,
     enabled: Boolean(user),
   });
+  const currentMenu = menus.data?.find((menu) =>
+    menu.route === "/"
+      ? location.pathname === "/"
+      : location.pathname.startsWith(menu.route),
+  );
 
   const signOut = async () => {
     queryClient.clear();
@@ -81,35 +104,77 @@ export function AdminLayout() {
             })}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter>
-          <div className="group-data-[collapsible=icon]:hidden"><ThemeSelector /></div>
-          <Separator />
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<div />}
-                size="lg"
-                tooltip={user?.displayName}
-              >
-                <Avatar><AvatarFallback>{user?.displayName?.slice(0, 1)}</AvatarFallback></Avatar>
-                <span className="min-w-0">
-                  <span className="block truncate font-semibold">{user?.displayName}</span>
-                  <span className="block truncate text-xs text-muted-foreground">{user?.email}</span>
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-          <Button onClick={signOut} type="button" variant="outline">
-            <LogOut aria-hidden="true" data-icon="inline-start" />
-            <span className="group-data-[collapsible=icon]:hidden">{t("logout")}</span>
-          </Button>
-        </SidebarFooter>
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="safe-top sticky top-0 flex min-h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:hidden">
+        <header className="safe-top sticky top-0 z-20 flex min-h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur sm:px-6">
           <SidebarTrigger aria-label={t("openMenu")} />
-          <span className="font-bold">{t("appName")}</span>
+          <Separator className="h-5" orientation="vertical" />
+          <Breadcrumb className="min-w-0 flex-1">
+            <BreadcrumbList className="flex-nowrap">
+              <BreadcrumbItem className="hidden sm:inline-flex">
+                {location.pathname === "/" ? (
+                  <BreadcrumbPage>{t("home")}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink render={<NavLink to="/" />}>
+                    {t("home")}
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+              {location.pathname !== "/" && (
+                <>
+                  <BreadcrumbSeparator className="hidden sm:block" />
+                  <BreadcrumbItem className="min-w-0">
+                    <BreadcrumbPage className="truncate font-semibold">
+                      {currentMenu?.label ?? t("appName")}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              )}
+            </BreadcrumbList>
+          </Breadcrumb>
+          <ThemeMenu />
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  aria-label={t("accountMenu")}
+                  className="gap-2"
+                  variant="ghost"
+                />
+              }
+            >
+              <Avatar className="size-8">
+                <AvatarFallback>{user?.displayName?.slice(0, 1)}</AvatarFallback>
+              </Avatar>
+              <span className="hidden max-w-32 truncate text-sm font-semibold md:inline">
+                {user?.displayName}
+              </span>
+              <RiArrowDownSLine aria-hidden="true" className="hidden md:block" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>
+                  <span className="block font-semibold text-foreground">{user?.displayName}</span>
+                  <span className="block max-w-56 truncate">{user?.email}</span>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem disabled>
+                  <RiUserLine aria-hidden="true" />
+                  {t("account")}
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={signOut} variant="destructive">
+                  <LogOut aria-hidden="true" />
+                  {t("logout")}
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
         <div
           className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 md:px-8 md:py-10"

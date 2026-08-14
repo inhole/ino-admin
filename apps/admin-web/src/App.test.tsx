@@ -93,7 +93,7 @@ test('navigates to the authenticated user directory', async () => {
   fireEvent.click(await screen.findByRole('link', { name: '사용자' }))
 
   expect(await screen.findByRole('heading', { name: '사용자 관리' })).toBeInTheDocument()
-  expect(screen.getByText('admin@example.com')).toBeInTheDocument()
+  expect(await screen.findByText('admin@example.com')).toBeInTheDocument()
 })
 
 test('super admin creates a viewer from the user directory', async () => {

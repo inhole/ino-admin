@@ -11,7 +11,7 @@ function storedTheme(): Theme {
 function applyTheme(theme: ResolvedTheme) {
   document.documentElement.classList.toggle('dark', theme === 'dark')
   document.documentElement.style.colorScheme = theme
-  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#111827' : '#f7f8fa')
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1c1917' : '#fafaf9')
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

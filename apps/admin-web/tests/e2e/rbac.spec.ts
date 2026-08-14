@@ -77,9 +77,11 @@ test('모바일에서 메뉴를 열어 파일 관리로 이동한다', async ({ 
 
 test('선택한 다크 테마를 새로고침 후에도 유지한다', async ({ page }) => {
   await page.goto('/login')
-  await page.getByRole('button', { name: '다크' }).click()
+  await page.getByRole('button', { name: '테마' }).click()
+  await page.getByRole('menuitemradio', { name: '다크' }).click()
   await expect(page.locator('html')).toHaveClass(/dark/)
   await page.reload()
   await expect(page.locator('html')).toHaveClass(/dark/)
-  await expect(page.getByRole('button', { name: '다크' })).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: '테마' }).click()
+  await expect(page.getByRole('menuitemradio', { name: '다크' })).toHaveAttribute('aria-checked', 'true')
 })
