@@ -1,12 +1,12 @@
 import { Route, Routes } from 'react-router-dom'
-import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { DashboardPage } from '@/features/dashboard'
 import { LoginPage } from '@/features/auth/ui/LoginPage'
 import { ProtectedRoute } from '@/features/auth/ui/ProtectedRoute'
 import { AdminLayout } from '@/components/layout/AdminLayout'
-import { UsersPage } from '@/features/users/UsersPage'
-import { PermissionsPage } from '@/features/permissions/PermissionsPage'
-import { MenuManagementPage } from '@/features/menus/MenuManagementPage'
-import { FileManagementPage } from '@/features/files/FileManagementPage'
+import { UsersPage } from '@/features/users'
+import { PermissionsPage } from '@/features/permissions'
+import { MenuManagementPage } from '@/features/menus'
+import { FileManagementPage } from '@/features/files'
 
 export function App() {
   return (

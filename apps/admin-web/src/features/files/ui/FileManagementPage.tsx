@@ -10,6 +10,7 @@ import {
   type StoredFileSummary,
 } from "@/features/files/api/filesApi";
 import { ApiClientError } from "@/api/client";
+import { fileKeys } from "@/features/files/model/fileKeys";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -52,7 +53,7 @@ export function FileManagementPage() {
   const { t } = useTranslation("files");
   const { t: common } = useTranslation("common");
   const queryClient = useQueryClient();
-  const files = useQuery({ queryKey: ["files"], queryFn: getMyFiles });
+  const files = useQuery({ queryKey: fileKeys.all, queryFn: getMyFiles });
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export function FileManagementPage() {
       setError(null);
       toast.add({ title: t("uploaded") });
       setSelected(null);
-      await queryClient.invalidateQueries({ queryKey: ["files"] });
+      await queryClient.invalidateQueries({ queryKey: fileKeys.all });
     },
     onError: (caught) =>
       setError(
@@ -74,7 +75,7 @@ export function FileManagementPage() {
     onSuccess: async () => {
       setError(null);
       toast.add({ title: t("deleted") });
-      await queryClient.invalidateQueries({ queryKey: ["files"] });
+      await queryClient.invalidateQueries({ queryKey: fileKeys.all });
     },
     onError: (caught) =>
       setError(

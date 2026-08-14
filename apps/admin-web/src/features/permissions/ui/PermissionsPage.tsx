@@ -7,6 +7,7 @@ import {
   updateRoleStatus,
 } from "@/features/permissions/api/permissionsApi";
 import { ApiClientError } from "@/api/client";
+import { permissionKeys } from "@/features/permissions/model/permissionKeys";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
@@ -33,11 +34,11 @@ import { LoadingPanel, PageHeader } from "@/components/layout/Page";
 
 export function PermissionsPage() {
   const catalog = useQuery({
-    queryKey: ["permissions"],
+    queryKey: permissionKeys.all,
     queryFn: getPermissionCatalog,
   });
   const available = useQuery({
-    queryKey: ["permissions", "available"],
+    queryKey: permissionKeys.available,
     queryFn: getAvailablePermissions,
   });
   const client = useQueryClient();
@@ -51,18 +52,18 @@ export function PermissionsPage() {
       permissions: string[];
     }) => updateRolePermissions(role, permissions),
     onSuccess: async () =>
-      client.invalidateQueries({ queryKey: ["permissions"] }),
+      client.invalidateQueries({ queryKey: permissionKeys.all }),
   });
   const create = useMutation({
     mutationFn: createRole,
     onSuccess: async () =>
-      client.invalidateQueries({ queryKey: ["permissions"] }),
+      client.invalidateQueries({ queryKey: permissionKeys.all }),
   });
   const status = useMutation({
     mutationFn: ({ role, enabled }: { role: string; enabled: boolean }) =>
       updateRoleStatus(role, enabled),
     onSuccess: async () =>
-      client.invalidateQueries({ queryKey: ["permissions"] }),
+      client.invalidateQueries({ queryKey: permissionKeys.all }),
   });
   return (
     <>

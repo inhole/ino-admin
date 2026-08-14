@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { ThemeSelector } from './ThemeSelector'
+import { ThemeSelector } from '../ui/ThemeSelector'
 import { ThemeProvider } from './theme'
 
 beforeEach(() => localStorage.clear())

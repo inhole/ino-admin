@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/features/auth/model/useAuth";
-import { ThemeSelector } from "@/features/settings/ThemeSelector";
+import { ThemeSelector } from "@/features/settings";
 
 export function LoginPage() {
   const { t } = useTranslation("auth");

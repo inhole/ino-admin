@@ -3,7 +3,7 @@ import { type ReactNode, useState } from "react";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/features/auth/model/AuthContext";
-import { ThemeProvider } from "@/features/settings/theme";
+import { ThemeProvider } from "@/features/settings";
 import { createAppQueryClient } from "./queryClient";
 
 export type AppProvidersProps = {

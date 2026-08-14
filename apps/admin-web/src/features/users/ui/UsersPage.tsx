@@ -10,7 +10,8 @@ import {
   type UserSummary,
 } from "@/features/users/api/usersApi";
 import { ApiClientError } from "@/api/client";
-import { getPermissionCatalog } from "@/features/permissions/api/permissionsApi";
+import { getPermissionCatalog, permissionKeys } from "@/features/permissions";
+import { userKeys } from "@/features/users/model/userKeys";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -59,9 +60,9 @@ import { formatDate } from "@/i18n/format";
 
 export function UsersPage() {
   const { t } = useTranslation("users");
-  const users = useQuery({ queryKey: ["users"], queryFn: () => getUsers() });
+  const users = useQuery({ queryKey: userKeys.all, queryFn: getUsers });
   const roles = useQuery({
-    queryKey: ["permissions"],
+    queryKey: permissionKeys.all,
     queryFn: getPermissionCatalog,
   });
   const { user: currentUser } = useAuth();
@@ -81,7 +82,7 @@ export function UsersPage() {
     mutationFn: createUser,
     onSuccess: async (created) => {
       toast.add({ title: t("created", { name: created.displayName }) });
-      await queryClient.invalidateQueries({ queryKey: ["users"] });
+      await queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
   });
   const changeStatus = useMutation({
@@ -94,7 +95,7 @@ export function UsersPage() {
     }) => updateUserStatus(id, status),
     onSuccess: async () => {
       setStatusError(null);
-      await queryClient.invalidateQueries({ queryKey: ["users"] });
+      await queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
     onError: (error) =>
       setStatusError(
@@ -114,7 +115,7 @@ export function UsersPage() {
     onSuccess: async () => {
       setEditing(null);
       setStatusError(null);
-      await queryClient.invalidateQueries({ queryKey: ["users"] });
+      await queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
     onError: (error) =>
       setStatusError(

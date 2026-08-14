@@ -8,6 +8,7 @@ import {
   type ManagedMenu,
 } from "@/features/menus/api/menusApi";
 import { ApiClientError } from "@/api/client";
+import { menuKeys } from "@/features/menus/model/menuKeys";
 import { FormField, LoadingPanel, PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -34,13 +35,13 @@ export function MenuManagementPage() {
   const { t } = useTranslation("menus");
   const { t: common } = useTranslation("common");
   const queryClient = useQueryClient();
-  const menus = useQuery({ queryKey: ["menus", "all"], queryFn: getMenus });
+  const menus = useQuery({ queryKey: menuKeys.all, queryFn: getMenus });
   const [error, setError] = useState<string | null>(null);
   const save = useMutation({
     mutationFn: createMenu,
     onSuccess: async () => {
       setError(null);
-      await queryClient.invalidateQueries({ queryKey: ["menus"] });
+      await queryClient.invalidateQueries({ queryKey: menuKeys.root });
     },
     onError: (e) =>
       setError(e instanceof ApiClientError ? e.message : t("saveError")),
@@ -49,7 +50,7 @@ export function MenuManagementPage() {
     mutationFn: (menu: ManagedMenu) =>
       updateMenu(menu.id, { ...menu, enabled: !menu.enabled }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["menus"] });
+      await queryClient.invalidateQueries({ queryKey: menuKeys.root });
     },
     onError: (e) =>
       setError(e instanceof ApiClientError ? e.message : t("statusError")),

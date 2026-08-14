@@ -3,6 +3,7 @@ import { CheckCircle2, Server } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ApiClientError } from "@/api/client";
 import { getSamples } from "@/features/dashboard/api/dashboardApi";
+import { dashboardKeys } from "@/features/dashboard/model/dashboardKeys";
 import { LoadingPanel, PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ import {
 export function DashboardPage() {
   const { t } = useTranslation("dashboard");
   const { t: common } = useTranslation("common");
-  const samples = useQuery({ queryKey: ["samples"], queryFn: getSamples });
+  const samples = useQuery({ queryKey: dashboardKeys.samples, queryFn: getSamples });
   return (
     <>
       <PageHeader

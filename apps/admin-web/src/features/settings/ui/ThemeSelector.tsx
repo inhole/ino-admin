@@ -1,6 +1,6 @@
 import { Moon, Monitor, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useTheme, type Theme } from "./theme";
+import { useTheme, type Theme } from "../model/theme";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
 

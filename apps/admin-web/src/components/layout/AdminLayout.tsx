@@ -3,7 +3,7 @@ import { File, KeyRound, LayoutDashboard, LogOut, Menu, Users } from "lucide-rea
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { getMyMenus } from "@/features/menus/api/menusApi";
+import { getMyMenus, menuKeys } from "@/features/menus";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/model/useAuth";
-import { ThemeSelector } from "@/features/settings/ThemeSelector";
+import { ThemeSelector } from "@/features/settings";
 
 const iconMap = {
   users: Users,
@@ -38,7 +38,7 @@ export function AdminLayout() {
   const queryClient = useQueryClient();
   const location = useLocation();
   const menus = useQuery({
-    queryKey: ["menus", "me"],
+    queryKey: menuKeys.current,
     queryFn: getMyMenus,
     enabled: Boolean(user),
   });
