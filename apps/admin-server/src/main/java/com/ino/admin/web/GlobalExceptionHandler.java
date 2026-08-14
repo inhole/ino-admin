@@ -15,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -62,6 +63,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FileNotFoundException.class)
     ResponseEntity<ApiError> handleFileNotFound(FileNotFoundException exception) {
         return response(HttpStatus.NOT_FOUND, "FILE_NOT_FOUND", exception.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> handleMaxUploadSize(MaxUploadSizeExceededException exception) {
+        return response(HttpStatus.PAYLOAD_TOO_LARGE, "FILE_TOO_LARGE", "파일 크기 제한을 초과했습니다.", List.of());
     }
 
     @ExceptionHandler(AuthenticationFailedException.class)

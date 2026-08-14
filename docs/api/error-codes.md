@@ -27,6 +27,9 @@ All errors include `code`, `message`, `fieldErrors`, `traceId`, and an ISO-8601 
 | `ROLE_ALREADY_EXISTS` | 400 | 동일한 역할 키가 이미 존재한다. |
 | `UNAUTHORIZED` | 401 | bearer token이 없거나 서명·만료·issuer·audience 검증에 실패했다. |
 | `FORBIDDEN` | 403 | 인증되었지만 요청을 수행할 역할 또는 권한이 없다. |
+| `INVALID_FILE` | 400 | 파일 이름, 크기, 확장자, MIME 또는 실제 내용이 업로드 정책과 맞지 않는다. |
+| `FILE_NOT_FOUND` | 404 | 파일이 없거나 요청자가 해당 파일의 소유자가 아니다. |
+| `FILE_TOO_LARGE` | 413 | multipart 요청의 파일 크기가 설정된 최대값을 초과했다. |
 | `INTERNAL_ERROR` | 500 | An unexpected server error occurred. |
 
 Clients should branch on `code`, not localized `message` text. Quote the `traceId` when reporting an incident.
