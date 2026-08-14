@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { getMyMenus, menuKeys } from "@/features/menus";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -136,13 +136,8 @@ export function AdminLayout() {
           <ThemeMenu />
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={
-                <Button
-                  aria-label={t("accountMenu")}
-                  className="gap-2"
-                  variant="ghost"
-                />
-              }
+              aria-label={t("accountMenu")}
+              className={buttonVariants({ className: "gap-2", variant: "ghost" })}
             >
               <Avatar className="size-8">
                 <AvatarFallback>{user?.displayName?.slice(0, 1)}</AvatarFallback>

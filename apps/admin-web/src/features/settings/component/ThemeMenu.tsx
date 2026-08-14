@@ -1,6 +1,6 @@
 import { RiComputerLine, RiMoonLine, RiSunLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,14 +26,9 @@ export function ThemeMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={
-          <Button
-            aria-label={t("theme")}
-            size="icon"
-            title={t("theme")}
-            variant="ghost"
-          />
-        }
+        aria-label={t("theme")}
+        className={buttonVariants({ size: "icon", variant: "ghost" })}
+        title={t("theme")}
       >
         <CurrentIcon aria-hidden="true" />
       </DropdownMenuTrigger>
