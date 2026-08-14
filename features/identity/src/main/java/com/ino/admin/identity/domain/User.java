@@ -114,4 +114,10 @@ public class User {
         }
         updatedAt = now;
     }
+
+    public void updateProfile(String newDisplayName, UserRole newRole, Instant now) {
+        displayName = newDisplayName.strip();
+        role = newRole;
+        updatedAt = now;
+    }
 }

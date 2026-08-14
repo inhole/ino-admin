@@ -68,4 +68,26 @@ class UserManagementServiceTest {
         assertThatThrownBy(() -> service.changeStatus(actorId, actorId, "DISABLED"))
                 .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("SELF_DISABLE_NOT_ALLOWED");
     }
+
+    @Test
+    void updatesAnotherUsersProfileAndRevokesRefreshTokens() {
+        var user = User.create("viewer@example.com", "hash", "뷰어", UserRole.VIEWER,
+                Instant.parse("2026-08-13T00:00:00Z"));
+        when(repository.findById(user.id())).thenReturn(Optional.of(user));
+
+        var result = service.updateProfile(UUID.randomUUID(), user.id(),
+                new com.ino.admin.identity.api.UserManagementUseCase.UpdateProfile(" 운영자 ", "ADMIN"));
+
+        assertThat(result.displayName()).isEqualTo("운영자");
+        assertThat(result.role()).isEqualTo("ADMIN");
+        verify(refreshTokenService).revokeAllForUser(user.id());
+    }
+
+    @Test
+    void rejectsSelfRoleChange() {
+        var actorId = UUID.randomUUID();
+        assertThatThrownBy(() -> service.updateProfile(actorId, actorId,
+                new com.ino.admin.identity.api.UserManagementUseCase.UpdateProfile("관리자", "ADMIN")))
+                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("SELF_ROLE_CHANGE_NOT_ALLOWED");
+    }
 }

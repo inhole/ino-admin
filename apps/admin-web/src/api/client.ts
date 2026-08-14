@@ -108,9 +108,13 @@ export async function logout() {
 export function getCurrentUser() { return request<CurrentUser>('/api/v1/auth/me') }
 export function getSamples() { return request<PageResponse<Sample>>('/api/v1/samples') }
 export function getUsers() { return request<PageResponse<UserSummary>>('/api/v1/users') }
+export function getUser(userId: string) { return request<UserSummary>(`/api/v1/users/${userId}`) }
 export function createUser(input: { email: string; password: string; displayName: string; role: 'ADMIN' | 'VIEWER' }) {
   return request<UserSummary>('/api/v1/users', { method: 'POST', body: JSON.stringify(input) })
 }
 export function updateUserStatus(userId: string, status: 'ACTIVE' | 'DISABLED') {
   return request<{ id: string; status: string }>(`/api/v1/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) })
+}
+export function updateUserProfile(userId: string, input: { displayName: string; role: 'ADMIN' | 'VIEWER' }) {
+  return request<{ id: string; displayName: string; role: string }>(`/api/v1/users/${userId}`, { method: 'PATCH', body: JSON.stringify(input) })
 }

@@ -96,14 +96,18 @@ test('navigates to the authenticated user directory', async () => {
 test('super admin creates a viewer from the user directory', async () => {
   let created = false
   let disabled = false
+  let displayName = '뷰어'
+  let role = 'VIEWER'
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = String(input)
     if (url.endsWith('/auth/login')) return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
     if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN' })
     if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
     if (url.endsWith('/users') && init?.method === 'POST') { created = true; return json({ id: 'user-2', email: 'viewer@example.com', displayName: '뷰어', status: 'ACTIVE', role: 'VIEWER', createdAt: '2026-08-14T00:00:00Z' }, 201) }
+    if (url.endsWith('/users/user-2') && init?.method === 'PATCH') { displayName = '운영자'; role = 'ADMIN'; return json({ id: 'user-2', displayName, role }) }
     if (url.endsWith('/users/user-2/status') && init?.method === 'PATCH') { disabled = true; return json({ id: 'user-2', status: 'DISABLED' }) }
-    if (url.endsWith('/users')) return json({ content: created ? [{ id: 'user-2', email: 'viewer@example.com', displayName: '뷰어', status: disabled ? 'DISABLED' : 'ACTIVE', role: 'VIEWER', createdAt: '2026-08-14T00:00:00Z' }] : [], page: 0, size: 20, totalElements: created ? 1 : 0, totalPages: created ? 1 : 0 })
+    if (url.endsWith('/users/user-2')) return json({ id: 'user-2', email: 'viewer@example.com', displayName, status: disabled ? 'DISABLED' : 'ACTIVE', role, createdAt: '2026-08-14T00:00:00Z' })
+    if (url.endsWith('/users')) return json({ content: created ? [{ id: 'user-2', email: 'viewer@example.com', displayName, status: disabled ? 'DISABLED' : 'ACTIVE', role, createdAt: '2026-08-14T00:00:00Z' }] : [], page: 0, size: 20, totalElements: created ? 1 : 0, totalPages: created ? 1 : 0 })
     throw new Error(`Unexpected request: ${url}`)
   })
 
@@ -119,6 +123,11 @@ test('super admin creates a viewer from the user directory', async () => {
 
   expect(await screen.findByText('뷰어 사용자를 생성했습니다.')).toBeInTheDocument()
   expect(await screen.findByText('viewer@example.com')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: '수정' }))
+  fireEvent.change(await screen.findByLabelText('수정할 이름'), { target: { value: '운영자' } })
+  fireEvent.change(screen.getByLabelText('수정할 역할'), { target: { value: 'ADMIN' } })
+  fireEvent.click(screen.getByRole('button', { name: '저장' }))
+  expect(await screen.findByText('운영자')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: '비활성화' }))
   expect(await screen.findByRole('button', { name: '활성화' })).toBeInTheDocument()
 })

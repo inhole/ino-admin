@@ -43,6 +43,20 @@ public class UserManagementService implements UserManagementUseCase {
         return new UpdatedUser(user.id(), user.status().name());
     }
 
+    @Override
+    @Transactional
+    public UpdatedProfile updateProfile(java.util.UUID actorId, java.util.UUID userId, UpdateProfile command) {
+        if (actorId.equals(userId)) {
+            throw new BusinessException("SELF_ROLE_CHANGE_NOT_ALLOWED", "자기 계정의 역할은 변경할 수 없습니다.");
+        }
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "사용자를 찾을 수 없습니다."));
+        var role = parseAssignableRole(command.role());
+        user.updateProfile(command.displayName(), role, Instant.now(clock));
+        refreshTokenService.revokeAllForUser(user.id());
+        return new UpdatedProfile(user.id(), user.displayName(), user.role().name());
+    }
+
     private UserStatus parseStatus(String status) {
         try {
             var parsed = UserStatus.valueOf(status);
