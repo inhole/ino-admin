@@ -72,3 +72,23 @@ test('shows the server authentication error without exposing account state', asy
 
   expect(await screen.findByRole('alert')).toHaveTextContent('이메일 또는 비밀번호가 올바르지 않습니다.')
 })
+
+test('navigates to the authenticated user directory', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+    const url = String(input)
+    if (url.endsWith('/auth/login') && init?.method === 'POST') return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
+    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE' })
+    if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+    if (url.endsWith('/users')) return json({ content: [{ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', createdAt: '2026-08-14T00:00:00Z' }], page: 0, size: 20, totalElements: 1, totalPages: 1 })
+    throw new Error(`Unexpected request: ${url}`)
+  })
+
+  renderApp('/login')
+  fireEvent.change(await screen.findByLabelText('이메일'), { target: { value: 'admin@example.com' } })
+  fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'Admin-Password-2026!' } })
+  fireEvent.click(screen.getByRole('button', { name: '로그인' }))
+  fireEvent.click(await screen.findByRole('link', { name: '사용자' }))
+
+  expect(await screen.findByRole('heading', { name: '사용자 관리' })).toBeInTheDocument()
+  expect(screen.getByText('admin@example.com')).toBeInTheDocument()
+})

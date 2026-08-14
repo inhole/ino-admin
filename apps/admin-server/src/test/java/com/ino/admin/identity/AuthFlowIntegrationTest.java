@@ -68,6 +68,22 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void listsUsersWithoutExposingPasswordData() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        var loginResult = login(PASSWORD);
+        String accessToken = JsonPath.read(loginResult.getResponse().getContentAsString(), "$.accessToken");
+
+        mockMvc.perform(get("/api/v1/users")
+                        .queryParam("query", "login")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].email").value(EMAIL))
+                .andExpect(jsonPath("$.content[0].displayName").value("로그인 관리자"))
+                .andExpect(jsonPath("$.content[0].passwordHash").doesNotExist())
+                .andExpect(jsonPath("$.page").value(0));
+    }
+
+    @Test
     void rotatesRefreshTokenAndRejectsReusedTokenFamily() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         String first = loginAndGetRefreshToken();

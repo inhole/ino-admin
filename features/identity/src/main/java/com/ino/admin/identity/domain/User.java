@@ -72,6 +72,7 @@ public class User {
     public UserStatus status() { return status; }
     public int failedLoginAttempts() { return failedLoginAttempts; }
     public Instant lockedAt() { return lockedAt; }
+    public Instant createdAt() { return createdAt; }
 
     public void recordFailedLogin(int maxFailedAttempts, Instant now) {
         if (status != UserStatus.ACTIVE) return;

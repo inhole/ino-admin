@@ -20,6 +20,7 @@ identity/
 - `LoginUseCase`: 로그인 및 현재 사용자 조회
 - `PasswordChangeUseCase`: 본인 비밀번호 변경
 - `RefreshTokenUseCase`: token rotation과 로그아웃
+- `UserDirectoryUseCase`: 사용자 검색과 페이징 조회
 - `AccessTokenIssuer`: 실행 애플리케이션이 구현하는 access token 발급 port
 - `api`의 인증 관련 예외
 
