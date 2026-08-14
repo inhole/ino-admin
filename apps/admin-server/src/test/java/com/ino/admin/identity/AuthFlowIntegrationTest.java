@@ -109,6 +109,21 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void returnsMenusFilteredByTokenPermissions() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        String token = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
+        mockMvc.perform(get("/api/v1/menus/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].id").value(org.hamcrest.Matchers.contains(
+                        "dashboard", "users", "permissions")));
+
+        var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
+        mockMvc.perform(get("/api/v1/menus/me").header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].id").value(org.hamcrest.Matchers.contains("dashboard")));
+    }
+
+    @Test
     void superAdminCreatesUserButViewerCannot() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         var loginResult = login(PASSWORD);

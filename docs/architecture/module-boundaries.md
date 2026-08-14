@@ -4,6 +4,7 @@
 
 ```text
 apps/admin-server -> features/identity -> modules/common-core
+apps/admin-server -> features/menu
 apps/admin-server ---------------------> modules/common-core
 ```
 
