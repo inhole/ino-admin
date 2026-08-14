@@ -10,6 +10,7 @@ All errors include `code`, `message`, `fieldErrors`, `traceId`, and an ISO-8601 
 | `PASSWORD_REUSE_NOT_ALLOWED` | 400 | 새 비밀번호가 현재 비밀번호와 동일하다. |
 | `PASSWORD_POLICY_VIOLATION` | 400 | 새 비밀번호가 길이 또는 문자 조합 정책을 충족하지 않는다. |
 | `UNAUTHORIZED` | 401 | bearer token이 없거나 서명·만료·issuer·audience 검증에 실패했다. |
+| `FORBIDDEN` | 403 | 인증되었지만 요청을 수행할 역할 또는 권한이 없다. |
 | `INTERNAL_ERROR` | 500 | An unexpected server error occurred. |
 
 Clients should branch on `code`, not localized `message` text. Quote the `traceId` when reporting an incident.

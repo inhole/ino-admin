@@ -84,6 +84,15 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void viewerCannotListUsers() throws Exception {
+        var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
+
+        mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
     void rotatesRefreshTokenAndRejectsReusedTokenFamily() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         String first = loginAndGetRefreshToken();
@@ -249,12 +258,17 @@ class AuthFlowIntegrationTest {
     }
 
     private String signedToken(Instant issuedAt, Instant expiresAt, String audience) {
+        return signedToken(issuedAt, expiresAt, audience, "VIEWER");
+    }
+
+    private String signedToken(Instant issuedAt, Instant expiresAt, String audience, String role) {
         var claims = JwtClaimsSet.builder()
                 .issuer("ino-admin")
                 .audience(List.of(audience))
                 .subject(UUID.randomUUID().toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
+                .claim("role", role)
                 .build();
         return jwtEncoder.encode(JwtEncoderParameters.from(
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();

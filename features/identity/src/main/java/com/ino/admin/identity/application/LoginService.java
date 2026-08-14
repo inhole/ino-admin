@@ -50,7 +50,7 @@ public class LoginService implements LoginUseCase {
             throw new AuthenticationFailedException();
         }
         user.recordSuccessfulLogin(Instant.now(clock));
-        var token = accessTokenIssuer.issue(user.id());
+        var token = accessTokenIssuer.issue(user.id(), user.role().name());
         var refreshToken = refreshTokenService.issue(user);
         return new LoginResult(token.value(), token.expiresInSeconds(), refreshToken.rawToken());
     }
@@ -61,7 +61,7 @@ public class LoginService implements LoginUseCase {
         var user = userRepository.findById(userId)
                 .filter(found -> found.status() == UserStatus.ACTIVE)
                 .orElseThrow(AuthenticationFailedException::new);
-        return new CurrentUser(user.id(), user.email(), user.displayName(), user.status().name());
+        return new CurrentUser(user.id(), user.email(), user.displayName(), user.status().name(), user.role().name());
     }
 
 }

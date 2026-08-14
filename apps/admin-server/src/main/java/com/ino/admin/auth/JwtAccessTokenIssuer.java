@@ -24,13 +24,14 @@ class JwtAccessTokenIssuer implements AccessTokenIssuer {
     }
 
     @Override
-    public IssuedAccessToken issue(UUID userId) {
+    public IssuedAccessToken issue(UUID userId, String role) {
         var issuedAt = Instant.now(clock);
         var expiresAt = issuedAt.plus(properties.getAccessTokenTtl());
         var claims = JwtClaimsSet.builder()
                 .issuer(properties.getIssuer())
                 .audience(java.util.List.of(properties.getAudience()))
                 .subject(userId.toString())
+                .claim("role", role)
                 .id(UUID.randomUUID().toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)

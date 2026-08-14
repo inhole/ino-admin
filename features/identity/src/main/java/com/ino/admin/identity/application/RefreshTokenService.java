@@ -59,7 +59,7 @@ public class RefreshTokenService implements RefreshTokenUseCase {
         var replacement = newToken(current.user(), current.familyId(), now);
         repository.save(replacement.entity());
         current.replaceWith(replacement.entity().id(), now);
-        var access = accessTokenIssuer.issue(current.user().id());
+        var access = accessTokenIssuer.issue(current.user().id(), current.user().role().name());
         return new RefreshResult(access.value(), access.expiresInSeconds(), replacement.rawToken());
     }
 
