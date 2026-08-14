@@ -112,6 +112,10 @@ export function getCurrentUser() { return request<CurrentUser>('/api/v1/auth/me'
 export function getSamples() { return request<PageResponse<Sample>>('/api/v1/samples') }
 export function getUsers() { return request<PageResponse<UserSummary>>('/api/v1/users') }
 export function getPermissionCatalog() { return request<RolePermissions[]>('/api/v1/permissions') }
+export function getAvailablePermissions() { return request<string[]>('/api/v1/permissions/available') }
+export function updateRolePermissions(role: string, permissions: string[]) {
+  return request<RolePermissions>(`/api/v1/permissions/roles/${role}`, { method: 'PATCH', body: JSON.stringify({ permissions }) })
+}
 export function getMyMenus() { return request<MenuItem[]>('/api/v1/menus/me') }
 export function getMenus() { return request<ManagedMenu[]>('/api/v1/menus') }
 export function createMenu(input: ManagedMenu) { return request<ManagedMenu>('/api/v1/menus', { method: 'POST', body: JSON.stringify(input) }) }

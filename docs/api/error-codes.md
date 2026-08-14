@@ -21,6 +21,8 @@ All errors include `code`, `message`, `fieldErrors`, `traceId`, and an ISO-8601 
 | `MENU_CYCLE` | 400 | 메뉴 부모 관계가 순환한다. |
 | `MENU_ORDER_DUPLICATED` | 400 | 동일 부모 아래 정렬 순서가 중복된다. |
 | `ROLE_NOT_FOUND` | 400 | 사용자에게 지정된 역할이 catalog에 존재하지 않는다. |
+| `SYSTEM_ROLE_PROTECTED` | 400 | 최고 관리자 역할의 권한 변경을 요청했다. |
+| `INVALID_PERMISSION` | 400 | catalog에 없는 권한을 역할에 할당하려 했다. |
 | `UNAUTHORIZED` | 401 | bearer token이 없거나 서명·만료·issuer·audience 검증에 실패했다. |
 | `FORBIDDEN` | 403 | 인증되었지만 요청을 수행할 역할 또는 권한이 없다. |
 | `INTERNAL_ERROR` | 500 | An unexpected server error occurred. |
