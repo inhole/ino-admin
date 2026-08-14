@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 import com.ino.admin.core.BusinessException;
 import com.ino.admin.identity.domain.Role;
@@ -42,5 +43,19 @@ class RoleManagementServiceTest {
         when(roles.findById("ADMIN")).thenReturn(Optional.of(mock(Role.class)));
         assertThatThrownBy(() -> service.replacePermissions("ADMIN", List.of("unknown:permission")))
                 .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_PERMISSION");
+    }
+
+    @Test
+    void createsCustomRoleAndProtectsSystemRoleLifecycle() {
+        when(roles.save(any(Role.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        var created = service.create(new com.ino.admin.identity.api.RoleManagementUseCase.CreateRole(
+                "content_editor", "콘텐츠 편집자", List.of("user:read")));
+        assertThat(created.role()).isEqualTo("CONTENT_EDITOR");
+        assertThat(created.enabled()).isTrue();
+
+        var systemRole = mock(Role.class); when(systemRole.systemRole()).thenReturn(true);
+        when(roles.findById("ADMIN")).thenReturn(Optional.of(systemRole));
+        assertThatThrownBy(() -> service.changeEnabled("ADMIN", false))
+                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("SYSTEM_ROLE_PROTECTED");
     }
 }

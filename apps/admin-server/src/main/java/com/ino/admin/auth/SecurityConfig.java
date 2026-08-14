@@ -35,6 +35,8 @@ class SecurityConfig {
                                 .hasAuthority("permission:read")
                         .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/permissions/**")
                                 .hasAuthority("permission:update")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/permissions/**")
+                                .hasAuthority("permission:update")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/menus")
                                 .hasAuthority("menu:read")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/menus")
