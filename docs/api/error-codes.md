@@ -15,6 +15,11 @@ All errors include `code`, `message`, `fieldErrors`, `traceId`, and an ISO-8601 
 | `SELF_DISABLE_NOT_ALLOWED` | 400 | 관리자가 자기 계정 비활성화를 요청했다. |
 | `SELF_ROLE_CHANGE_NOT_ALLOWED` | 400 | 관리자가 자기 계정의 역할 변경을 요청했다. |
 | `USER_NOT_FOUND` | 400 | 상태를 변경할 사용자를 찾을 수 없다. |
+| `MENU_ID_ALREADY_EXISTS` | 400 | 이미 존재하는 메뉴 ID를 생성하려 했다. |
+| `MENU_NOT_FOUND` | 400 | 변경할 메뉴가 존재하지 않는다. |
+| `INVALID_MENU_PARENT` | 400 | 지정한 부모 메뉴가 존재하지 않는다. |
+| `MENU_CYCLE` | 400 | 메뉴 부모 관계가 순환한다. |
+| `MENU_ORDER_DUPLICATED` | 400 | 동일 부모 아래 정렬 순서가 중복된다. |
 | `UNAUTHORIZED` | 401 | bearer token이 없거나 서명·만료·issuer·audience 검증에 실패했다. |
 | `FORBIDDEN` | 403 | 인증되었지만 요청을 수행할 역할 또는 권한이 없다. |
 | `INTERNAL_ERROR` | 500 | An unexpected server error occurred. |

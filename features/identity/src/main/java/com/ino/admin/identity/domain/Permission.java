@@ -4,7 +4,9 @@ public enum Permission {
     USER_READ("user:read"),
     USER_CREATE("user:create"),
     USER_UPDATE("user:update"),
-    PERMISSION_READ("permission:read");
+    PERMISSION_READ("permission:read"),
+    MENU_READ("menu:read"),
+    MENU_UPDATE("menu:update");
 
     private final String key;
 

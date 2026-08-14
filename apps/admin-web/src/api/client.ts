@@ -10,7 +10,8 @@ export interface Sample { id: number; name: string }
 export interface ApiError { code: string; message: string; traceId?: string }
 export interface CurrentUser { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; permissions: string[] }
 export interface RolePermissions { role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; permissions: string[] }
-export interface MenuItem { id: string; label: string; route: string; icon: 'layout-dashboard' | 'users' | 'key-round'; order: number; children: MenuItem[] }
+export interface MenuItem { id: string; label: string; route: string; icon: 'layout-dashboard' | 'users' | 'key-round' | 'menu'; order: number; children: MenuItem[] }
+export interface ManagedMenu extends Omit<MenuItem, 'children'> { parentId: string | null; requiredPermission: string | null; enabled: boolean }
 export interface UserSummary { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; createdAt: string }
 
 interface TokenResponse {
@@ -112,6 +113,9 @@ export function getSamples() { return request<PageResponse<Sample>>('/api/v1/sam
 export function getUsers() { return request<PageResponse<UserSummary>>('/api/v1/users') }
 export function getPermissionCatalog() { return request<RolePermissions[]>('/api/v1/permissions') }
 export function getMyMenus() { return request<MenuItem[]>('/api/v1/menus/me') }
+export function getMenus() { return request<ManagedMenu[]>('/api/v1/menus') }
+export function createMenu(input: ManagedMenu) { return request<ManagedMenu>('/api/v1/menus', { method: 'POST', body: JSON.stringify(input) }) }
+export function updateMenu(id: string, input: ManagedMenu) { return request<ManagedMenu>(`/api/v1/menus/${id}`, { method: 'PATCH', body: JSON.stringify(input) }) }
 export function getUser(userId: string) { return request<UserSummary>(`/api/v1/users/${userId}`) }
 export function createUser(input: { email: string; password: string; displayName: string; role: 'ADMIN' | 'VIEWER' }) {
   return request<UserSummary>('/api/v1/users', { method: 'POST', body: JSON.stringify(input) })
