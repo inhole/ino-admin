@@ -10,9 +10,10 @@ export interface Sample { id: number; name: string }
 export interface ApiError { code: string; message: string; traceId?: string }
 export interface CurrentUser { id: string; email: string; displayName: string; status: string; role: string; permissions: string[] }
 export interface RolePermissions { role: string; displayName: string; systemRole: boolean; enabled: boolean; permissions: string[] }
-export interface MenuItem { id: string; label: string; route: string; icon: 'layout-dashboard' | 'users' | 'key-round' | 'menu'; order: number; children: MenuItem[] }
+export interface MenuItem { id: string; label: string; route: string; icon: 'layout-dashboard' | 'users' | 'key-round' | 'menu' | 'file'; order: number; children: MenuItem[] }
 export interface ManagedMenu extends Omit<MenuItem, 'children'> { parentId: string | null; requiredPermission: string | null; enabled: boolean }
 export interface UserSummary { id: string; email: string; displayName: string; status: string; role: string; createdAt: string }
+export interface StoredFileSummary { id: string; originalName: string; contentType: string; size: number; createdAt: string }
 
 interface TokenResponse {
   accessToken: string
@@ -135,4 +136,20 @@ export function updateUserStatus(userId: string, status: 'ACTIVE' | 'DISABLED') 
 }
 export function updateUserProfile(userId: string, input: { displayName: string; role: string }) {
   return request<{ id: string; displayName: string; role: string }>(`/api/v1/users/${userId}`, { method: 'PATCH', body: JSON.stringify(input) })
+}
+
+export function getMyFiles() { return request<PageResponse<StoredFileSummary>>('/api/v1/files') }
+export function deleteFile(fileId: string) { return request<void>(`/api/v1/files/${fileId}`, { method: 'DELETE' }) }
+export async function uploadFile(file: File) {
+  const form = new FormData(); form.append('file', file)
+  const headers = new Headers(); const token = sessionStorage.getItem(accessTokenKey); if (token) headers.set('Authorization', `Bearer ${token}`)
+  const response = await fetch(`${apiBaseUrl}/api/v1/files`, { method: 'POST', headers, body: form })
+  if (!response.ok) throw await errorFrom(response)
+  return response.json() as Promise<StoredFileSummary>
+}
+export async function downloadFile(fileId: string) {
+  const headers = new Headers(); const token = sessionStorage.getItem(accessTokenKey); if (token) headers.set('Authorization', `Bearer ${token}`)
+  const response = await fetch(`${apiBaseUrl}/api/v1/files/${fileId}/content`, { headers })
+  if (!response.ok) throw await errorFrom(response)
+  return response.blob()
 }

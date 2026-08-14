@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class FileManagementService implements FileManagementUseCase {
@@ -48,6 +50,21 @@ public class FileManagementService implements FileManagementUseCase {
         var file = repository.findById(fileId).filter(found -> found.ownerId().equals(requesterId))
                 .orElseThrow(FileNotFoundException::new);
         return new FileDownload(file.originalName(), file.contentType(), storage.load(file.storageKey()));
+    }
+
+    @Override @Transactional(readOnly = true)
+    public FilePage list(UUID ownerId, int page, int size) {
+        var result = repository.findAllByOwnerId(ownerId, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+        return new FilePage(result.getContent().stream().map(file -> new FileSummary(file.id(), file.originalName(),
+                file.contentType(), file.size(), file.createdAt())).toList(), page, size, result.getTotalElements(), result.getTotalPages());
+    }
+
+    @Override @Transactional
+    public void delete(UUID requesterId, UUID fileId) {
+        var file = repository.findById(fileId).filter(found -> found.ownerId().equals(requesterId))
+                .orElseThrow(FileNotFoundException::new);
+        storage.delete(file.storageKey());
+        repository.delete(file);
     }
 
     private void validate(UploadFile command) {

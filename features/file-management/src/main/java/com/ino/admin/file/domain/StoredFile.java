@@ -33,4 +33,5 @@ public class StoredFile {
     public String storageKey() { return storageKey; }
     public String contentType() { return contentType; }
     public long size() { return size; }
+    public Instant createdAt() { return createdAt; }
 }

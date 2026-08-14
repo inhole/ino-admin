@@ -12,6 +12,7 @@ const managementMenus = [
   { id: 'users', label: '사용자 관리', route: '/users', icon: 'users', order: 20, children: [] },
   { id: 'permissions', label: '권한 관리', route: '/permissions', icon: 'key-round', order: 30, children: [] },
   { id: 'menus', label: '메뉴 관리', route: '/menu-management', icon: 'menu', order: 40, children: [] },
+  { id: 'files', label: '파일 관리', route: '/files', icon: 'file', order: 50, children: [] },
 ]
 
 async function json(route: Route, body: unknown, status = 200) {
@@ -33,6 +34,7 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER') {
       ? json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
       : json(route, { code: 'FORBIDDEN', message: '접근 권한이 없습니다.' }, 403)
     if (path === '/api/v1/permissions') return json(route, [])
+    if (path === '/api/v1/files') return json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
     if (path === '/api/v1/samples') return json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
     return json(route, { code: 'NOT_FOUND', message: path }, 404)
   })
@@ -50,6 +52,9 @@ test('SUPER_ADMIN에게 관리 메뉴를 모두 노출한다', async ({ page }) 
   await expect(page.getByRole('link', { name: '사용자 관리' })).toBeVisible()
   await expect(page.getByRole('link', { name: '권한 관리' })).toBeVisible()
   await expect(page.getByRole('link', { name: '메뉴 관리' })).toBeVisible()
+  await page.getByRole('link', { name: '파일 관리' }).click()
+  await expect(page.getByRole('heading', { name: '파일 관리' })).toBeVisible()
+  await expect(page.getByText('업로드한 파일이 없습니다.')).toBeVisible()
 })
 
 test('VIEWER는 관리 메뉴가 없고 직접 접근해도 서버의 403을 처리한다', async ({ page }) => {
