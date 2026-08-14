@@ -13,7 +13,7 @@
 
 ## Workflow
 - Preserve unrelated user changes and keep each change focused on one verifiable objective.
-- Follow `docs/development/commit-convention.md` for commit messages. Write the summary in Korean using `type: 변경사항`.
+- Write commit summaries in Korean using `type: 변경사항`. Use the `ino-admin-deliver-change` skill when preparing commits and pull requests.
 - Add or update tests whenever behavior changes.
 - Manage every database change with Flyway. Never edit an applied migration; add a new migration instead.
 - Store server timestamps in UTC and inject `Clock` into time-dependent domain logic.
