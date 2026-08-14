@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Server } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ApiClientError, getSamples } from "@/api/client";
-import { PageHeader, StatusPanel } from "@/components/layout/Page";
+import { LoadingPanel, PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,20 +33,16 @@ export function DashboardPage() {
         title={t("title")}
       />
       <Card aria-labelledby="connection-title">
-        <CardHeader className="flex-row items-start gap-4">
-          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-            <Server />
-          </div>
-          <div>
-            <CardTitle id="connection-title">{t("connectionTitle")}</CardTitle>
-            <CardDescription>{t("connectionDescription")}</CardDescription>
-          </div>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2" id="connection-title">
+            <Server aria-hidden="true" />
+            {t("connectionTitle")}
+          </CardTitle>
+          <CardDescription>{t("connectionDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           {samples.isPending && (
-            <StatusPanel>
-              <p role="status">{t("loading")}</p>
-            </StatusPanel>
+            <LoadingPanel label={t("loading")} />
           )}
           {samples.isError && (
             <Alert variant="destructive" role="alert">

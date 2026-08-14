@@ -86,7 +86,11 @@ export function AdminLayout() {
           <Separator />
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" tooltip={user?.displayName}>
+              <SidebarMenuButton
+                render={<div />}
+                size="lg"
+                tooltip={user?.displayName}
+              >
                 <Avatar><AvatarFallback>{user?.displayName?.slice(0, 1)}</AvatarFallback></Avatar>
                 <span className="min-w-0">
                   <span className="block truncate font-semibold">{user?.displayName}</span>

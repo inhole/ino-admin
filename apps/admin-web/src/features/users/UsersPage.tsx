@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "@/components/ui/toast";
 import {
   Table,
   TableBody,
@@ -66,7 +67,6 @@ export function UsersPage() {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [createError, setCreateError] = useState<string | null>(null);
-  const [createdMessage, setCreatedMessage] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [statusDialogId, setStatusDialogId] = useState<string | null>(null);
   const [editing, setEditing] = useState<UserSummary | null>(null);
@@ -80,7 +80,7 @@ export function UsersPage() {
   const create = useMutation({
     mutationFn: createUser,
     onSuccess: async (created) => {
-      setCreatedMessage(t("created", { name: created.displayName }));
+      toast.add({ title: t("created", { name: created.displayName }) });
       await queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
@@ -134,7 +134,6 @@ export function UsersPage() {
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setCreateError(null);
-    setCreatedMessage(null);
     const form = event.currentTarget;
     const data = new FormData(form);
     try {
@@ -214,11 +213,6 @@ export function UsersPage() {
                   role="alert"
                 >
                   <AlertDescription>{createError}</AlertDescription>
-                </Alert>
-              )}
-              {createdMessage && (
-                <Alert className="md:col-span-2" role="status">
-                  <AlertDescription>{createdMessage}</AlertDescription>
                 </Alert>
               )}
               <Button

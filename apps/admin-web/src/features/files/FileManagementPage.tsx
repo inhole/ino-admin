@@ -35,7 +35,6 @@ import { Input } from "@/components/ui/input";
 import {
   Field,
   FieldDescription,
-  FieldLabel,
 } from "@/components/ui/field";
 import {
   Item,
@@ -46,6 +45,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import { formatDateTime, formatFileSize } from "@/i18n/format";
 
 export function FileManagementPage() {
@@ -54,14 +54,13 @@ export function FileManagementPage() {
   const queryClient = useQueryClient();
   const files = useQuery({ queryKey: ["files"], queryFn: getMyFiles });
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
   const upload = useMutation({
     mutationFn: uploadFile,
     onSuccess: async () => {
       setError(null);
-      setMessage(t("uploaded"));
+      toast.add({ title: t("uploaded") });
       setSelected(null);
       await queryClient.invalidateQueries({ queryKey: ["files"] });
     },
@@ -74,7 +73,7 @@ export function FileManagementPage() {
     mutationFn: deleteFile,
     onSuccess: async () => {
       setError(null);
-      setMessage(t("deleted"));
+      toast.add({ title: t("deleted") });
       await queryClient.invalidateQueries({ queryKey: ["files"] });
     },
     onError: (caught) =>
@@ -84,7 +83,6 @@ export function FileManagementPage() {
   });
   const select = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    setMessage(null);
     setSelected(file?.name ?? null);
     if (file) upload.mutate(file);
     event.target.value = "";
@@ -118,20 +116,24 @@ export function FileManagementPage() {
         </CardHeader>
         <CardContent>
           <Field>
-          <FieldLabel
-            className="flex min-h-32 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/25 p-5 text-center hover:bg-muted/50"
+          <Button
+            className="min-h-32 w-full flex-col"
+            nativeButton={false}
+            render={<label htmlFor="file-upload" />}
+            variant="outline"
           >
-            <FileUp aria-hidden="true" />
+            <FileUp aria-hidden="true" data-icon="inline-start" />
             {t("input")}
             <Input
               aria-label={t("input")}
               accept=".pdf,.png,.jpg,.jpeg,.txt"
               className="sr-only"
               disabled={upload.isPending}
+              id="file-upload"
               onChange={select}
               type="file"
             />
-          </FieldLabel>
+          </Button>
           {selected && (
             <FieldDescription className="break-all">
               {t("selected", { name: selected })}
@@ -153,11 +155,6 @@ export function FileManagementPage() {
       {error && (
         <Alert className="mb-4" variant="destructive" role="alert">
           <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      {message && (
-        <Alert className="mb-4" role="status">
-          <AlertDescription>{message}</AlertDescription>
         </Alert>
       )}
       <Card>

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Spinner } from "@/components/ui/spinner";
 
 export function PageHeader({
   eyebrow,
@@ -65,5 +66,14 @@ export function StatusPanel({
 }) {
   return (
     <Empty className={cn("border", className)}><EmptyHeader><EmptyTitle>{children}</EmptyTitle><EmptyDescription>현재 표시할 데이터가 없습니다.</EmptyDescription></EmptyHeader></Empty>
+  );
+}
+
+export function LoadingPanel({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-24 items-center justify-center gap-2" role="status">
+      <Spinner />
+      <span>{label}</span>
+    </div>
   );
 }

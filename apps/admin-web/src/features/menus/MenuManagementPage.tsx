@@ -8,7 +8,7 @@ import {
   updateMenu,
   type ManagedMenu,
 } from "@/api/client";
-import { FormField, PageHeader, StatusPanel } from "@/components/layout/Page";
+import { FormField, LoadingPanel, PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -145,9 +145,7 @@ export function MenuManagementPage() {
             </Alert>
           )}
           {menus.isPending && (
-            <StatusPanel>
-              <p role="status">{t("loading")}</p>
-            </StatusPanel>
+            <LoadingPanel label={t("loading")} />
           )}
           {menus.isError && (
             <Alert variant="destructive" role="alert">

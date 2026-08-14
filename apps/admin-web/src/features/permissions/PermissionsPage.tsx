@@ -29,7 +29,7 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
-import { PageHeader, StatusPanel } from "@/components/layout/Page";
+import { LoadingPanel, PageHeader } from "@/components/layout/Page";
 
 export function PermissionsPage() {
   const catalog = useQuery({
@@ -124,9 +124,7 @@ export function PermissionsPage() {
         </CardHeader>
         <CardContent>
           {catalog.isPending && (
-            <StatusPanel>
-              <span role="status">권한을 불러오는 중…</span>
-            </StatusPanel>
+            <LoadingPanel label="권한을 불러오는 중…" />
           )}
           {catalog.isError && (
             <Alert variant="destructive" role="alert">
@@ -189,6 +187,7 @@ export function PermissionsPage() {
                               ) ||
                               update.isPending
                             }
+                            id={`${item.role}-${permission}`}
                             onCheckedChange={() =>
                               update.mutate({
                                 role: item.role,
@@ -200,7 +199,10 @@ export function PermissionsPage() {
                               })
                             }
                           />
-                          <FieldLabel className="cursor-pointer break-all font-mono text-xs">
+                          <FieldLabel
+                            className="cursor-pointer break-all font-mono text-xs"
+                            htmlFor={`${item.role}-${permission}`}
+                          >
                             {permission}
                           </FieldLabel>
                         </Field>

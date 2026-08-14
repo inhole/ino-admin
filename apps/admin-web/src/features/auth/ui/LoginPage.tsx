@@ -116,7 +116,11 @@ export function LoginPage() {
                   size="icon-sm"
                   type="button"
                 >
-                  {showPassword ? <EyeOff /> : <Eye />}
+                  {showPassword ? (
+                    <EyeOff data-icon="inline-start" />
+                  ) : (
+                    <Eye data-icon="inline-start" />
+                  )}
                 </InputGroupButton>
                 </InputGroupAddon>
               </InputGroup>
