@@ -1,7 +1,6 @@
 package com.ino.admin.identity.infrastructure.persistence;
 
 import com.ino.admin.identity.domain.User;
-import com.ino.admin.identity.domain.UserRole;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -16,7 +15,7 @@ import org.springframework.data.repository.query.Param;
 public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
     Optional<User> findByEmail(String email);
-    java.util.List<User> findAllByRole(UserRole role);
+    java.util.List<User> findAllByRole(String role);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select user from User user where user.email = :email")

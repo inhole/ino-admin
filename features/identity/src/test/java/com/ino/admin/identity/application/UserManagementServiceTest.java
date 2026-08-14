@@ -9,8 +9,8 @@ import static org.mockito.Mockito.when;
 import com.ino.admin.core.BusinessException;
 import com.ino.admin.identity.api.UserManagementUseCase.CreateUser;
 import com.ino.admin.identity.domain.User;
-import com.ino.admin.identity.domain.UserRole;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;
+import com.ino.admin.identity.infrastructure.persistence.RoleRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -24,12 +24,14 @@ class UserManagementServiceTest {
     private final UserRepository repository = mock(UserRepository.class);
     private final PasswordEncoder encoder = mock(PasswordEncoder.class);
     private final RefreshTokenService refreshTokenService = mock(RefreshTokenService.class);
+    private final RoleRepository roleRepository = mock(RoleRepository.class);
     private final UserManagementService service = new UserManagementService(repository, encoder,
-            Clock.fixed(Instant.parse("2026-08-14T00:00:00Z"), ZoneOffset.UTC), refreshTokenService);
+            Clock.fixed(Instant.parse("2026-08-14T00:00:00Z"), ZoneOffset.UTC), refreshTokenService, roleRepository);
 
     @Test
     void createsViewerWithNormalizedEmailAndEncodedPassword() {
         when(encoder.encode("Viewer-Password-2026!")).thenReturn("encoded");
+        when(roleRepository.existsById("VIEWER")).thenReturn(true);
 
         var result = service.create(new CreateUser(" Viewer@Example.com ", "Viewer-Password-2026!", " 뷰어 ", "VIEWER"));
 
@@ -37,7 +39,7 @@ class UserManagementServiceTest {
         verify(repository).save(captor.capture());
         assertThat(result.email()).isEqualTo("viewer@example.com");
         assertThat(captor.getValue().passwordHash()).isEqualTo("encoded");
-        assertThat(captor.getValue().role()).isEqualTo(UserRole.VIEWER);
+        assertThat(captor.getValue().role()).isEqualTo("VIEWER");
     }
 
     @Test
@@ -52,7 +54,7 @@ class UserManagementServiceTest {
     @Test
     void disablesAnotherUserAndRevokesRefreshTokens() {
         var actorId = UUID.randomUUID();
-        var user = User.create("viewer@example.com", "hash", "뷰어", UserRole.VIEWER,
+        var user = User.create("viewer@example.com", "hash", "뷰어", "VIEWER",
                 Instant.parse("2026-08-13T00:00:00Z"));
         when(repository.findById(user.id())).thenReturn(Optional.of(user));
 
@@ -71,9 +73,10 @@ class UserManagementServiceTest {
 
     @Test
     void updatesAnotherUsersProfileAndRevokesRefreshTokens() {
-        var user = User.create("viewer@example.com", "hash", "뷰어", UserRole.VIEWER,
+        var user = User.create("viewer@example.com", "hash", "뷰어", "VIEWER",
                 Instant.parse("2026-08-13T00:00:00Z"));
         when(repository.findById(user.id())).thenReturn(Optional.of(user));
+        when(roleRepository.existsById("ADMIN")).thenReturn(true);
 
         var result = service.updateProfile(UUID.randomUUID(), user.id(),
                 new com.ino.admin.identity.api.UserManagementUseCase.UpdateProfile(" 운영자 ", "ADMIN"));

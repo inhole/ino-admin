@@ -30,9 +30,8 @@ public class User {
     @Column(nullable = false, length = 20)
     private UserStatus status;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private UserRole role;
+    @Column(nullable = false, length = 50)
+    private String role;
 
     @Column(name = "failed_login_attempts", nullable = false)
     private int failedLoginAttempts;
@@ -56,10 +55,10 @@ public class User {
     protected User() {}
 
     public static User createInitialAdmin(String email, String passwordHash, String displayName, Instant now) {
-        return create(email, passwordHash, displayName, UserRole.SUPER_ADMIN, now);
+        return create(email, passwordHash, displayName, UserRole.SUPER_ADMIN.name(), now);
     }
 
-    public static User create(String email, String passwordHash, String displayName, UserRole role, Instant now) {
+    public static User create(String email, String passwordHash, String displayName, String role, Instant now) {
         var user = new User();
         user.id = UUID.randomUUID();
         user.email = email.strip().toLowerCase(Locale.ROOT);
@@ -79,7 +78,7 @@ public class User {
     public String passwordHash() { return passwordHash; }
     public String displayName() { return displayName; }
     public UserStatus status() { return status; }
-    public UserRole role() { return role; }
+    public String role() { return role; }
     public int failedLoginAttempts() { return failedLoginAttempts; }
     public Instant lockedAt() { return lockedAt; }
     public Instant createdAt() { return createdAt; }
@@ -115,7 +114,7 @@ public class User {
         updatedAt = now;
     }
 
-    public void updateProfile(String newDisplayName, UserRole newRole, Instant now) {
+    public void updateProfile(String newDisplayName, String newRole, Instant now) {
         displayName = newDisplayName.strip();
         role = newRole;
         updatedAt = now;

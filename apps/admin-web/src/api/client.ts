@@ -8,11 +8,11 @@ export interface PageResponse<T> {
 
 export interface Sample { id: number; name: string }
 export interface ApiError { code: string; message: string; traceId?: string }
-export interface CurrentUser { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; permissions: string[] }
-export interface RolePermissions { role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; permissions: string[] }
+export interface CurrentUser { id: string; email: string; displayName: string; status: string; role: string; permissions: string[] }
+export interface RolePermissions { role: string; permissions: string[] }
 export interface MenuItem { id: string; label: string; route: string; icon: 'layout-dashboard' | 'users' | 'key-round' | 'menu'; order: number; children: MenuItem[] }
 export interface ManagedMenu extends Omit<MenuItem, 'children'> { parentId: string | null; requiredPermission: string | null; enabled: boolean }
-export interface UserSummary { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; createdAt: string }
+export interface UserSummary { id: string; email: string; displayName: string; status: string; role: string; createdAt: string }
 
 interface TokenResponse {
   accessToken: string
@@ -121,12 +121,12 @@ export function getMenus() { return request<ManagedMenu[]>('/api/v1/menus') }
 export function createMenu(input: ManagedMenu) { return request<ManagedMenu>('/api/v1/menus', { method: 'POST', body: JSON.stringify(input) }) }
 export function updateMenu(id: string, input: ManagedMenu) { return request<ManagedMenu>(`/api/v1/menus/${id}`, { method: 'PATCH', body: JSON.stringify(input) }) }
 export function getUser(userId: string) { return request<UserSummary>(`/api/v1/users/${userId}`) }
-export function createUser(input: { email: string; password: string; displayName: string; role: 'ADMIN' | 'VIEWER' }) {
+export function createUser(input: { email: string; password: string; displayName: string; role: string }) {
   return request<UserSummary>('/api/v1/users', { method: 'POST', body: JSON.stringify(input) })
 }
 export function updateUserStatus(userId: string, status: 'ACTIVE' | 'DISABLED') {
   return request<{ id: string; status: string }>(`/api/v1/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) })
 }
-export function updateUserProfile(userId: string, input: { displayName: string; role: 'ADMIN' | 'VIEWER' }) {
+export function updateUserProfile(userId: string, input: { displayName: string; role: string }) {
   return request<{ id: string; displayName: string; role: string }>(`/api/v1/users/${userId}`, { method: 'PATCH', body: JSON.stringify(input) })
 }
