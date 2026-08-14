@@ -93,6 +93,22 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void superAdminReadsPermissionCatalogButViewerCannot() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        String token = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
+
+        mockMvc.perform(get("/api/v1/permissions").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].role").value("SUPER_ADMIN"))
+                .andExpect(jsonPath("$[0].permissions").isArray());
+
+        var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
+        mockMvc.perform(get("/api/v1/permissions").header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
     void superAdminCreatesUserButViewerCannot() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         var loginResult = login(PASSWORD);
@@ -350,6 +366,9 @@ class AuthFlowIntegrationTest {
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .claim("role", role)
+                .claim("permissions", com.ino.admin.identity.domain.RolePermissions.forRole(
+                        com.ino.admin.identity.domain.UserRole.valueOf(role)).stream()
+                        .map(permission -> permission.key()).toList())
                 .build();
         return jwtEncoder.encode(JwtEncoderParameters.from(
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();

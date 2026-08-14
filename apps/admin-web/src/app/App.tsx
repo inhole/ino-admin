@@ -4,13 +4,14 @@ import { LoginPage } from '@/features/auth/ui/LoginPage'
 import { ProtectedRoute } from '@/features/auth/ui/ProtectedRoute'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { UsersPage } from '@/features/users/UsersPage'
+import { PermissionsPage } from '@/features/permissions/PermissionsPage'
 import '@/styles.css'
 
 export function App() {
   return (
     <Routes>
       <Route element={<LoginPage />} path="/login" />
-      <Route element={<ProtectedRoute />}><Route element={<AdminLayout />}><Route element={<DashboardPage />} path="/" /><Route element={<UsersPage />} path="/users" /></Route></Route>
+      <Route element={<ProtectedRoute />}><Route element={<AdminLayout />}><Route element={<DashboardPage />} path="/" /><Route element={<UsersPage />} path="/users" /><Route element={<PermissionsPage />} path="/permissions" /></Route></Route>
     </Routes>
   )
 }

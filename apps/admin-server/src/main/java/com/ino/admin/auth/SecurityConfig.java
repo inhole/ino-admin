@@ -26,15 +26,18 @@ class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST,
                                 "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/users/**")
-                                .hasAnyRole("SUPER_ADMIN", "ADMIN")
+                                .hasAuthority("user:read")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/users/**")
-                                .hasRole("SUPER_ADMIN")
+                                .hasAuthority("user:create")
                         .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/users/**")
-                                .hasRole("SUPER_ADMIN")
+                                .hasAuthority("user:update")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/permissions")
+                                .hasAuthority("permission:read")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(token -> new JwtAuthenticationToken(token,
-                                java.util.List.of(new SimpleGrantedAuthority("ROLE_" + token.getClaimAsString("role"))))))
+                                java.util.Optional.ofNullable(token.getClaimAsStringList("permissions")).orElse(java.util.List.of())
+                                        .stream().map(SimpleGrantedAuthority::new).toList())))
                         .authenticationEntryPoint(authenticationEntryPoint))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)

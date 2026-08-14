@@ -8,7 +8,8 @@ export interface PageResponse<T> {
 
 export interface Sample { id: number; name: string }
 export interface ApiError { code: string; message: string; traceId?: string }
-export interface CurrentUser { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' }
+export interface CurrentUser { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; permissions: string[] }
+export interface RolePermissions { role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; permissions: string[] }
 export interface UserSummary { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; createdAt: string }
 
 interface TokenResponse {
@@ -108,6 +109,7 @@ export async function logout() {
 export function getCurrentUser() { return request<CurrentUser>('/api/v1/auth/me') }
 export function getSamples() { return request<PageResponse<Sample>>('/api/v1/samples') }
 export function getUsers() { return request<PageResponse<UserSummary>>('/api/v1/users') }
+export function getPermissionCatalog() { return request<RolePermissions[]>('/api/v1/permissions') }
 export function getUser(userId: string) { return request<UserSummary>(`/api/v1/users/${userId}`) }
 export function createUser(input: { email: string; password: string; displayName: string; role: 'ADMIN' | 'VIEWER' }) {
   return request<UserSummary>('/api/v1/users', { method: 'POST', body: JSON.stringify(input) })

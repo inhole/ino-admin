@@ -1,6 +1,8 @@
 package com.ino.admin.auth;
 
 import com.ino.admin.identity.application.port.AccessTokenIssuer;
+import com.ino.admin.identity.domain.RolePermissions;
+import com.ino.admin.identity.domain.UserRole;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
@@ -32,6 +34,8 @@ class JwtAccessTokenIssuer implements AccessTokenIssuer {
                 .audience(java.util.List.of(properties.getAudience()))
                 .subject(userId.toString())
                 .claim("role", role)
+                .claim("permissions", RolePermissions.forRole(UserRole.valueOf(role)).stream()
+                        .map(permission -> permission.key()).sorted().toList())
                 .id(UUID.randomUUID().toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
