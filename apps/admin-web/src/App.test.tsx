@@ -136,6 +136,7 @@ test('super admin creates a viewer from the user directory', async () => {
   fireEvent.click(screen.getByRole('button', { name: '저장' }))
   expect(await screen.findByText('운영자')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: '비활성화' }))
+  fireEvent.click(await screen.findByRole('button', { name: '비활성화', hidden: false }))
   expect(await screen.findByRole('button', { name: '활성화' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('link', { name: '권한' }))
   expect(await screen.findByRole('heading', { name: '권한 카탈로그' })).toBeInTheDocument()
