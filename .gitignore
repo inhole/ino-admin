@@ -32,6 +32,8 @@ replay_pid*
 **/node_modules/
 **/dist/
 **/.vite/
+**/playwright-report/
+**/test-results/
 
 # IDE
 .idea/
