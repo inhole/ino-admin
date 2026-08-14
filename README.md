@@ -29,6 +29,8 @@ npm install
 npm run dev
 ```
 
+웹의 `/login`에서 초기 관리자 계정으로 로그인할 수 있습니다. 인증 token은 현재 브라우저 탭의 `sessionStorage`에만 유지되며 새로고침 시 refresh token rotation으로 인증 상태를 복구합니다. 탭을 닫거나 로그아웃하면 다시 로그인해야 합니다.
+
 - 웹: http://localhost:5173
 - backend health: http://localhost:8080/actuator/health
 - OpenAPI UI: http://localhost:8080/swagger-ui.html
