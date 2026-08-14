@@ -9,7 +9,7 @@ export interface PageResponse<T> {
 export interface Sample { id: number; name: string }
 export interface ApiError { code: string; message: string; traceId?: string }
 export interface CurrentUser { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' }
-export interface UserSummary { id: string; email: string; displayName: string; status: string; createdAt: string }
+export interface UserSummary { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'; createdAt: string }
 
 interface TokenResponse {
   accessToken: string
@@ -108,3 +108,6 @@ export async function logout() {
 export function getCurrentUser() { return request<CurrentUser>('/api/v1/auth/me') }
 export function getSamples() { return request<PageResponse<Sample>>('/api/v1/samples') }
 export function getUsers() { return request<PageResponse<UserSummary>>('/api/v1/users') }
+export function createUser(input: { email: string; password: string; displayName: string; role: 'ADMIN' | 'VIEWER' }) {
+  return request<UserSummary>('/api/v1/users', { method: 'POST', body: JSON.stringify(input) })
+}

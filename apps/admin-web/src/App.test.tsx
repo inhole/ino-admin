@@ -30,7 +30,7 @@ test('logs in and renders the protected dashboard', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = String(input)
     if (url.endsWith('/auth/login') && init?.method === 'POST') return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
-    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE' })
+    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN' })
     if (url.endsWith('/samples')) return json({ content: [{ id: 1, name: '서버 연결' }], page: 0, size: 20, totalElements: 1, totalPages: 1 })
     throw new Error(`Unexpected request: ${url}`)
   })
@@ -51,7 +51,7 @@ test('restores authentication by rotating the refresh token', async () => {
   const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = String(input)
     if (url.endsWith('/auth/refresh')) return json({ accessToken: 'access-new', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-new' })
-    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE' })
+    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN' })
     if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
     throw new Error(`Unexpected request: ${url}`)
   })
@@ -77,7 +77,7 @@ test('navigates to the authenticated user directory', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = String(input)
     if (url.endsWith('/auth/login') && init?.method === 'POST') return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
-    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE' })
+    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN' })
     if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
     if (url.endsWith('/users')) return json({ content: [{ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', createdAt: '2026-08-14T00:00:00Z' }], page: 0, size: 20, totalElements: 1, totalPages: 1 })
     throw new Error(`Unexpected request: ${url}`)
@@ -91,4 +91,30 @@ test('navigates to the authenticated user directory', async () => {
 
   expect(await screen.findByRole('heading', { name: '사용자 관리' })).toBeInTheDocument()
   expect(screen.getByText('admin@example.com')).toBeInTheDocument()
+})
+
+test('super admin creates a viewer from the user directory', async () => {
+  let created = false
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+    const url = String(input)
+    if (url.endsWith('/auth/login')) return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
+    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN' })
+    if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+    if (url.endsWith('/users') && init?.method === 'POST') { created = true; return json({ id: 'user-2', email: 'viewer@example.com', displayName: '뷰어', status: 'ACTIVE', role: 'VIEWER', createdAt: '2026-08-14T00:00:00Z' }, 201) }
+    if (url.endsWith('/users')) return json({ content: created ? [{ id: 'user-2', email: 'viewer@example.com', displayName: '뷰어', status: 'ACTIVE', createdAt: '2026-08-14T00:00:00Z' }] : [], page: 0, size: 20, totalElements: created ? 1 : 0, totalPages: created ? 1 : 0 })
+    throw new Error(`Unexpected request: ${url}`)
+  })
+
+  renderApp('/login')
+  fireEvent.change(await screen.findByLabelText('이메일'), { target: { value: 'admin@example.com' } })
+  fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'Admin-Password-2026!' } })
+  fireEvent.click(screen.getByRole('button', { name: '로그인' }))
+  fireEvent.click(await screen.findByRole('link', { name: '사용자' }))
+  fireEvent.change(await screen.findByLabelText('이름'), { target: { value: '뷰어' } })
+  fireEvent.change(screen.getByLabelText('이메일', { selector: '#new-user-email' }), { target: { value: 'viewer@example.com' } })
+  fireEvent.change(screen.getByLabelText('초기 비밀번호'), { target: { value: 'Viewer-Password-2026!' } })
+  fireEvent.click(screen.getByRole('button', { name: '사용자 생성' }))
+
+  expect(await screen.findByText('뷰어 사용자를 생성했습니다.')).toBeInTheDocument()
+  expect(await screen.findByText('viewer@example.com')).toBeInTheDocument()
 })

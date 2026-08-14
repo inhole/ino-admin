@@ -93,6 +93,29 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void superAdminCreatesUserButViewerCannot() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        var loginResult = login(PASSWORD);
+        String superAdminToken = JsonPath.read(loginResult.getResponse().getContentAsString(), "$.accessToken");
+        var request = """
+                {"email":"viewer@example.com","password":"Viewer-Password-2026!","displayName":"조회 사용자","role":"VIEWER"}
+                """;
+
+        mockMvc.perform(post("/api/v1/users").header("Authorization", "Bearer " + superAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value("viewer@example.com"))
+                .andExpect(jsonPath("$.role").value("VIEWER"))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist());
+
+        var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
+        mockMvc.perform(post("/api/v1/users").header("Authorization", "Bearer " + viewerToken)
+                        .contentType(MediaType.APPLICATION_JSON).content(request.replace("viewer@example.com", "other@example.com")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
     void rotatesRefreshTokenAndRejectsReusedTokenFamily() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         String first = loginAndGetRefreshToken();

@@ -27,6 +27,8 @@ class SecurityConfig {
                                 "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/users/**")
                                 .hasAnyRole("SUPER_ADMIN", "ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/users/**")
+                                .hasRole("SUPER_ADMIN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(token -> new JwtAuthenticationToken(token,
