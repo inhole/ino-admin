@@ -47,6 +47,8 @@ class SecurityConfig {
                                 .hasAuthority("file:read")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/files/**")
                                 .hasAuthority("file:write")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/files/**")
+                                .hasAuthority("file:write")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(token -> new JwtAuthenticationToken(token,

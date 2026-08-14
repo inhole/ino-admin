@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.PageImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -72,5 +73,21 @@ class FileManagementServiceTest {
                 Instant.parse("2026-08-14T00:00:00Z"));
         when(repository.findById(file.id())).thenReturn(Optional.of(file));
         assertThatThrownBy(() -> service.download(ownerId, file.id())).isInstanceOf(FileNotFoundException.class);
+    }
+
+    @Test void listsOnlyOwnersFiles() {
+        var file = StoredFile.create(ownerId, "report.pdf", "key", "application/pdf", 4,
+                Instant.parse("2026-08-14T00:00:00Z"));
+        when(repository.findAllByOwnerId(org.mockito.ArgumentMatchers.eq(ownerId), any())).thenReturn(new PageImpl<>(java.util.List.of(file)));
+        assertThat(service.list(ownerId, 0, 20).content()).extracting("originalName").containsExactly("report.pdf");
+    }
+
+    @Test void deletesOwnedObjectAndMetadata() {
+        var file = StoredFile.create(ownerId, "report.pdf", "key", "application/pdf", 4,
+                Instant.parse("2026-08-14T00:00:00Z"));
+        when(repository.findById(file.id())).thenReturn(Optional.of(file));
+        service.delete(ownerId, file.id());
+        verify(storage).delete("key");
+        verify(repository).delete(file);
     }
 }
