@@ -11,6 +11,7 @@ java {
 tasks.withType<JavaCompile>().configureEach { options.release = 25 }
 
 dependencies {
+    implementation(project(":features:identity"))
     implementation(project(":modules:common-core"))
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -55,4 +56,5 @@ tasks.register<Test>("architectureTest") {
     classpath = sourceSets["test"].runtimeClasspath
     useJUnitPlatform { includeTags("architecture") }
     shouldRunAfter(tasks.test)
+    dependsOn(rootProject.tasks.named("verifyModuleDependencies"))
 }
