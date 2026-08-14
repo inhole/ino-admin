@@ -70,4 +70,22 @@ class User {
     String passwordHash() { return passwordHash; }
     String displayName() { return displayName; }
     UserStatus status() { return status; }
+    int failedLoginAttempts() { return failedLoginAttempts; }
+    Instant lockedAt() { return lockedAt; }
+
+    void recordFailedLogin(int maxFailedAttempts, Instant now) {
+        if (status != UserStatus.ACTIVE) return;
+        failedLoginAttempts++;
+        updatedAt = now;
+        if (failedLoginAttempts >= maxFailedAttempts) {
+            status = UserStatus.LOCKED;
+            lockedAt = now;
+        }
+    }
+
+    void recordSuccessfulLogin(Instant now) {
+        if (failedLoginAttempts == 0) return;
+        failedLoginAttempts = 0;
+        updatedAt = now;
+    }
 }
