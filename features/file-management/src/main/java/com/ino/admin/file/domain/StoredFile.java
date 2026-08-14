@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -17,6 +19,9 @@ public class StoredFile {
     @Column(name = "content_type", nullable = false, length = 100) private String contentType;
     @Column(nullable = false) private long size;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20) private FileStatus status;
+    @Column(name = "delete_requested_at") private Instant deleteRequestedAt;
 
     protected StoredFile() {}
 
@@ -24,6 +29,7 @@ public class StoredFile {
         var file = new StoredFile();
         file.id = UUID.randomUUID(); file.ownerId = ownerId; file.originalName = originalName;
         file.storageKey = storageKey; file.contentType = contentType; file.size = size; file.createdAt = now;
+        file.status = FileStatus.READY;
         return file;
     }
 
@@ -34,4 +40,8 @@ public class StoredFile {
     public String contentType() { return contentType; }
     public long size() { return size; }
     public Instant createdAt() { return createdAt; }
+    public FileStatus status() { return status; }
+    public Instant deleteRequestedAt() { return deleteRequestedAt; }
+    public boolean isReady() { return status == FileStatus.READY; }
+    public void markDeleting(Instant now) { status = FileStatus.DELETING; if (deleteRequestedAt == null) deleteRequestedAt = now; }
 }
