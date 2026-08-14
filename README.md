@@ -67,6 +67,8 @@ Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/v1/auth/logout -Co
 
 access token의 기본 만료 시간은 15분, refresh token은 30일입니다. refresh token은 갱신할 때마다 교체되며 이전 token이 재사용되면 같은 로그인 세션의 token이 모두 폐기됩니다. 서버에는 refresh token 원문 대신 SHA-256 hash만 저장됩니다. `/api/v1/auth/login`, `/refresh`, `/logout`, health와 OpenAPI 경로를 제외한 API는 유효한 bearer token이 필요합니다.
 
+비밀번호를 연속 5회 잘못 입력하면 계정은 `LOCKED` 상태가 되며 이후 올바른 비밀번호로도 로그인할 수 없습니다. 임계값은 `APP_LOGIN_MAX_FAILED_ATTEMPTS`로 설정할 수 있고 1 이상이어야 합니다. 성공적으로 로그인하면 누적 실패 횟수가 초기화됩니다. 잠긴 계정의 해제는 사용자 관리 기능에서 별도 권한으로 제공할 예정입니다.
+
 ## 검증
 
 ```powershell
