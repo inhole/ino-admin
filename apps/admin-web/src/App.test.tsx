@@ -107,7 +107,8 @@ test('super admin creates a viewer from the user directory', async () => {
     if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN', permissions: ['user:read', 'user:create', 'user:update', 'permission:read'] })
     if (url.endsWith('/menus/me')) return json([{ id: 'dashboard', label: '대시보드', route: '/', icon: 'layout-dashboard', order: 10, children: [] }, { id: 'users', label: '사용자', route: '/users', icon: 'users', order: 20, children: [] }, { id: 'permissions', label: '권한', route: '/permissions', icon: 'key-round', order: 30, children: [] }])
     if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
-    if (url.endsWith('/permissions')) return json([{ role: 'SUPER_ADMIN', permissions: ['permission:read', 'user:create', 'user:read', 'user:update'] }, { role: 'ADMIN', permissions: ['user:read'] }, { role: 'VIEWER', permissions: [] }])
+    if (url.endsWith('/permissions/available')) return json(['permission:read', 'permission:update', 'user:create', 'user:read', 'user:update'])
+    if (url.endsWith('/permissions')) return json([{ role: 'SUPER_ADMIN', permissions: ['permission:read', 'permission:update', 'user:create', 'user:read', 'user:update'] }, { role: 'ADMIN', permissions: ['user:read'] }, { role: 'VIEWER', permissions: [] }])
     if (url.endsWith('/users') && init?.method === 'POST') { created = true; return json({ id: 'user-2', email: 'viewer@example.com', displayName: '뷰어', status: 'ACTIVE', role: 'VIEWER', createdAt: '2026-08-14T00:00:00Z' }, 201) }
     if (url.endsWith('/users/user-2') && init?.method === 'PATCH') { displayName = '운영자'; role = 'ADMIN'; return json({ id: 'user-2', displayName, role }) }
     if (url.endsWith('/users/user-2/status') && init?.method === 'PATCH') { disabled = true; return json({ id: 'user-2', status: 'DISABLED' }) }
@@ -137,5 +138,5 @@ test('super admin creates a viewer from the user directory', async () => {
   expect(await screen.findByRole('button', { name: '활성화' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('link', { name: '권한' }))
   expect(await screen.findByRole('heading', { name: '권한 카탈로그' })).toBeInTheDocument()
-  expect(await screen.findByText('permission:read')).toBeInTheDocument()
+  expect((await screen.findAllByText('permission:read')).length).toBeGreaterThan(0)
 })

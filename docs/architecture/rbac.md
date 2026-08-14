@@ -13,4 +13,5 @@
 - UI에서 메뉴를 숨기는 것은 인가 수단이 아니며 서버가 최종 판정한다.
 - 역할 CRUD와 다중 역할·권한 catalog는 후속 vertical slice에서 별도 테이블로 확장한다.
 - 현재 권한 원본은 `roles`, `role_permissions` 테이블이며 `GET /api/v1/permissions`에서 역할별 매핑을 조회할 수 있다. 로그인과 refresh token 회전 시 최신 DB 권한이 access token에 반영된다.
+- SUPER_ADMIN 매핑은 변경할 수 없으며 ADMIN/VIEWER 권한 변경 시 해당 역할 사용자의 refresh token을 폐기한다. 기존 access token은 최대 잔여 수명 동안 유효하다.
 - 역할 변경 시 기존 token 무효화 또는 짧은 TTL 내 반영 정책을 역할 관리 slice에서 확정한다.

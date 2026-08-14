@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.time.Instant;
 
 @Entity
 @Table(name = "roles")
@@ -25,6 +26,8 @@ public class Role {
     @CollectionTable(name = "role_permissions", joinColumns = @JoinColumn(name = "role_key"))
     @Column(name = "permission_key")
     private Set<String> permissions = new LinkedHashSet<>();
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 
     protected Role() {}
 
@@ -32,4 +35,10 @@ public class Role {
     public String displayName() { return displayName; }
     public boolean systemRole() { return systemRole; }
     public Set<String> permissions() { return Set.copyOf(permissions); }
+
+    public void replacePermissions(Set<String> newPermissions, Instant now) {
+        permissions.clear();
+        permissions.addAll(newPermissions);
+        updatedAt = now;
+    }
 }
