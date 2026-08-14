@@ -30,8 +30,9 @@ class RefreshTokenServiceTest {
     private static final Instant NOW = Instant.parse("2026-08-14T00:00:00Z");
     private final RefreshTokenRepository repository = mock(RefreshTokenRepository.class);
     private final AccessTokenIssuer accessTokenIssuer = mock(AccessTokenIssuer.class);
+    private final RolePermissionService rolePermissionService = mock(RolePermissionService.class);
     private final RefreshTokenService service = new RefreshTokenService(
-            repository, accessTokenIssuer, Clock.fixed(NOW, ZoneOffset.UTC), Duration.ofDays(30));
+            repository, accessTokenIssuer, Clock.fixed(NOW, ZoneOffset.UTC), Duration.ofDays(30), rolePermissionService);
 
     @Test
     void storesOnlyHashWhenIssuingRefreshToken() throws Exception {

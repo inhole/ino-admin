@@ -1,6 +1,6 @@
 # Identity Feature
 
-사용자 인증, 로그인 잠금, 비밀번호 정책, refresh token 수명주기와 초기 관리자 생성을 담당한다.
+사용자 인증, 역할·권한 catalog, 로그인 잠금, 비밀번호 정책, refresh token 수명주기와 초기 관리자 생성을 담당한다.
 
 ## 디렉터리 구조
 

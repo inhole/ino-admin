@@ -12,5 +12,5 @@
 - access token 발급과 rotation 모두 DB의 현재 역할을 claim에 포함한다.
 - UI에서 메뉴를 숨기는 것은 인가 수단이 아니며 서버가 최종 판정한다.
 - 역할 CRUD와 다중 역할·권한 catalog는 후속 vertical slice에서 별도 테이블로 확장한다.
-- 현재 권한 원본은 `RolePermissions`이며 `GET /api/v1/permissions`에서 역할별 매핑을 조회할 수 있다. DB 기반 역할 편집은 후속 slice에서 migration과 함께 확장한다.
+- 현재 권한 원본은 `roles`, `role_permissions` 테이블이며 `GET /api/v1/permissions`에서 역할별 매핑을 조회할 수 있다. 로그인과 refresh token 회전 시 최신 DB 권한이 access token에 반영된다.
 - 역할 변경 시 기존 token 무효화 또는 짧은 TTL 내 반영 정책을 역할 관리 slice에서 확정한다.

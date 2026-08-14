@@ -5,7 +5,6 @@ import com.ino.admin.identity.api.LoginUseCase;
 import com.ino.admin.identity.application.port.AccessTokenIssuer;
 import com.ino.admin.identity.config.LoginSecurityProperties;
 import com.ino.admin.identity.domain.UserStatus;
-import com.ino.admin.identity.domain.RolePermissions;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 
 import java.time.Clock;
@@ -24,16 +23,19 @@ public class LoginService implements LoginUseCase {
     private final RefreshTokenService refreshTokenService;
     private final LoginSecurityProperties securityProperties;
     private final Clock clock;
+    private final RolePermissionService rolePermissionService;
     private final String dummyPasswordHash;
 
     public LoginService(UserRepository userRepository, PasswordEncoder passwordEncoder, AccessTokenIssuer accessTokenIssuer,
-            RefreshTokenService refreshTokenService, LoginSecurityProperties securityProperties, Clock clock) {
+            RefreshTokenService refreshTokenService, LoginSecurityProperties securityProperties, Clock clock,
+            RolePermissionService rolePermissionService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.accessTokenIssuer = accessTokenIssuer;
         this.refreshTokenService = refreshTokenService;
         this.securityProperties = securityProperties;
         this.clock = clock;
+        this.rolePermissionService = rolePermissionService;
         this.dummyPasswordHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
@@ -51,7 +53,8 @@ public class LoginService implements LoginUseCase {
             throw new AuthenticationFailedException();
         }
         user.recordSuccessfulLogin(Instant.now(clock));
-        var token = accessTokenIssuer.issue(user.id(), user.role().name());
+        var token = accessTokenIssuer.issue(user.id(), user.role().name(),
+                rolePermissionService.findPermissions(user.role().name()));
         var refreshToken = refreshTokenService.issue(user);
         return new LoginResult(token.value(), token.expiresInSeconds(), refreshToken.rawToken());
     }
@@ -63,7 +66,7 @@ public class LoginService implements LoginUseCase {
                 .filter(found -> found.status() == UserStatus.ACTIVE)
                 .orElseThrow(AuthenticationFailedException::new);
         return new CurrentUser(user.id(), user.email(), user.displayName(), user.status().name(), user.role().name(),
-                RolePermissions.forRole(user.role()).stream().map(permission -> permission.key()).sorted().toList());
+                rolePermissionService.findPermissions(user.role().name()));
     }
 
 }

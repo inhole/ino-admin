@@ -1,8 +1,7 @@
 package com.ino.admin.auth;
 
 import com.ino.admin.identity.application.port.AccessTokenIssuer;
-import com.ino.admin.identity.domain.RolePermissions;
-import com.ino.admin.identity.domain.UserRole;
+import java.util.List;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
@@ -26,7 +25,7 @@ class JwtAccessTokenIssuer implements AccessTokenIssuer {
     }
 
     @Override
-    public IssuedAccessToken issue(UUID userId, String role) {
+    public IssuedAccessToken issue(UUID userId, String role, List<String> permissions) {
         var issuedAt = Instant.now(clock);
         var expiresAt = issuedAt.plus(properties.getAccessTokenTtl());
         var claims = JwtClaimsSet.builder()
@@ -34,8 +33,7 @@ class JwtAccessTokenIssuer implements AccessTokenIssuer {
                 .audience(java.util.List.of(properties.getAudience()))
                 .subject(userId.toString())
                 .claim("role", role)
-                .claim("permissions", RolePermissions.forRole(UserRole.valueOf(role)).stream()
-                        .map(permission -> permission.key()).sorted().toList())
+                .claim("permissions", permissions)
                 .id(UUID.randomUUID().toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
