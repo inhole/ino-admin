@@ -1,0 +1,57 @@
+name: PR Policy
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch and pull request metadata
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const head = pr.head.ref;
+            const base = pr.base.ref;
+            const title = pr.title;
+            const labels = new Set(pr.labels.map(label => label.name));
+
+            const typedBranch = /^(feat|fix|docs|test|refactor|perf|style|build|ci|chore|revert)\/[a-z0-9][a-z0-9-]*$/;
+            const codexBranch = /^codex\/[a-z0-9][a-z0-9-]*$/;
+            const dependencyBranch = /^dependabot\/.+$/;
+            const titlePattern = /^(feat|fix|docs|test|refactor|perf|style|build|ci|chore|revert): .+$/;
+            const validHead = typedBranch.test(head) || codexBranch.test(head) || dependencyBranch.test(head);
+
+            const errors = [];
+            if (!validHead) {
+              errors.push(`브랜치 '${head}'는 <type>/<slug>, codex/<slug>, dependabot/* 형식이어야 합니다.`);
+            }
+            if (head.length > 80) {
+              errors.push(`브랜치 이름은 80자 이하여야 합니다. 현재 ${head.length}자입니다.`);
+            }
+            if (!titlePattern.test(title)) {
+              errors.push(`PR 제목 '${title}'은 'type: 변경사항' 형식이어야 합니다.`);
+            }
+
+            if (base !== 'main') {
+              if (!labels.has('stacked')) {
+                errors.push(`main이 아닌 '${base}' 대상 PR에는 stacked 라벨이 필요합니다.`);
+              }
+              const validStackBase = typedBranch.test(base) || codexBranch.test(base);
+              if (!validStackBase) {
+                errors.push(`Stacked PR의 base '${base}'도 허용된 작업 브랜치 형식이어야 합니다.`);
+              }
+            }
+
+            if (errors.length > 0) {
+              core.setFailed(errors.join('\n'));
+            } else {
+              core.notice(`PR 정책 확인 완료: ${head} -> ${base}`);
+            }
