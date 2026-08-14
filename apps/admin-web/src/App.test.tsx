@@ -1,10 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { App } from '@/app/App'
-import { AuthProvider } from '@/features/auth/model/AuthContext'
-import { ThemeProvider } from '@/features/settings/theme'
+import { AppProviders } from '@/app/providers/AppProviders'
 
 beforeEach(() => sessionStorage.clear())
 afterEach(() => {
@@ -18,7 +17,7 @@ function json(data: unknown, status = 200) {
 
 function renderApp(path = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(<ThemeProvider><QueryClientProvider client={client}><MemoryRouter initialEntries={[path]}><AuthProvider><App /></AuthProvider></MemoryRouter></QueryClientProvider></ThemeProvider>)
+  render(<AppProviders queryClient={client}><MemoryRouter initialEntries={[path]}><App /></MemoryRouter></AppProviders>)
 }
 
 test('redirects unauthenticated users to login', async () => {

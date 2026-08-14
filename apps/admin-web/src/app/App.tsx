@@ -7,7 +7,6 @@ import { UsersPage } from '@/features/users/UsersPage'
 import { PermissionsPage } from '@/features/permissions/PermissionsPage'
 import { MenuManagementPage } from '@/features/menus/MenuManagementPage'
 import { FileManagementPage } from '@/features/files/FileManagementPage'
-import '@/styles.css'
 
 export function App() {
   return (
