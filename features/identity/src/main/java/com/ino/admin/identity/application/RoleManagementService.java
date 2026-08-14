@@ -3,7 +3,6 @@ package com.ino.admin.identity.application;
 import com.ino.admin.core.BusinessException;
 import com.ino.admin.identity.api.RoleManagementUseCase;
 import com.ino.admin.identity.domain.Permission;
-import com.ino.admin.identity.domain.UserRole;
 import com.ino.admin.identity.infrastructure.persistence.RoleRepository;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 import java.time.Clock;
@@ -42,7 +41,7 @@ public class RoleManagementService implements RoleManagementUseCase {
         if (!allowed.containsAll(requested))
             throw new BusinessException("INVALID_PERMISSION", "등록되지 않은 권한이 포함되어 있습니다.");
         role.replacePermissions(requested, Instant.now(clock));
-        userRepository.findAllByRole(UserRole.valueOf(roleKey))
+        userRepository.findAllByRole(roleKey)
                 .forEach(user -> refreshTokenService.revokeAllForUser(user.id()));
         return new UpdatedRole(role.key(), role.permissions().stream().sorted().toList());
     }

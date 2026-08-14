@@ -24,7 +24,7 @@ public class UserDirectoryService implements UserDirectoryUseCase {
         var users = userRepository.search(query == null ? "" : query.strip(), pageable);
         var content = users.getContent().stream()
                 .map(user -> new UserSummary(user.id(), user.email(), user.displayName(),
-                        user.status().name(), user.role().name(), user.createdAt()))
+                        user.status().name(), user.role(), user.createdAt()))
                 .toList();
         return new UserPage(content, users.getNumber(), users.getSize(), users.getTotalElements(), users.getTotalPages());
     }
@@ -35,6 +35,6 @@ public class UserDirectoryService implements UserDirectoryUseCase {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "사용자를 찾을 수 없습니다."));
         return new UserSummary(user.id(), user.email(), user.displayName(), user.status().name(),
-                user.role().name(), user.createdAt());
+                user.role(), user.createdAt());
     }
 }

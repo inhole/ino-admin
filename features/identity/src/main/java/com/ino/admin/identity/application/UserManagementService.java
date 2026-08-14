@@ -7,6 +7,7 @@ import com.ino.admin.identity.domain.User;
 import com.ino.admin.identity.domain.UserRole;
 import com.ino.admin.identity.domain.UserStatus;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;
+import com.ino.admin.identity.infrastructure.persistence.RoleRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Locale;
@@ -20,13 +21,15 @@ public class UserManagementService implements UserManagementUseCase {
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
     private final RefreshTokenService refreshTokenService;
+    private final RoleRepository roleRepository;
 
     public UserManagementService(UserRepository userRepository, PasswordEncoder passwordEncoder, Clock clock,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.clock = clock;
         this.refreshTokenService = refreshTokenService;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -54,7 +57,7 @@ public class UserManagementService implements UserManagementUseCase {
         var role = parseAssignableRole(command.role());
         user.updateProfile(command.displayName(), role, Instant.now(clock));
         refreshTokenService.revokeAllForUser(user.id());
-        return new UpdatedProfile(user.id(), user.displayName(), user.role().name());
+        return new UpdatedProfile(user.id(), user.displayName(), user.role());
     }
 
     private UserStatus parseStatus(String status) {
@@ -82,16 +85,13 @@ public class UserManagementService implements UserManagementUseCase {
         var user = User.create(email, passwordEncoder.encode(command.password()), command.displayName(), role,
                 Instant.now(clock));
         userRepository.save(user);
-        return new CreatedUser(user.id(), user.email(), user.displayName(), user.status().name(), user.role().name());
+        return new CreatedUser(user.id(), user.email(), user.displayName(), user.status().name(), user.role());
     }
 
-    private UserRole parseAssignableRole(String role) {
-        try {
-            var parsed = UserRole.valueOf(role);
-            if (parsed == UserRole.SUPER_ADMIN) throw new IllegalArgumentException();
-            return parsed;
-        } catch (IllegalArgumentException exception) {
-            throw new BusinessException("INVALID_USER_ROLE", "생성 가능한 역할은 ADMIN 또는 VIEWER입니다.");
-        }
+    private String parseAssignableRole(String role) {
+        var normalized = role == null ? "" : role.strip();
+        if (normalized.equals(UserRole.SUPER_ADMIN.name()) || !roleRepository.existsById(normalized))
+            throw new BusinessException("INVALID_USER_ROLE", "할당 가능한 역할을 선택해야 합니다.");
+        return normalized;
     }
 }

@@ -2,7 +2,6 @@ package com.ino.admin.identity;
 
 import com.ino.admin.identity.bootstrap.AdminBootstrapService;
 import com.ino.admin.identity.domain.UserStatus;
-import com.ino.admin.identity.domain.UserRole;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +42,7 @@ class UserPersistenceIntegrationTest {
         assertThat(result).isEqualTo(AdminBootstrapService.Result.CREATED);
         assertThat(saved).isPresent();
         assertThat(saved.orElseThrow().status()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(saved.orElseThrow().role()).isEqualTo(UserRole.SUPER_ADMIN);
+        assertThat(saved.orElseThrow().role()).isEqualTo("SUPER_ADMIN");
         assertThat(saved.orElseThrow().passwordHash()).isNotEqualTo(password);
         assertThat(passwordEncoder.matches(password, saved.orElseThrow().passwordHash())).isTrue();
         assertThat(bootstrapService.bootstrap("integration@example.com", password, "통합 테스트 관리자"))

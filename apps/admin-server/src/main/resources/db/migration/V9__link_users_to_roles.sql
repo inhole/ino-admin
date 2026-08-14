@@ -1,0 +1,2 @@
+ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(50);
+ALTER TABLE users ADD CONSTRAINT fk_users_role FOREIGN KEY (role) REFERENCES roles(role_key);
