@@ -9,7 +9,8 @@ src/
 │  ├─ auth/
 │  │  ├─ model/         # 인증 상태, context, hook
 │  │  └─ ui/            # 로그인과 보호 route
-│  └─ dashboard/        # 대시보드 화면
+│  ├─ dashboard/        # 대시보드 화면
+│  └─ users/            # 사용자 관리 화면
 ├─ components/ui/       # shadcn/ui 기반 공통 표현 컴포넌트
 ├─ api/                 # 서버 API 계약과 transport
 ├─ lib/                 # 업무 규칙이 없는 작은 기반 유틸리티
