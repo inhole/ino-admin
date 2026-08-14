@@ -29,6 +29,8 @@ npm install
 npm run dev
 ```
 
+웹의 `/login`에서 초기 관리자 계정으로 로그인할 수 있습니다. 인증 token은 현재 브라우저 탭의 `sessionStorage`에만 유지되며 새로고침 시 refresh token rotation으로 인증 상태를 복구합니다. 탭을 닫거나 로그아웃하면 다시 로그인해야 합니다.
+
 - 웹: http://localhost:5173
 - backend health: http://localhost:8080/actuator/health
 - OpenAPI UI: http://localhost:8080/swagger-ui.html
@@ -67,6 +69,8 @@ Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/v1/auth/logout -Co
 
 access token의 기본 만료 시간은 15분, refresh token은 30일입니다. refresh token은 갱신할 때마다 교체되며 이전 token이 재사용되면 같은 로그인 세션의 token이 모두 폐기됩니다. 서버에는 refresh token 원문 대신 SHA-256 hash만 저장됩니다. `/api/v1/auth/login`, `/refresh`, `/logout`, health와 OpenAPI 경로를 제외한 API는 유효한 bearer token이 필요합니다.
 
+비밀번호를 연속 5회 잘못 입력하면 계정은 `LOCKED` 상태가 되며 이후 올바른 비밀번호로도 로그인할 수 없습니다. 임계값은 `APP_LOGIN_MAX_FAILED_ATTEMPTS`로 설정할 수 있고 1 이상이어야 합니다. 성공적으로 로그인하면 누적 실패 횟수가 초기화됩니다. 잠긴 계정의 해제는 사용자 관리 기능에서 별도 권한으로 제공할 예정입니다.
+
 ## 검증
 
 ```powershell
@@ -82,3 +86,5 @@ docker compose -f ../../infra/compose.yaml config
 프로젝트 방향과 단계별 완료 기준은 [.docs/PROJECT_PLAN.md](.docs/PROJECT_PLAN.md), 저장소 작업 규칙은 [AGENTS.md](AGENTS.md)를 참고하십시오.
 
 커밋 메시지는 `type: 한글 변경사항` 형식을 사용합니다. 세부 규칙과 type 목록은 [Git 커밋 메시지 규칙](docs/development/commit-convention.md)을 참고하십시오.
+
+브랜치는 `main` 기반의 GitHub Flow로 운영하며 이름과 PR 대상은 CI가 자동 검증합니다. 생성·리뷰·stacked PR·merge 절차는 [Git 브랜치 전략](docs/development/branch-strategy.md)을 참고하십시오.

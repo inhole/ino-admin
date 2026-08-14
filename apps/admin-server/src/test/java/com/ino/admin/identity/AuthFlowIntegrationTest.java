@@ -1,5 +1,6 @@
 package com.ino.admin.identity;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -34,6 +35,7 @@ class AuthFlowIntegrationTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired AdminBootstrapService bootstrapService;
+    @Autowired UserRepository userRepository;
     @Autowired JwtEncoder jwtEncoder;
 
     @Test
@@ -101,6 +103,33 @@ class AuthFlowIntegrationTest {
 
         assertInvalidCredentials("unknown@example.com", PASSWORD);
         assertInvalidCredentials(EMAIL, "Wrong-Password-2026!");
+    }
+
+    @Test
+    void locksAccountAfterFiveFailedLoginsAndKeepsGenericError() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            assertInvalidCredentials(EMAIL, "Wrong-Password-2026!");
+        }
+
+        var locked = userRepository.findByEmail(EMAIL).orElseThrow();
+        assertThat(locked.status()).isEqualTo(UserStatus.LOCKED);
+        assertThat(locked.failedLoginAttempts()).isEqualTo(5);
+        assertThat(locked.lockedAt()).isNotNull();
+        assertInvalidCredentials(EMAIL, PASSWORD);
+    }
+
+    @Test
+    void successfulLoginResetsPreviousFailedAttempts() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        assertInvalidCredentials(EMAIL, "Wrong-Password-2026!");
+
+        loginAndGetRefreshToken();
+
+        var user = userRepository.findByEmail(EMAIL).orElseThrow();
+        assertThat(user.status()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(user.failedLoginAttempts()).isZero();
     }
 
     @Test

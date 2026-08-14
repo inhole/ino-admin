@@ -1,5 +1,7 @@
 package com.ino.admin.identity;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,26 +14,34 @@ public class LoginService {
     private final PasswordEncoder passwordEncoder;
     private final AccessTokenIssuer accessTokenIssuer;
     private final RefreshTokenService refreshTokenService;
+    private final LoginSecurityProperties securityProperties;
+    private final Clock clock;
     private final String dummyPasswordHash;
 
     LoginService(UserRepository userRepository, PasswordEncoder passwordEncoder, AccessTokenIssuer accessTokenIssuer,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService, LoginSecurityProperties securityProperties, Clock clock) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.accessTokenIssuer = accessTokenIssuer;
         this.refreshTokenService = refreshTokenService;
+        this.securityProperties = securityProperties;
+        this.clock = clock;
         this.dummyPasswordHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = AuthenticationFailedException.class)
     public LoginResult login(String email, String password) {
         var normalizedEmail = email.strip().toLowerCase(Locale.ROOT);
-        var user = userRepository.findByEmail(normalizedEmail).orElse(null);
+        var user = userRepository.findByEmailForUpdate(normalizedEmail).orElse(null);
         var passwordHash = user == null ? dummyPasswordHash : user.passwordHash();
         var passwordMatches = passwordEncoder.matches(password, passwordHash);
         if (user == null || !passwordMatches || user.status() != UserStatus.ACTIVE) {
+            if (user != null && !passwordMatches && user.status() == UserStatus.ACTIVE) {
+                user.recordFailedLogin(securityProperties.getMaxFailedAttempts(), Instant.now(clock));
+            }
             throw new AuthenticationFailedException();
         }
+        user.recordSuccessfulLogin(Instant.now(clock));
         var token = accessTokenIssuer.issue(user.id());
         var refreshToken = refreshTokenService.issue(user);
         return new LoginResult(token.value(), token.expiresInSeconds(), refreshToken.rawToken());
