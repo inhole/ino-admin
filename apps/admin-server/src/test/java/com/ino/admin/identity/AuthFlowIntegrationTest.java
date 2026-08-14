@@ -99,8 +99,7 @@ class AuthFlowIntegrationTest {
 
         mockMvc.perform(get("/api/v1/permissions").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].role").value("SUPER_ADMIN"))
-                .andExpect(jsonPath("$[0].permissions").isArray());
+                .andExpect(jsonPath("$[?(@.role == 'SUPER_ADMIN')].permissions").isNotEmpty());
 
         var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
         mockMvc.perform(get("/api/v1/permissions").header("Authorization", "Bearer " + viewerToken))
@@ -381,9 +380,10 @@ class AuthFlowIntegrationTest {
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .claim("role", role)
-                .claim("permissions", com.ino.admin.identity.domain.RolePermissions.forRole(
-                        com.ino.admin.identity.domain.UserRole.valueOf(role)).stream()
-                        .map(permission -> permission.key()).toList())
+                .claim("permissions", role.equals("SUPER_ADMIN")
+                        ? java.util.Arrays.stream(com.ino.admin.identity.domain.Permission.values())
+                                .map(permission -> permission.key()).toList()
+                        : role.equals("ADMIN") ? List.of("user:read") : List.of())
                 .build();
         return jwtEncoder.encode(JwtEncoderParameters.from(
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();

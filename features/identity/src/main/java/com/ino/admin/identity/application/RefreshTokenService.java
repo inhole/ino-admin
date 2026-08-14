@@ -28,14 +28,16 @@ public class RefreshTokenService implements RefreshTokenUseCase {
     private final AccessTokenIssuer accessTokenIssuer;
     private final Clock clock;
     private final Duration ttl;
+    private final RolePermissionService rolePermissionService;
 
     public RefreshTokenService(RefreshTokenRepository repository, AccessTokenIssuer accessTokenIssuer, Clock clock,
-            @Value("${app.jwt.refresh-token-ttl:30d}") Duration ttl) {
+            @Value("${app.jwt.refresh-token-ttl:30d}") Duration ttl, RolePermissionService rolePermissionService) {
         if (ttl.isZero() || ttl.isNegative()) throw new IllegalStateException("Refresh token TTL은 0보다 커야 합니다.");
         this.repository = repository;
         this.accessTokenIssuer = accessTokenIssuer;
         this.clock = clock;
         this.ttl = ttl;
+        this.rolePermissionService = rolePermissionService;
     }
 
     @Transactional
@@ -59,7 +61,8 @@ public class RefreshTokenService implements RefreshTokenUseCase {
         var replacement = newToken(current.user(), current.familyId(), now);
         repository.save(replacement.entity());
         current.replaceWith(replacement.entity().id(), now);
-        var access = accessTokenIssuer.issue(current.user().id(), current.user().role().name());
+        var access = accessTokenIssuer.issue(current.user().id(), current.user().role().name(),
+                rolePermissionService.findPermissions(current.user().role().name()));
         return new RefreshResult(access.value(), access.expiresInSeconds(), replacement.rawToken());
     }
 
