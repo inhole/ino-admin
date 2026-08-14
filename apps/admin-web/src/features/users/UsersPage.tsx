@@ -200,7 +200,7 @@ export function UsersPage() {
               </Field>
               <Field>
                 <FieldLabel>{t("role")}</FieldLabel>
-                <Select defaultValue="VIEWER" name="role">
+                <Select defaultValue="VIEWER" items={roleOptions} name="role">
                   <SelectTrigger aria-label={t("role")} className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -297,7 +297,7 @@ export function UsersPage() {
                 required
               /></Field>
               <Field><FieldLabel>{t("editRole")}</FieldLabel>
-              <Select defaultValue={editing.role} name="role">
+              <Select defaultValue={editing.role} items={roleOptions} name="role">
                 <SelectTrigger aria-label={t("editRole")} className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectGroup>{roleOptions.map((role) => <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>)}</SelectGroup></SelectContent>
               </Select></Field>

@@ -10,6 +10,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -28,6 +29,7 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
+import { PageHeader, StatusPanel } from "@/components/layout/Page";
 
 export function PermissionsPage() {
   const catalog = useQuery({
@@ -64,12 +66,11 @@ export function PermissionsPage() {
   });
   return (
     <>
-      <header className="mb-8">
-        <p className="text-xs font-semibold tracking-[0.2em] text-primary">
-          IDENTITY
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight">권한 카탈로그</h1>
-      </header>
+      <PageHeader
+        description="역할별 서버 접근 권한을 관리합니다."
+        eyebrow="IDENTITY"
+        title="권한 카탈로그"
+      />
       {user?.permissions.includes("permission:update") && (
         <Card className="mb-6">
           <CardHeader>
@@ -122,7 +123,11 @@ export function PermissionsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {catalog.isPending && <p role="status">권한을 불러오는 중…</p>}
+          {catalog.isPending && (
+            <StatusPanel>
+              <span role="status">권한을 불러오는 중…</span>
+            </StatusPanel>
+          )}
           {catalog.isError && (
             <Alert variant="destructive" role="alert">
               <AlertTitle>조회 오류</AlertTitle>
@@ -136,23 +141,19 @@ export function PermissionsPage() {
           {catalog.data && (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {catalog.data.map((item) => (
-                <section
-                  className="rounded-xl border bg-card p-4 shadow-sm"
-                  key={item.role}
-                >
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="font-semibold">
-                        {item.displayName || item.role}
-                      </h2>
+                <Card key={item.role} size="sm">
+                  <CardHeader>
+                    <CardTitle>{item.displayName || item.role}</CardTitle>
+                    <CardDescription>
                       <Badge
-                        className="mt-1 font-mono"
+                        className="font-mono"
                         variant={item.enabled ? "secondary" : "outline"}
                       >
                         {item.role}
                       </Badge>
-                    </div>
+                    </CardDescription>
                     {!item.systemRole && (
+                      <CardAction>
                       <Button
                         onClick={() =>
                           status.mutate({
@@ -165,8 +166,10 @@ export function PermissionsPage() {
                       >
                         {item.enabled ? "비활성화" : "활성화"}
                       </Button>
+                      </CardAction>
                     )}
-                  </div>
+                  </CardHeader>
+                  <CardContent>
                   <FieldSet>
                     <FieldLegend className="sr-only">{item.displayName || item.role} 권한</FieldLegend>
                     <FieldGroup className="gap-1">
@@ -219,7 +222,8 @@ export function PermissionsPage() {
                       </AlertDescription>
                     </Alert>
                   )}
-                </section>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}

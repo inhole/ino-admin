@@ -12,6 +12,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
 
 export function DashboardPage() {
   const { t } = useTranslation("dashboard");
@@ -62,20 +70,21 @@ export function DashboardPage() {
             <StatusPanel>{common("empty")}</StatusPanel>
           )}
           {samples.data && samples.data.content.length > 0 && (
-            <ul className="divide-y">
+            <ItemGroup>
               {samples.data.content.map((sample) => (
-                <li
-                  className="flex items-center justify-between gap-4 py-4"
-                  key={sample.id}
-                >
-                  <span className="font-medium">{sample.name}</span>
-                  <strong className="status-success flex items-center gap-2 text-sm">
-                    <CheckCircle2 size={17} />
+                <Item key={sample.id} variant="outline">
+                  <ItemContent>
+                    <ItemTitle>{sample.name}</ItemTitle>
+                  </ItemContent>
+                  <ItemActions>
+                  <Badge variant="secondary">
+                    <CheckCircle2 aria-hidden="true" />
                     {common("statusNormal")}
-                  </strong>
-                </li>
+                  </Badge>
+                  </ItemActions>
+                </Item>
               ))}
-            </ul>
+            </ItemGroup>
           )}
         </CardContent>
       </Card>

@@ -21,6 +21,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { FieldGroup } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
 
 export function MenuManagementPage() {
   const { t } = useTranslation("menus");
@@ -148,22 +156,18 @@ export function MenuManagementPage() {
           )}
           {menus.data?.length === 0 && <StatusPanel>{t("empty")}</StatusPanel>}
           {menus.data && (
-            <div className="grid gap-3">
+            <ItemGroup>
               {menus.data.map((menu) => (
-                <article
-                  className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
-                  key={menu.id}
-                >
-                  <div className="min-w-0">
-                    <p className="font-semibold">{menu.label}</p>
-                    <p className="mt-1 break-all text-sm text-muted-foreground">
-                      {menu.route}
-                    </p>
-                    <p className="mt-1 break-all text-xs text-muted-foreground">
+                <Item key={menu.id} variant="outline">
+                  <ItemContent>
+                    <ItemTitle>{menu.label}</ItemTitle>
+                    <ItemDescription className="break-all">
+                      {menu.route}<br />
                       {menu.requiredPermission ?? t("public")} ·{" "}
                       {common("order", { value: menu.order })}
-                    </p>
-                  </div>
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
                   <Button
                     className="min-h-11 sm:min-w-24"
                     disabled={toggle.isPending}
@@ -172,9 +176,10 @@ export function MenuManagementPage() {
                   >
                     {menu.enabled ? common("disable") : common("enable")}
                   </Button>
-                </article>
+                  </ItemActions>
+                </Item>
               ))}
-            </div>
+            </ItemGroup>
           )}
         </CardContent>
       </Card>

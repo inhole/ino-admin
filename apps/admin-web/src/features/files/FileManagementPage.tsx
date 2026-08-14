@@ -33,6 +33,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  Field,
+  FieldDescription,
+  FieldLabel,
+} from "@/components/ui/field";
+import {
   Item,
   ItemActions,
   ItemContent,
@@ -112,9 +117,12 @@ export function FileManagementPage() {
           <CardDescription>{t("uploadDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/25 p-5 text-center hover:bg-muted/50">
-            <FileUp className="text-primary" />
-            <span className="text-sm font-semibold">{t("input")}</span>
+          <Field>
+          <FieldLabel
+            className="flex min-h-32 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/25 p-5 text-center hover:bg-muted/50"
+          >
+            <FileUp aria-hidden="true" />
+            {t("input")}
             <Input
               aria-label={t("input")}
               accept=".pdf,.png,.jpg,.jpeg,.txt"
@@ -123,12 +131,13 @@ export function FileManagementPage() {
               onChange={select}
               type="file"
             />
-          </label>
+          </FieldLabel>
           {selected && (
-            <p className="mt-3 break-all text-sm text-muted-foreground">
+            <FieldDescription className="break-all">
               {t("selected", { name: selected })}
-            </p>
+            </FieldDescription>
           )}
+          </Field>
           {upload.isPending && (
             <div
               className="mt-4 grid gap-2"
