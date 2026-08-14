@@ -9,6 +9,7 @@ apps/admin-server ---------------------> modules/common-core
 
 - `admin-server`는 HTTP API, 보안 filter/JWT 구현, 실행 설정과 migration을 조립한다.
 - `identity`는 인증 도메인, 유스케이스, JPA entity/repository를 소유한다.
+- `admin-server`는 identity의 `api` 및 `application.port`만 참조한다.
 - `common-core`는 앱 또는 feature를 참조하지 않는다.
 - feature 간 직접 의존과 역방향 의존은 허용하지 않는다.
 

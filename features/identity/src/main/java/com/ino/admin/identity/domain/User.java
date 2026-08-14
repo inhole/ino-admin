@@ -1,4 +1,4 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users")
-class User {
+public class User {
     @Id
     private UUID id;
 
@@ -51,7 +51,7 @@ class User {
 
     protected User() {}
 
-    static User createInitialAdmin(String email, String passwordHash, String displayName, Instant now) {
+    public static User createInitialAdmin(String email, String passwordHash, String displayName, Instant now) {
         var user = new User();
         user.id = UUID.randomUUID();
         user.email = email.strip().toLowerCase(Locale.ROOT);
@@ -65,15 +65,15 @@ class User {
         return user;
     }
 
-    UUID id() { return id; }
-    String email() { return email; }
-    String passwordHash() { return passwordHash; }
-    String displayName() { return displayName; }
-    UserStatus status() { return status; }
-    int failedLoginAttempts() { return failedLoginAttempts; }
-    Instant lockedAt() { return lockedAt; }
+    public UUID id() { return id; }
+    public String email() { return email; }
+    public String passwordHash() { return passwordHash; }
+    public String displayName() { return displayName; }
+    public UserStatus status() { return status; }
+    public int failedLoginAttempts() { return failedLoginAttempts; }
+    public Instant lockedAt() { return lockedAt; }
 
-    void recordFailedLogin(int maxFailedAttempts, Instant now) {
+    public void recordFailedLogin(int maxFailedAttempts, Instant now) {
         if (status != UserStatus.ACTIVE) return;
         failedLoginAttempts++;
         updatedAt = now;
@@ -83,13 +83,13 @@ class User {
         }
     }
 
-    void recordSuccessfulLogin(Instant now) {
+    public void recordSuccessfulLogin(Instant now) {
         if (failedLoginAttempts == 0) return;
         failedLoginAttempts = 0;
         updatedAt = now;
     }
 
-    void changePassword(String newPasswordHash, Instant now) {
+    public void changePassword(String newPasswordHash, Instant now) {
         passwordHash = newPasswordHash;
         passwordChangedAt = now;
         updatedAt = now;

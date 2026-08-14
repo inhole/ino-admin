@@ -1,4 +1,8 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.bootstrap;
+
+import com.ino.admin.identity.domain.User;
+import com.ino.admin.identity.domain.UserStatus;
+import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

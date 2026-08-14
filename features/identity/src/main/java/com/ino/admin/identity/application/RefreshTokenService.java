@@ -1,4 +1,12 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.application;
+
+import com.ino.admin.identity.api.InvalidRefreshTokenException;
+import com.ino.admin.identity.api.RefreshTokenUseCase;
+import com.ino.admin.identity.application.port.AccessTokenIssuer;
+import com.ino.admin.identity.domain.RefreshToken;
+import com.ino.admin.identity.domain.User;
+import com.ino.admin.identity.domain.UserStatus;
+import com.ino.admin.identity.infrastructure.persistence.RefreshTokenRepository;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -14,14 +22,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class RefreshTokenService {
+public class RefreshTokenService implements RefreshTokenUseCase {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private final RefreshTokenRepository repository;
     private final AccessTokenIssuer accessTokenIssuer;
     private final Clock clock;
     private final Duration ttl;
 
-    RefreshTokenService(RefreshTokenRepository repository, AccessTokenIssuer accessTokenIssuer, Clock clock,
+    public RefreshTokenService(RefreshTokenRepository repository, AccessTokenIssuer accessTokenIssuer, Clock clock,
             @Value("${app.jwt.refresh-token-ttl:30d}") Duration ttl) {
         if (ttl.isZero() || ttl.isNegative()) throw new IllegalStateException("Refresh token TTL은 0보다 커야 합니다.");
         this.repository = repository;
@@ -36,6 +44,7 @@ public class RefreshTokenService {
     }
 
     @Transactional(noRollbackFor = InvalidRefreshTokenException.class)
+    @Override
     public RefreshResult rotate(String rawToken) {
         var now = Instant.now(clock);
         var current = repository.findByTokenHash(hash(rawToken)).orElseThrow(InvalidRefreshTokenException::new);
@@ -55,6 +64,7 @@ public class RefreshTokenService {
     }
 
     @Transactional
+    @Override
     public void logout(String rawToken) {
         repository.findByTokenHash(hash(rawToken)).ifPresent(token -> revokeFamily(token.familyId(), Instant.now(clock)));
     }
@@ -93,5 +103,4 @@ public class RefreshTokenService {
     }
 
     record IssuedRefreshToken(String rawToken, RefreshToken entity) {}
-    public record RefreshResult(String accessToken, long expiresInSeconds, String refreshToken) {}
 }

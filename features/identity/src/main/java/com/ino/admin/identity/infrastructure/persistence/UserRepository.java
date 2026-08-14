@@ -1,4 +1,6 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.infrastructure.persistence;
+
+import com.ino.admin.identity.domain.User;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -8,7 +10,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
     Optional<User> findByEmail(String email);
 

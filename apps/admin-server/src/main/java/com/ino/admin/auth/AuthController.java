@@ -1,8 +1,8 @@
 package com.ino.admin.auth;
 
-import com.ino.admin.identity.LoginService;
-import com.ino.admin.identity.PasswordChangeService;
-import com.ino.admin.identity.RefreshTokenService;
+import com.ino.admin.identity.api.LoginUseCase;
+import com.ino.admin.identity.api.PasswordChangeUseCase;
+import com.ino.admin.identity.api.RefreshTokenUseCase;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
-    private final LoginService loginService;
-    private final RefreshTokenService refreshTokenService;
-    private final PasswordChangeService passwordChangeService;
+    private final LoginUseCase loginService;
+    private final RefreshTokenUseCase refreshTokenService;
+    private final PasswordChangeUseCase passwordChangeService;
 
-    public AuthController(LoginService loginService, RefreshTokenService refreshTokenService,
-            PasswordChangeService passwordChangeService) {
+    public AuthController(LoginUseCase loginService, RefreshTokenUseCase refreshTokenService,
+            PasswordChangeUseCase passwordChangeService) {
         this.loginService = loginService;
         this.refreshTokenService = refreshTokenService;
         this.passwordChangeService = passwordChangeService;
@@ -49,7 +49,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    LoginService.CurrentUser me(@AuthenticationPrincipal Jwt jwt) {
+    LoginUseCase.CurrentUser me(@AuthenticationPrincipal Jwt jwt) {
         return loginService.currentUser(UUID.fromString(jwt.getSubject()));
     }
 

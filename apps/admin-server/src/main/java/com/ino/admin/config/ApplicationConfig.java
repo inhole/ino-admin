@@ -1,8 +1,8 @@
 package com.ino.admin.config;
 
 import java.time.Clock;
-import com.ino.admin.identity.AdminBootstrapProperties;
-import com.ino.admin.identity.LoginSecurityProperties;
+import com.ino.admin.identity.bootstrap.AdminBootstrapProperties;
+import com.ino.admin.identity.config.LoginSecurityProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

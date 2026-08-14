@@ -1,8 +1,8 @@
 package com.ino.admin.web;
 
 import com.ino.admin.core.BusinessException;
-import com.ino.admin.identity.AuthenticationFailedException;
-import com.ino.admin.identity.InvalidRefreshTokenException;
+import com.ino.admin.identity.api.AuthenticationFailedException;
+import com.ino.admin.identity.api.InvalidRefreshTokenException;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Clock;
 import java.time.Instant;
