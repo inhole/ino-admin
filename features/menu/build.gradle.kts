@@ -12,8 +12,11 @@ dependencyManagement {
 
 dependencies {
     implementation("org.springframework:spring-context")
+    implementation("org.springframework.data:spring-data-jpa")
+    implementation("jakarta.persistence:jakarta.persistence-api")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.assertj:assertj-core")
+    testImplementation("org.mockito:mockito-core")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
