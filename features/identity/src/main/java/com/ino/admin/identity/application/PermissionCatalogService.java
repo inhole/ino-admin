@@ -16,7 +16,8 @@ public class PermissionCatalogService implements PermissionCatalogUseCase {
     @Override
     public List<PermissionCatalogUseCase.RolePermissions> findAll() {
         return repository.findAllByOrderByKeyAsc().stream()
-                .map(role -> new PermissionCatalogUseCase.RolePermissions(role.key(),
+                .map(role -> new PermissionCatalogUseCase.RolePermissions(role.key(), role.displayName(),
+                        role.systemRole(), role.enabled(),
                         role.permissions().stream().sorted().toList()))
                 .toList();
     }

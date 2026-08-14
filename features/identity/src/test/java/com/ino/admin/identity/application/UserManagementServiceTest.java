@@ -11,6 +11,7 @@ import com.ino.admin.identity.api.UserManagementUseCase.CreateUser;
 import com.ino.admin.identity.domain.User;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 import com.ino.admin.identity.infrastructure.persistence.RoleRepository;
+import com.ino.admin.identity.domain.Role;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -31,7 +32,8 @@ class UserManagementServiceTest {
     @Test
     void createsViewerWithNormalizedEmailAndEncodedPassword() {
         when(encoder.encode("Viewer-Password-2026!")).thenReturn("encoded");
-        when(roleRepository.existsById("VIEWER")).thenReturn(true);
+        var role = mock(Role.class); when(role.enabled()).thenReturn(true);
+        when(roleRepository.findById("VIEWER")).thenReturn(Optional.of(role));
 
         var result = service.create(new CreateUser(" Viewer@Example.com ", "Viewer-Password-2026!", " 뷰어 ", "VIEWER"));
 
@@ -76,7 +78,8 @@ class UserManagementServiceTest {
         var user = User.create("viewer@example.com", "hash", "뷰어", "VIEWER",
                 Instant.parse("2026-08-13T00:00:00Z"));
         when(repository.findById(user.id())).thenReturn(Optional.of(user));
-        when(roleRepository.existsById("ADMIN")).thenReturn(true);
+        var role = mock(Role.class); when(role.enabled()).thenReturn(true);
+        when(roleRepository.findById("ADMIN")).thenReturn(Optional.of(role));
 
         var result = service.updateProfile(UUID.randomUUID(), user.id(),
                 new com.ino.admin.identity.api.UserManagementUseCase.UpdateProfile(" 운영자 ", "ADMIN"));

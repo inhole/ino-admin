@@ -9,7 +9,7 @@ export interface PageResponse<T> {
 export interface Sample { id: number; name: string }
 export interface ApiError { code: string; message: string; traceId?: string }
 export interface CurrentUser { id: string; email: string; displayName: string; status: string; role: string; permissions: string[] }
-export interface RolePermissions { role: string; permissions: string[] }
+export interface RolePermissions { role: string; displayName: string; systemRole: boolean; enabled: boolean; permissions: string[] }
 export interface MenuItem { id: string; label: string; route: string; icon: 'layout-dashboard' | 'users' | 'key-round' | 'menu'; order: number; children: MenuItem[] }
 export interface ManagedMenu extends Omit<MenuItem, 'children'> { parentId: string | null; requiredPermission: string | null; enabled: boolean }
 export interface UserSummary { id: string; email: string; displayName: string; status: string; role: string; createdAt: string }
@@ -115,6 +115,12 @@ export function getPermissionCatalog() { return request<RolePermissions[]>('/api
 export function getAvailablePermissions() { return request<string[]>('/api/v1/permissions/available') }
 export function updateRolePermissions(role: string, permissions: string[]) {
   return request<RolePermissions>(`/api/v1/permissions/roles/${role}`, { method: 'PATCH', body: JSON.stringify({ permissions }) })
+}
+export function createRole(input: { role: string; displayName: string; permissions: string[] }) {
+  return request<RolePermissions>('/api/v1/permissions/roles', { method: 'POST', body: JSON.stringify(input) })
+}
+export function updateRoleStatus(role: string, enabled: boolean) {
+  return request<RolePermissions>(`/api/v1/permissions/roles/${role}/status`, { method: 'PATCH', body: JSON.stringify({ enabled }) })
 }
 export function getMyMenus() { return request<MenuItem[]>('/api/v1/menus/me') }
 export function getMenus() { return request<ManagedMenu[]>('/api/v1/menus') }

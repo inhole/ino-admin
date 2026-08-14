@@ -90,7 +90,7 @@ public class UserManagementService implements UserManagementUseCase {
 
     private String parseAssignableRole(String role) {
         var normalized = role == null ? "" : role.strip();
-        if (normalized.equals(UserRole.SUPER_ADMIN.name()) || !roleRepository.existsById(normalized))
+        if (normalized.equals(UserRole.SUPER_ADMIN.name()) || roleRepository.findById(normalized).filter(found -> found.enabled()).isEmpty())
             throw new BusinessException("INVALID_USER_ROLE", "할당 가능한 역할을 선택해야 합니다.");
         return normalized;
     }
