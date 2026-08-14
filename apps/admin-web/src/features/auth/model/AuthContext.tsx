@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { clearSession, getCurrentUser, hasRefreshToken, login as loginRequest, logout as logoutRequest, onSessionExpired, refreshSession, type CurrentUser } from '../api/client'
+import { clearSession, getCurrentUser, hasRefreshToken, login as loginRequest, logout as logoutRequest, onSessionExpired, refreshSession, type CurrentUser } from '@/api/client'
 import { AuthContext, type AuthContextValue } from './authContextValue'
 
 export function AuthProvider({ children }: { children: ReactNode }) {

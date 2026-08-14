@@ -1,8 +1,8 @@
 import { Route, Routes } from 'react-router-dom'
-import { DashboardPage } from './DashboardPage'
-import { LoginPage } from './auth/LoginPage'
-import { ProtectedRoute } from './auth/ProtectedRoute'
-import './styles.css'
+import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { LoginPage } from '@/features/auth/ui/LoginPage'
+import { ProtectedRoute } from '@/features/auth/ui/ProtectedRoute'
+import '@/styles.css'
 
 export function App() {
   return (

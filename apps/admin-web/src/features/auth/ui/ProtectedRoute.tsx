@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { useAuth } from './useAuth'
+import { useAuth } from '@/features/auth/model/useAuth'
 
 export function ProtectedRoute() {
   const { isRestoring, user } = useAuth()

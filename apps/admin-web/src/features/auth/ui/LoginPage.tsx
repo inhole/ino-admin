@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { ApiClientError } from '../api/client'
+import { ApiClientError } from '@/api/client'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { useAuth } from './useAuth'
+import { useAuth } from '@/features/auth/model/useAuth'
 
 export function LoginPage() {
   const { isRestoring, login, user } = useAuth()

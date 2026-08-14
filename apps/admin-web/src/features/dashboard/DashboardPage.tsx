@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiClientError, getSamples } from './api/client'
-import { useAuth } from './auth/useAuth'
+import { ApiClientError, getSamples } from '@/api/client'
+import { useAuth } from '@/features/auth/model/useAuth'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
