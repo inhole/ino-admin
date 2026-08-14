@@ -59,6 +59,12 @@ public class RefreshTokenService {
         repository.findByTokenHash(hash(rawToken)).ifPresent(token -> revokeFamily(token.familyId(), Instant.now(clock)));
     }
 
+    @Transactional
+    public void revokeAllForUser(UUID userId) {
+        var now = Instant.now(clock);
+        repository.findAllByUser_Id(userId).forEach(token -> token.revoke(now));
+    }
+
     private IssuedRefreshToken issue(User user, UUID familyId, Instant now) {
         var issued = newToken(user, familyId, now);
         repository.save(issued.entity());

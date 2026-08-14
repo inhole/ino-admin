@@ -6,6 +6,9 @@ All errors include `code`, `message`, `fieldErrors`, `traceId`, and an ISO-8601 
 |---|---:|---|
 | `VALIDATION_ERROR` | 400 | One or more request fields are invalid. |
 | `INVALID_CREDENTIALS` | 401 | 이메일 또는 비밀번호가 올바르지 않거나 계정을 사용할 수 없다. |
+| `INVALID_CURRENT_PASSWORD` | 400 | 비밀번호 변경 요청의 현재 비밀번호가 올바르지 않다. |
+| `PASSWORD_REUSE_NOT_ALLOWED` | 400 | 새 비밀번호가 현재 비밀번호와 동일하다. |
+| `PASSWORD_POLICY_VIOLATION` | 400 | 새 비밀번호가 길이 또는 문자 조합 정책을 충족하지 않는다. |
 | `UNAUTHORIZED` | 401 | bearer token이 없거나 서명·만료·issuer·audience 검증에 실패했다. |
 | `INTERNAL_ERROR` | 500 | An unexpected server error occurred. |
 

@@ -13,4 +13,7 @@ interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<RefreshToken> findAllByFamilyId(UUID familyId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<RefreshToken> findAllByUser_Id(UUID userId);
 }

@@ -88,4 +88,10 @@ class User {
         failedLoginAttempts = 0;
         updatedAt = now;
     }
+
+    void changePassword(String newPasswordHash, Instant now) {
+        passwordHash = newPasswordHash;
+        passwordChangedAt = now;
+        updatedAt = now;
+    }
 }
