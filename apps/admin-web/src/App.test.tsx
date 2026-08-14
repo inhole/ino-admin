@@ -30,7 +30,7 @@ test('logs in and renders the protected dashboard', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = String(input)
     if (url.endsWith('/auth/login') && init?.method === 'POST') return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
-    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN' })
+    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN', permissions: ['user:read', 'user:create', 'user:update', 'permission:read'] })
     if (url.endsWith('/samples')) return json({ content: [{ id: 1, name: '서버 연결' }], page: 0, size: 20, totalElements: 1, totalPages: 1 })
     throw new Error(`Unexpected request: ${url}`)
   })
@@ -51,7 +51,7 @@ test('restores authentication by rotating the refresh token', async () => {
   const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = String(input)
     if (url.endsWith('/auth/refresh')) return json({ accessToken: 'access-new', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-new' })
-    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN' })
+    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN', permissions: ['user:read', 'user:create', 'user:update', 'permission:read'] })
     if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
     throw new Error(`Unexpected request: ${url}`)
   })
@@ -77,7 +77,7 @@ test('navigates to the authenticated user directory', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = String(input)
     if (url.endsWith('/auth/login') && init?.method === 'POST') return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
-    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN' })
+    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN', permissions: ['user:read', 'user:create', 'user:update', 'permission:read'] })
     if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
     if (url.endsWith('/users')) return json({ content: [{ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', createdAt: '2026-08-14T00:00:00Z' }], page: 0, size: 20, totalElements: 1, totalPages: 1 })
     throw new Error(`Unexpected request: ${url}`)
@@ -101,8 +101,9 @@ test('super admin creates a viewer from the user directory', async () => {
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = String(input)
     if (url.endsWith('/auth/login')) return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
-    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN' })
+    if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN', permissions: ['user:read', 'user:create', 'user:update', 'permission:read'] })
     if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+    if (url.endsWith('/permissions')) return json([{ role: 'SUPER_ADMIN', permissions: ['permission:read', 'user:create', 'user:read', 'user:update'] }, { role: 'ADMIN', permissions: ['user:read'] }, { role: 'VIEWER', permissions: [] }])
     if (url.endsWith('/users') && init?.method === 'POST') { created = true; return json({ id: 'user-2', email: 'viewer@example.com', displayName: '뷰어', status: 'ACTIVE', role: 'VIEWER', createdAt: '2026-08-14T00:00:00Z' }, 201) }
     if (url.endsWith('/users/user-2') && init?.method === 'PATCH') { displayName = '운영자'; role = 'ADMIN'; return json({ id: 'user-2', displayName, role }) }
     if (url.endsWith('/users/user-2/status') && init?.method === 'PATCH') { disabled = true; return json({ id: 'user-2', status: 'DISABLED' }) }
@@ -130,4 +131,7 @@ test('super admin creates a viewer from the user directory', async () => {
   expect(await screen.findByText('운영자')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: '비활성화' }))
   expect(await screen.findByRole('button', { name: '활성화' })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('link', { name: '권한' }))
+  expect(await screen.findByRole('heading', { name: '권한 카탈로그' })).toBeInTheDocument()
+  expect(await screen.findByText('permission:read')).toBeInTheDocument()
 })

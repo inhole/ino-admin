@@ -5,6 +5,7 @@ import com.ino.admin.identity.api.LoginUseCase;
 import com.ino.admin.identity.application.port.AccessTokenIssuer;
 import com.ino.admin.identity.config.LoginSecurityProperties;
 import com.ino.admin.identity.domain.UserStatus;
+import com.ino.admin.identity.domain.RolePermissions;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 
 import java.time.Clock;
@@ -61,7 +62,8 @@ public class LoginService implements LoginUseCase {
         var user = userRepository.findById(userId)
                 .filter(found -> found.status() == UserStatus.ACTIVE)
                 .orElseThrow(AuthenticationFailedException::new);
-        return new CurrentUser(user.id(), user.email(), user.displayName(), user.status().name(), user.role().name());
+        return new CurrentUser(user.id(), user.email(), user.displayName(), user.status().name(), user.role().name(),
+                RolePermissions.forRole(user.role()).stream().map(permission -> permission.key()).sorted().toList());
     }
 
 }
