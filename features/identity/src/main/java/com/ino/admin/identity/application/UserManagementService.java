@@ -5,6 +5,7 @@ import com.ino.admin.identity.api.UserManagementUseCase;
 import com.ino.admin.identity.domain.PasswordPolicy;
 import com.ino.admin.identity.domain.User;
 import com.ino.admin.identity.domain.UserRole;
+import com.ino.admin.identity.domain.UserStatus;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 import java.time.Clock;
 import java.time.Instant;
@@ -18,11 +19,38 @@ public class UserManagementService implements UserManagementUseCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
+    private final RefreshTokenService refreshTokenService;
 
-    public UserManagementService(UserRepository userRepository, PasswordEncoder passwordEncoder, Clock clock) {
+    public UserManagementService(UserRepository userRepository, PasswordEncoder passwordEncoder, Clock clock,
+            RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.clock = clock;
+        this.refreshTokenService = refreshTokenService;
+    }
+
+    @Override
+    @Transactional
+    public UpdatedUser changeStatus(java.util.UUID actorId, java.util.UUID userId, String status) {
+        var requested = parseStatus(status);
+        if (actorId.equals(userId) && requested == UserStatus.DISABLED) {
+            throw new BusinessException("SELF_DISABLE_NOT_ALLOWED", "자기 계정은 비활성화할 수 없습니다.");
+        }
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "사용자를 찾을 수 없습니다."));
+        user.changeStatus(requested, Instant.now(clock));
+        if (requested == UserStatus.DISABLED) refreshTokenService.revokeAllForUser(user.id());
+        return new UpdatedUser(user.id(), user.status().name());
+    }
+
+    private UserStatus parseStatus(String status) {
+        try {
+            var parsed = UserStatus.valueOf(status);
+            if (parsed == UserStatus.LOCKED) throw new IllegalArgumentException();
+            return parsed;
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            throw new BusinessException("INVALID_USER_STATUS", "변경 가능한 상태는 ACTIVE 또는 DISABLED입니다.");
+        }
     }
 
     @Override

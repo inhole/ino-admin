@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { ApiClientError, createUser, getUsers } from '@/api/client'
+import { ApiClientError, createUser, getUsers, updateUserStatus } from '@/api/client'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,10 +13,15 @@ export function UsersPage() {
   const queryClient = useQueryClient()
   const [createError, setCreateError] = useState<string | null>(null)
   const [createdMessage, setCreatedMessage] = useState<string | null>(null)
+  const [statusError, setStatusError] = useState<string | null>(null)
   const create = useMutation({ mutationFn: createUser, onSuccess: async (created) => {
     setCreatedMessage(`${created.displayName} 사용자를 생성했습니다.`)
     await queryClient.invalidateQueries({ queryKey: ['users'] })
   } })
+  const changeStatus = useMutation({ mutationFn: ({ id, status }: { id: string; status: 'ACTIVE' | 'DISABLED' }) => updateUserStatus(id, status), onSuccess: async () => {
+    setStatusError(null)
+    await queryClient.invalidateQueries({ queryKey: ['users'] })
+  }, onError: (error) => setStatusError(error instanceof ApiClientError ? error.message : '사용자 상태를 변경할 수 없습니다.') })
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setCreateError(null); setCreatedMessage(null)
     const form = event.currentTarget; const data = new FormData(form)
@@ -37,10 +42,11 @@ export function UsersPage() {
       <Button className="md:col-span-2 md:w-fit" disabled={create.isPending} type="submit">{create.isPending ? '생성 중…' : '사용자 생성'}</Button>
     </form></CardContent></Card>}
     <Card><CardHeader><CardTitle>사용자 목록</CardTitle><CardDescription>등록된 관리자 계정과 현재 상태입니다.</CardDescription></CardHeader><CardContent>
+      {statusError && <Alert className="mb-4" variant="destructive" role="alert"><AlertDescription>{statusError}</AlertDescription></Alert>}
       {users.isPending && <p role="status">사용자를 불러오는 중…</p>}
       {users.isError && <Alert variant="destructive" role="alert"><AlertTitle>조회 오류</AlertTitle><AlertDescription>{users.error instanceof ApiClientError && users.error.status === 403 ? '사용자 목록을 볼 권한이 없습니다.' : users.error.message}</AlertDescription><Button className="mt-3" onClick={() => users.refetch()} size="sm" variant="outline">다시 시도</Button></Alert>}
       {users.data?.content.length === 0 && <p>등록된 사용자가 없습니다.</p>}
-      {users.data && users.data.content.length > 0 && <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b text-muted-foreground"><tr><th className="py-3">이름</th><th>이메일</th><th>역할</th><th>상태</th><th>등록일</th></tr></thead><tbody className="divide-y">{users.data.content.map(user => <tr key={user.id}><td className="py-4 font-medium">{user.displayName}</td><td>{user.email}</td><td>{user.role}</td><td>{user.status}</td><td>{new Date(user.createdAt).toLocaleDateString('ko-KR')}</td></tr>)}</tbody></table></div>}
+      {users.data && users.data.content.length > 0 && <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b text-muted-foreground"><tr><th className="py-3">이름</th><th>이메일</th><th>역할</th><th>상태</th><th>등록일</th><th>관리</th></tr></thead><tbody className="divide-y">{users.data.content.map(user => <tr key={user.id}><td className="py-4 font-medium">{user.displayName}</td><td>{user.email}</td><td>{user.role}</td><td>{user.status}</td><td>{new Date(user.createdAt).toLocaleDateString('ko-KR')}</td><td>{currentUser?.role === 'SUPER_ADMIN' && currentUser.id !== user.id && <Button disabled={changeStatus.isPending} onClick={() => changeStatus.mutate({ id: user.id, status: user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE' })} size="sm" variant="outline">{user.status === 'ACTIVE' ? '비활성화' : user.status === 'LOCKED' ? '잠금 해제' : '활성화'}</Button>}</td></tr>)}</tbody></table></div>}
     </CardContent></Card>
   </>
 }
