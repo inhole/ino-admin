@@ -17,4 +17,5 @@ dependencyResolutionManagement {
 rootProject.name = "ino-admin"
 
 include("apps:admin-server")
+include("features:identity")
 include("modules:common-core")
