@@ -8,7 +8,7 @@ export interface PageResponse<T> {
 
 export interface Sample { id: number; name: string }
 export interface ApiError { code: string; message: string; traceId?: string }
-export interface CurrentUser { id: string; email: string; displayName: string; status: string }
+export interface CurrentUser { id: string; email: string; displayName: string; status: string; role: 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER' }
 export interface UserSummary { id: string; email: string; displayName: string; status: string; createdAt: string }
 
 interface TokenResponse {
