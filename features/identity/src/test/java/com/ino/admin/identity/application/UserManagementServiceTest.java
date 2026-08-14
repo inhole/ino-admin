@@ -1,0 +1,48 @@
+package com.ino.admin.identity.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.ino.admin.core.BusinessException;
+import com.ino.admin.identity.api.UserManagementUseCase.CreateUser;
+import com.ino.admin.identity.domain.User;
+import com.ino.admin.identity.domain.UserRole;
+import com.ino.admin.identity.infrastructure.persistence.UserRepository;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+class UserManagementServiceTest {
+    private final UserRepository repository = mock(UserRepository.class);
+    private final PasswordEncoder encoder = mock(PasswordEncoder.class);
+    private final UserManagementService service = new UserManagementService(repository, encoder,
+            Clock.fixed(Instant.parse("2026-08-14T00:00:00Z"), ZoneOffset.UTC));
+
+    @Test
+    void createsViewerWithNormalizedEmailAndEncodedPassword() {
+        when(encoder.encode("Viewer-Password-2026!")).thenReturn("encoded");
+
+        var result = service.create(new CreateUser(" Viewer@Example.com ", "Viewer-Password-2026!", " 뷰어 ", "VIEWER"));
+
+        var captor = ArgumentCaptor.forClass(User.class);
+        verify(repository).save(captor.capture());
+        assertThat(result.email()).isEqualTo("viewer@example.com");
+        assertThat(captor.getValue().passwordHash()).isEqualTo("encoded");
+        assertThat(captor.getValue().role()).isEqualTo(UserRole.VIEWER);
+    }
+
+    @Test
+    void rejectsDuplicateEmailAndSuperAdminAssignment() {
+        when(repository.existsByEmail("used@example.com")).thenReturn(true);
+        assertThatThrownBy(() -> service.create(new CreateUser("used@example.com", "Valid-Password-2026!", "중복", "VIEWER")))
+                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("EMAIL_ALREADY_EXISTS");
+        assertThatThrownBy(() -> service.create(new CreateUser("new@example.com", "Valid-Password-2026!", "최고 관리자", "SUPER_ADMIN")))
+                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_USER_ROLE");
+    }
+}

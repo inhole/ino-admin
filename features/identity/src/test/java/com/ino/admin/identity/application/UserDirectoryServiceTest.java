@@ -28,6 +28,7 @@ class UserDirectoryServiceTest {
             assertThat(summary.email()).isEqualTo("admin@example.com");
             assertThat(summary.displayName()).isEqualTo("관리자");
             assertThat(summary.status()).isEqualTo("ACTIVE");
+            assertThat(summary.role()).isEqualTo("SUPER_ADMIN");
             assertThat(summary.createdAt()).isEqualTo(createdAt);
         });
     }

@@ -56,13 +56,17 @@ public class User {
     protected User() {}
 
     public static User createInitialAdmin(String email, String passwordHash, String displayName, Instant now) {
+        return create(email, passwordHash, displayName, UserRole.SUPER_ADMIN, now);
+    }
+
+    public static User create(String email, String passwordHash, String displayName, UserRole role, Instant now) {
         var user = new User();
         user.id = UUID.randomUUID();
         user.email = email.strip().toLowerCase(Locale.ROOT);
         user.passwordHash = passwordHash;
         user.displayName = displayName.strip();
         user.status = UserStatus.ACTIVE;
-        user.role = UserRole.SUPER_ADMIN;
+        user.role = role;
         user.failedLoginAttempts = 0;
         user.passwordChangedAt = now;
         user.createdAt = now;
