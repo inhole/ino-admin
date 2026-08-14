@@ -2,6 +2,8 @@
 
 React, Vite, Tailwind CSS와 shadcn/ui 기반 관리자 웹입니다.
 
+UI/UX 개선 단계와 화면별 적용 범위는 [`docs/architecture/admin-ui-ux-roadmap.md`](../../docs/architecture/admin-ui-ux-roadmap.md)를 따릅니다.
+
 ## shadcn/ui 프리셋
 
 - 공식 shadcn CLI 프리셋 `b1aIuQ2XC`를 사용합니다.
