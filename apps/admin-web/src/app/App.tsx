@@ -1,7 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import { DashboardPage } from '@/features/dashboard'
-import { LoginPage } from '@/features/auth/ui/LoginPage'
-import { ProtectedRoute } from '@/features/auth/ui/ProtectedRoute'
+import { LoginPage, ProtectedRoute } from '@/features/auth'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { UsersPage } from '@/features/users'
 import { PermissionsPage } from '@/features/permissions'

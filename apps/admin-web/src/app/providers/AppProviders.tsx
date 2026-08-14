@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/features/auth/model/AuthContext";
+import { AuthProvider } from "@/features/auth";
 import { ThemeProvider } from "@/features/settings";
 import { createAppQueryClient } from "./queryClient";
 

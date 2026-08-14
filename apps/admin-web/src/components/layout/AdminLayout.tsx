@@ -13,7 +13,7 @@ import {
   SidebarProvider, SidebarRail, SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useAuth } from "@/features/auth/model/useAuth";
+import { useAuth } from "@/features/auth/hook/useAuth";
 import { ThemeSelector } from "@/features/settings";
 
 const iconMap = {

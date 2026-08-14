@@ -8,7 +8,7 @@ import {
   type ManagedMenu,
 } from "@/features/menus/api/menusApi";
 import { ApiClientError } from "@/api/client";
-import { menuKeys } from "@/features/menus/model/menuKeys";
+import { menuKeys } from "@/features/menus/hook/menuKeys";
 import { FormField, LoadingPanel, PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

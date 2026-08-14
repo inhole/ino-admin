@@ -7,7 +7,7 @@ import {
   updateRoleStatus,
 } from "@/features/permissions/api/permissionsApi";
 import { ApiClientError } from "@/api/client";
-import { permissionKeys } from "@/features/permissions/model/permissionKeys";
+import { permissionKeys } from "@/features/permissions/hook/permissionKeys";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/features/auth/model/useAuth";
+import { useAuth } from "@/features/auth/hook/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";

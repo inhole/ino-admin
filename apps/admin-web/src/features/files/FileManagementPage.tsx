@@ -10,7 +10,7 @@ import {
   type StoredFileSummary,
 } from "@/features/files/api/filesApi";
 import { ApiClientError } from "@/api/client";
-import { fileKeys } from "@/features/files/model/fileKeys";
+import { fileKeys } from "@/features/files/hook/fileKeys";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {

@@ -1,2 +1,4 @@
-export { ThemeProvider, useTheme, type Theme } from "./model/theme";
-export { ThemeSelector } from "./ui/ThemeSelector";
+export { ThemeProvider } from "./provider/ThemeProvider";
+export type { Theme } from "./provider/themeContext";
+export { useTheme } from "./hook/useTheme";
+export { ThemeSelector } from "./component/ThemeSelector";

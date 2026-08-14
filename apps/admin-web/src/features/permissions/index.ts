@@ -1,3 +1,3 @@
-export { PermissionsPage } from "./ui/PermissionsPage";
+export { PermissionsPage } from "./PermissionsPage";
 export { getPermissionCatalog } from "./api/permissionsApi";
-export { permissionKeys } from "./model/permissionKeys";
+export { permissionKeys } from "./hook/permissionKeys";

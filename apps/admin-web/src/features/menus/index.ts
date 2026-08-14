@@ -1,3 +1,3 @@
-export { MenuManagementPage } from "./ui/MenuManagementPage";
+export { MenuManagementPage } from "./MenuManagementPage";
 export { getMyMenus } from "./api/menusApi";
-export { menuKeys } from "./model/menuKeys";
+export { menuKeys } from "./hook/menuKeys";

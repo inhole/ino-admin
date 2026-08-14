@@ -22,7 +22,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
-import { useAuth } from "@/features/auth/model/useAuth";
+import { useAuth } from "@/features/auth/hook/useAuth";
 import { ThemeSelector } from "@/features/settings";
 
 export function LoginPage() {

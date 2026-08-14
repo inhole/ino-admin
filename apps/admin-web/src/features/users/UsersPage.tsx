@@ -11,7 +11,7 @@ import {
 } from "@/features/users/api/usersApi";
 import { ApiClientError } from "@/api/client";
 import { getPermissionCatalog, permissionKeys } from "@/features/permissions";
-import { userKeys } from "@/features/users/model/userKeys";
+import { userKeys } from "@/features/users/hook/userKeys";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -55,7 +55,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuth } from "@/features/auth/model/useAuth";
+import { useAuth } from "@/features/auth/hook/useAuth";
 import { formatDate } from "@/i18n/format";
 
 export function UsersPage() {

@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { useAuth } from '@/features/auth/model/useAuth'
+import { useAuth } from '@/features/auth/hook/useAuth'
 import { LoadingPanel } from '@/components/layout/Page'
 
 export function ProtectedRoute() {

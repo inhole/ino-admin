@@ -1,1 +1,1 @@
-export { FileManagementPage } from "./ui/FileManagementPage";
+export { FileManagementPage } from "./FileManagementPage";
