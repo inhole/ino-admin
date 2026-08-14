@@ -87,6 +87,6 @@ docker compose -f ../../infra/compose.yaml config
 
 프로젝트 방향과 단계별 완료 기준은 [.docs/PROJECT_PLAN.md](.docs/PROJECT_PLAN.md), 저장소 작업 규칙은 [AGENTS.md](AGENTS.md)를 참고하십시오.
 
-커밋 메시지는 `type: 한글 변경사항` 형식을 사용합니다. 세부 규칙과 type 목록은 [Git 커밋 메시지 규칙](docs/development/commit-convention.md)을 참고하십시오.
+커밋 메시지는 `type: 한글 변경사항` 형식을 사용합니다. Codex의 변경 검증·커밋·PR 절차는 저장소의 `ino-admin-deliver-change` skill이 제공합니다.
 
-브랜치는 `main` 기반의 GitHub Flow로 운영하며 이름과 PR 대상은 CI가 자동 검증합니다. 생성·리뷰·stacked PR·merge 절차는 [Git 브랜치 전략](docs/development/branch-strategy.md)을 참고하십시오.
+브랜치는 `main` 기반의 GitHub Flow로 운영하며 이름과 PR 대상은 CI가 자동 검증합니다.

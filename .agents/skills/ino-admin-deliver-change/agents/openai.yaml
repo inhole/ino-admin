@@ -1,0 +1,4 @@
+interface:
+  display_name: "INO Admin 변경 전달"
+  short_description: "저장소 변경을 검증하고 한국어 커밋과 PR로 전달"
+  default_prompt: "INO Admin 저장소의 변경을 규칙에 맞게 검증하고 커밋한 뒤 Pull Request로 전달해 주세요."
