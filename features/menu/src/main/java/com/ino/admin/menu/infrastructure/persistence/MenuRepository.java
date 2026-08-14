@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MenuRepository extends JpaRepository<Menu, String> {
     List<Menu> findAllByEnabledTrueOrderBySortOrderAsc();
+    List<Menu> findAllByOrderBySortOrderAsc();
+    boolean existsByParentIdAndSortOrderAndIdNot(String parentId, int sortOrder, String id);
 }
