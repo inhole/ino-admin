@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { App } from '@/app/App'
 import { AuthProvider } from '@/features/auth/model/AuthContext'
+import { ThemeProvider } from '@/features/settings/theme'
 
 beforeEach(() => sessionStorage.clear())
 afterEach(() => {
@@ -17,7 +18,7 @@ function json(data: unknown, status = 200) {
 
 function renderApp(path = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[path]}><AuthProvider><App /></AuthProvider></MemoryRouter></QueryClientProvider>)
+  render(<ThemeProvider><QueryClientProvider client={client}><MemoryRouter initialEntries={[path]}><AuthProvider><App /></AuthProvider></MemoryRouter></QueryClientProvider></ThemeProvider>)
 }
 
 test('redirects unauthenticated users to login', async () => {

@@ -1,24 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
+import { CheckCircle2, Server } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { ApiClientError, getSamples } from '@/api/client'
+import { PageHeader, StatusPanel } from '@/components/layout/Page'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function DashboardPage() {
-  const samples = useQuery({ queryKey: ['samples'], queryFn: getSamples })
-
-  return (
-    <>
-        <header className="mb-8"><p className="text-xs font-semibold tracking-[0.2em] text-primary">SYSTEM OVERVIEW</p><h1 className="text-3xl font-bold tracking-tight">관리자 시작 화면</h1></header>
-        <Card aria-labelledby="connection-title">
-          <CardHeader><CardTitle id="connection-title">백엔드 연결 상태</CardTitle><CardDescription>샘플 API의 현재 응답입니다.</CardDescription></CardHeader>
-          <CardContent>
-          {samples.isPending && <p role="status">불러오는 중…</p>}
-          {samples.isError && <Alert variant="destructive" role="alert"><AlertTitle>연결 오류</AlertTitle><AlertDescription>{samples.error instanceof ApiClientError && samples.error.status === 403 ? '이 정보를 볼 권한이 없습니다.' : samples.error.message}</AlertDescription><Button className="mt-3" onClick={() => samples.refetch()} size="sm" variant="outline">다시 시도</Button></Alert>}
-          {samples.data?.content.length === 0 && <p>표시할 항목이 없습니다.</p>}
-          {samples.data && samples.data.content.length > 0 && <ul className="divide-y">{samples.data.content.map((sample) => <li className="flex justify-between py-4" key={sample.id}><span>{sample.name}</span><strong className="text-emerald-600">정상</strong></li>)}</ul>}
-          </CardContent>
-        </Card>
-    </>
-  )
+  const { t } = useTranslation('dashboard'); const { t: common } = useTranslation('common'); const samples = useQuery({ queryKey: ['samples'], queryFn: getSamples })
+  return <><PageHeader description={t('description')} eyebrow={t('eyebrow')} title={t('title')} /><Card aria-labelledby="connection-title"><CardHeader className="flex-row items-start gap-4"><div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Server /></div><div><CardTitle id="connection-title">{t('connectionTitle')}</CardTitle><CardDescription>{t('connectionDescription')}</CardDescription></div></CardHeader><CardContent>{samples.isPending && <StatusPanel><p role="status">{t('loading')}</p></StatusPanel>}{samples.isError && <Alert variant="destructive" role="alert"><AlertTitle>{t('errorTitle')}</AlertTitle><AlertDescription>{samples.error instanceof ApiClientError && samples.error.status === 403 ? t('forbidden') : samples.error.message}</AlertDescription><Button className="mt-3 min-h-10" onClick={() => samples.refetch()} variant="outline">{common('retry')}</Button></Alert>}{samples.data?.content.length === 0 && <StatusPanel>{common('empty')}</StatusPanel>}{samples.data && samples.data.content.length > 0 && <ul className="divide-y">{samples.data.content.map(sample => <li className="flex items-center justify-between gap-4 py-4" key={sample.id}><span className="font-medium">{sample.name}</span><strong className="status-success flex items-center gap-2 text-sm"><CheckCircle2 size={17} />{common('statusNormal')}</strong></li>)}</ul>}</CardContent></Card></>
 }

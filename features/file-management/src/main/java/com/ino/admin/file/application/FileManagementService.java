@@ -24,9 +24,12 @@ public class FileManagementService implements FileManagementUseCase {
     private final FileStorage storage;
     private final FileStorageProperties properties;
     private final Clock clock;
+    private final FileDeletionCoordinator deletionCoordinator;
 
-    public FileManagementService(StoredFileRepository repository, FileStorage storage, FileStorageProperties properties, Clock clock) {
+    public FileManagementService(StoredFileRepository repository, FileStorage storage, FileStorageProperties properties, Clock clock,
+            FileDeletionCoordinator deletionCoordinator) {
         this.repository = repository; this.storage = storage; this.properties = properties; this.clock = clock;
+        this.deletionCoordinator = deletionCoordinator;
     }
 
     @Override @Transactional
@@ -36,7 +39,7 @@ public class FileManagementService implements FileManagementUseCase {
         var key = UUID.randomUUID().toString();
         storage.save(key, command.content());
         try {
-            var saved = repository.save(com.ino.admin.file.domain.StoredFile.create(ownerId, name, key,
+            var saved = repository.saveAndFlush(com.ino.admin.file.domain.StoredFile.create(ownerId, name, key,
                     command.contentType(), command.content().length, Instant.now(clock)));
             return new StoredFile(saved.id(), saved.originalName(), saved.contentType(), saved.size());
         } catch (RuntimeException exception) {
@@ -47,24 +50,22 @@ public class FileManagementService implements FileManagementUseCase {
 
     @Override @Transactional(readOnly = true)
     public FileDownload download(UUID requesterId, UUID fileId) {
-        var file = repository.findById(fileId).filter(found -> found.ownerId().equals(requesterId))
+        var file = repository.findById(fileId).filter(found -> found.ownerId().equals(requesterId) && found.isReady())
                 .orElseThrow(FileNotFoundException::new);
         return new FileDownload(file.originalName(), file.contentType(), storage.load(file.storageKey()));
     }
 
     @Override @Transactional(readOnly = true)
     public FilePage list(UUID ownerId, int page, int size) {
-        var result = repository.findAllByOwnerId(ownerId, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+        var result = repository.findAllByOwnerIdAndStatus(ownerId, com.ino.admin.file.domain.FileStatus.READY,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
         return new FilePage(result.getContent().stream().map(file -> new FileSummary(file.id(), file.originalName(),
                 file.contentType(), file.size(), file.createdAt())).toList(), page, size, result.getTotalElements(), result.getTotalPages());
     }
 
-    @Override @Transactional
+    @Override
     public void delete(UUID requesterId, UUID fileId) {
-        var file = repository.findById(fileId).filter(found -> found.ownerId().equals(requesterId))
-                .orElseThrow(FileNotFoundException::new);
-        storage.delete(file.storageKey());
-        repository.delete(file);
+        deletionCoordinator.delete(requesterId, fileId);
     }
 
     private void validate(UploadFile command) {

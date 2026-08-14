@@ -4,9 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { App } from '@/app/App'
 import { AuthProvider } from '@/features/auth/model/AuthContext'
+import { ThemeProvider } from '@/features/settings/theme'
+import '@/i18n'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } })
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode><QueryClientProvider client={queryClient}><BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter></QueryClientProvider></StrictMode>
+  <StrictMode><ThemeProvider><QueryClientProvider client={queryClient}><BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter></QueryClientProvider></ThemeProvider></StrictMode>
 )

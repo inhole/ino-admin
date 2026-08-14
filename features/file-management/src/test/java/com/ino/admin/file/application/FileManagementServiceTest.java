@@ -28,6 +28,7 @@ import org.mockito.MockitoAnnotations;
 class FileManagementServiceTest {
     @Mock StoredFileRepository repository;
     @Mock FileStorage storage;
+    @Mock FileDeletionCoordinator deletionCoordinator;
     private FileManagementService service;
     private final UUID ownerId = UUID.randomUUID();
 
@@ -35,11 +36,11 @@ class FileManagementServiceTest {
         MockitoAnnotations.openMocks(this);
         var properties = new FileStorageProperties();
         service = new FileManagementService(repository, storage, properties,
-                Clock.fixed(Instant.parse("2026-08-14T00:00:00Z"), ZoneOffset.UTC));
+                Clock.fixed(Instant.parse("2026-08-14T00:00:00Z"), ZoneOffset.UTC), deletionCoordinator);
     }
 
     @Test void storesSafeMetadataAndContent() {
-        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var result = service.upload(ownerId, new com.ino.admin.file.api.FileManagementUseCase.UploadFile(
                 "../report.pdf", "application/pdf", "%PDF-test".getBytes()));
         assertThat(result.originalName()).isEqualTo("report.pdf");
@@ -59,7 +60,7 @@ class FileManagementServiceTest {
     }
 
     @Test void deletesObjectWhenMetadataPersistenceFails() {
-        when(repository.save(any())).thenThrow(new IllegalStateException("db unavailable"));
+        when(repository.saveAndFlush(any())).thenThrow(new IllegalStateException("db unavailable"));
         assertThatThrownBy(() -> service.upload(ownerId,
                 new com.ino.admin.file.api.FileManagementUseCase.UploadFile("report.pdf", "application/pdf", "%PDF".getBytes())))
                 .isInstanceOf(IllegalStateException.class);
@@ -78,16 +79,15 @@ class FileManagementServiceTest {
     @Test void listsOnlyOwnersFiles() {
         var file = StoredFile.create(ownerId, "report.pdf", "key", "application/pdf", 4,
                 Instant.parse("2026-08-14T00:00:00Z"));
-        when(repository.findAllByOwnerId(org.mockito.ArgumentMatchers.eq(ownerId), any())).thenReturn(new PageImpl<>(java.util.List.of(file)));
+        when(repository.findAllByOwnerIdAndStatus(org.mockito.ArgumentMatchers.eq(ownerId),
+                org.mockito.ArgumentMatchers.eq(com.ino.admin.file.domain.FileStatus.READY), any()))
+                .thenReturn(new PageImpl<>(java.util.List.of(file)));
         assertThat(service.list(ownerId, 0, 20).content()).extracting("originalName").containsExactly("report.pdf");
     }
 
     @Test void deletesOwnedObjectAndMetadata() {
-        var file = StoredFile.create(ownerId, "report.pdf", "key", "application/pdf", 4,
-                Instant.parse("2026-08-14T00:00:00Z"));
-        when(repository.findById(file.id())).thenReturn(Optional.of(file));
-        service.delete(ownerId, file.id());
-        verify(storage).delete("key");
-        verify(repository).delete(file);
+        var fileId = UUID.randomUUID();
+        service.delete(ownerId, fileId);
+        verify(deletionCoordinator).delete(ownerId, fileId);
     }
 }
