@@ -2,6 +2,22 @@
 
 React, Vite, Tailwind CSS와 shadcn/ui 기반 관리자 웹입니다.
 
+## shadcn/ui 프리셋
+
+- 공식 shadcn CLI 프리셋 `b1aIuQ2XC`를 사용합니다.
+- 구성은 Base UI 기반 `luma` 스타일, `stone` 기본색, `blue` 테마·차트, `remixicon`, `Raleway` 가변 폰트, 큰 반경, 반투명 기본 메뉴입니다.
+- 설정의 기준 파일은 `components.json`, 전역 테마 토큰과 폰트의 기준 파일은 `src/styles.css`입니다.
+- 프리셋을 다시 적용할 때는 `apps/admin-web`에서 아래 명령을 실행합니다. `--force --reinstall`은 기존 공식 UI 컴포넌트 소스를 덮어쓰므로 로컬 변경을 먼저 확인해야 합니다.
+
+```text
+npx shadcn@latest init --preset b1aIuQ2XC --template vite --force --reinstall
+npx shadcn@latest info --json
+```
+
+- 새 UI는 먼저 `npx shadcn@latest search @shadcn -q "<검색어>"`로 공식 컴포넌트를 찾고, `npx shadcn@latest docs <컴포넌트>`로 Base UI 조합을 확인한 뒤 `npx shadcn@latest add <컴포넌트>`로 설치합니다.
+- 설치된 컴포넌트를 갱신할 때는 `add --dry-run`과 `add --diff <파일>`로 변경을 검토한 뒤 로컬 확장을 보존합니다.
+- 기능 화면은 `src/components/ui` 소스를 직접 변형하기보다 공식 variant와 조합을 우선하고, 색상은 `src/styles.css`의 의미 기반 토큰을 사용합니다.
+
 ## 화면 설정
 
 - 테마는 `light`, `dark`, `system`을 지원하며 `ino-admin.theme` 로컬 저장소 키에 보관합니다.
