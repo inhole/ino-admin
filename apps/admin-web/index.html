@@ -3,6 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <script>
+      (() => {
+        const stored = localStorage.getItem('ino-admin.theme')
+        const theme = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system'
+        const resolved = theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : theme === 'system' ? 'light' : theme
+        document.documentElement.classList.toggle('dark', resolved === 'dark')
+        document.documentElement.style.colorScheme = resolved
+      })()
+    </script>
     <title>INO Admin</title>
   </head>
   <body>

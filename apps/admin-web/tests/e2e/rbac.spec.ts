@@ -65,3 +65,21 @@ test('VIEWER는 관리 메뉴가 없고 직접 접근해도 서버의 403을 처
   await page.goto('/users')
   await expect(page.getByRole('alert')).toContainText('사용자 목록을 볼 권한이 없습니다.')
 })
+
+test('모바일에서 메뉴를 열어 파일 관리로 이동한다', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await authenticate(page, 'SUPER_ADMIN')
+  await page.getByRole('button', { name: '메뉴 열기' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('dialog').getByRole('link', { name: '파일 관리' }).click()
+  await expect(page.getByRole('heading', { name: '파일 관리' })).toBeVisible()
+})
+
+test('선택한 다크 테마를 새로고침 후에도 유지한다', async ({ page }) => {
+  await page.goto('/login')
+  await page.getByRole('button', { name: '다크' }).click()
+  await expect(page.locator('html')).toHaveClass(/dark/)
+  await page.reload()
+  await expect(page.locator('html')).toHaveClass(/dark/)
+  await expect(page.getByRole('button', { name: '다크' })).toHaveAttribute('aria-pressed', 'true')
+})

@@ -1,13 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ApiClientError, createUser, getPermissionCatalog, getUser, getUsers, updateUserProfile, updateUserStatus, type UserSummary } from '@/api/client'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/features/auth/model/useAuth'
+import { PageHeader } from '@/components/layout/Page'
 
 export function UsersPage() {
+  const { t } = useTranslation('users')
   const users = useQuery({ queryKey: ['users'], queryFn: () => getUsers() })
   const roles = useQuery({ queryKey: ['permissions'], queryFn: getPermissionCatalog })
   const { user: currentUser } = useAuth()
@@ -40,7 +43,7 @@ export function UsersPage() {
     } catch (error) { setCreateError(error instanceof ApiClientError ? error.message : '사용자를 생성할 수 없습니다.') }
   }
   return <>
-    <header className="mb-8"><p className="text-xs font-semibold tracking-[0.2em] text-primary">IDENTITY</p><h1 className="text-3xl font-bold tracking-tight">사용자 관리</h1></header>
+    <PageHeader description={t('description')} eyebrow={t('eyebrow')} title={t('title')} />
     {currentUser?.permissions.includes('user:create') && <Card className="mb-6"><CardHeader><CardTitle>사용자 생성</CardTitle><CardDescription>ADMIN 또는 VIEWER 계정을 생성합니다.</CardDescription></CardHeader><CardContent><form className="grid gap-4 md:grid-cols-2" onSubmit={submit}>
       <div className="grid gap-2"><label htmlFor="displayName">이름</label><Input id="displayName" name="displayName" required /></div>
       <div className="grid gap-2"><label htmlFor="new-user-email">이메일</label><Input id="new-user-email" name="email" required type="email" /></div>
