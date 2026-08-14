@@ -105,4 +105,13 @@ public class User {
         passwordChangedAt = now;
         updatedAt = now;
     }
+
+    public void changeStatus(UserStatus newStatus, Instant now) {
+        status = newStatus;
+        if (newStatus == UserStatus.ACTIVE) {
+            failedLoginAttempts = 0;
+            lockedAt = null;
+        }
+        updatedAt = now;
+    }
 }

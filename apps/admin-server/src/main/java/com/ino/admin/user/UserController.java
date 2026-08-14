@@ -11,12 +11,17 @@ import jakarta.validation.constraints.Size;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import java.util.UUID;
 
 @Validated
 @RestController
@@ -52,4 +57,12 @@ public class UserController {
             @NotBlank @Size(max = 100) String displayName,
             @NotBlank String role
     ) {}
+
+    @PatchMapping("/{userId}/status")
+    UserManagementUseCase.UpdatedUser changeStatus(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID userId,
+            @Valid @RequestBody ChangeStatusRequest request) {
+        return userManagement.changeStatus(UUID.fromString(jwt.getSubject()), userId, request.status());
+    }
+
+    record ChangeStatusRequest(@NotBlank String status) {}
 }

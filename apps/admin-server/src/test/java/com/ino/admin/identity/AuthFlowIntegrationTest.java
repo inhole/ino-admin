@@ -116,6 +116,35 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void superAdminDisablesUserButCannotDisableSelf() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        var loginResult = login(PASSWORD);
+        String token = JsonPath.read(loginResult.getResponse().getContentAsString(), "$.accessToken");
+        var created = mockMvc.perform(post("/api/v1/users").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"status@example.com","password":"Status-Password-2026!","displayName":"상태 사용자","role":"VIEWER"}
+                                """))
+                .andExpect(status().isCreated()).andReturn();
+        String userId = JsonPath.read(created.getResponse().getContentAsString(), "$.id");
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/users/{userId}/status", userId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DISABLED\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("DISABLED"));
+
+        var actor = userRepository.findByEmail(EMAIL).orElseThrow();
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/users/{userId}/status", actor.id())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DISABLED\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("SELF_DISABLE_NOT_ALLOWED"));
+    }
+
+    @Test
     void rotatesRefreshTokenAndRejectsReusedTokenFamily() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         String first = loginAndGetRefreshToken();

@@ -14,6 +14,8 @@ import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,8 +23,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 class UserManagementServiceTest {
     private final UserRepository repository = mock(UserRepository.class);
     private final PasswordEncoder encoder = mock(PasswordEncoder.class);
+    private final RefreshTokenService refreshTokenService = mock(RefreshTokenService.class);
     private final UserManagementService service = new UserManagementService(repository, encoder,
-            Clock.fixed(Instant.parse("2026-08-14T00:00:00Z"), ZoneOffset.UTC));
+            Clock.fixed(Instant.parse("2026-08-14T00:00:00Z"), ZoneOffset.UTC), refreshTokenService);
 
     @Test
     void createsViewerWithNormalizedEmailAndEncodedPassword() {
@@ -44,5 +47,25 @@ class UserManagementServiceTest {
                 .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("EMAIL_ALREADY_EXISTS");
         assertThatThrownBy(() -> service.create(new CreateUser("new@example.com", "Valid-Password-2026!", "최고 관리자", "SUPER_ADMIN")))
                 .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_USER_ROLE");
+    }
+
+    @Test
+    void disablesAnotherUserAndRevokesRefreshTokens() {
+        var actorId = UUID.randomUUID();
+        var user = User.create("viewer@example.com", "hash", "뷰어", UserRole.VIEWER,
+                Instant.parse("2026-08-13T00:00:00Z"));
+        when(repository.findById(user.id())).thenReturn(Optional.of(user));
+
+        var result = service.changeStatus(actorId, user.id(), "DISABLED");
+
+        assertThat(result.status()).isEqualTo("DISABLED");
+        verify(refreshTokenService).revokeAllForUser(user.id());
+    }
+
+    @Test
+    void rejectsSelfDisable() {
+        var actorId = UUID.randomUUID();
+        assertThatThrownBy(() -> service.changeStatus(actorId, actorId, "DISABLED"))
+                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("SELF_DISABLE_NOT_ALLOWED");
     }
 }
