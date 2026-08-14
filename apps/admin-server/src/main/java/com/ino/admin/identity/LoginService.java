@@ -11,16 +11,19 @@ public class LoginService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccessTokenIssuer accessTokenIssuer;
+    private final RefreshTokenService refreshTokenService;
     private final String dummyPasswordHash;
 
-    LoginService(UserRepository userRepository, PasswordEncoder passwordEncoder, AccessTokenIssuer accessTokenIssuer) {
+    LoginService(UserRepository userRepository, PasswordEncoder passwordEncoder, AccessTokenIssuer accessTokenIssuer,
+            RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.accessTokenIssuer = accessTokenIssuer;
+        this.refreshTokenService = refreshTokenService;
         this.dummyPasswordHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResult login(String email, String password) {
         var normalizedEmail = email.strip().toLowerCase(Locale.ROOT);
         var user = userRepository.findByEmail(normalizedEmail).orElse(null);
@@ -30,7 +33,8 @@ public class LoginService {
             throw new AuthenticationFailedException();
         }
         var token = accessTokenIssuer.issue(user.id());
-        return new LoginResult(token.value(), token.expiresInSeconds());
+        var refreshToken = refreshTokenService.issue(user);
+        return new LoginResult(token.value(), token.expiresInSeconds(), refreshToken.rawToken());
     }
 
     @Transactional(readOnly = true)
@@ -41,6 +45,6 @@ public class LoginService {
         return new CurrentUser(user.id(), user.email(), user.displayName(), user.status().name());
     }
 
-    public record LoginResult(String accessToken, long expiresInSeconds) {}
+    public record LoginResult(String accessToken, long expiresInSeconds, String refreshToken) {}
     public record CurrentUser(UUID id, String email, String displayName, String status) {}
 }

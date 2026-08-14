@@ -2,6 +2,7 @@ package com.ino.admin.web;
 
 import com.ino.admin.core.BusinessException;
 import com.ino.admin.identity.AuthenticationFailedException;
+import com.ino.admin.identity.InvalidRefreshTokenException;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Clock;
 import java.time.Instant;
@@ -60,6 +61,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationFailedException.class)
     ResponseEntity<ApiError> handleAuthenticationFailed(AuthenticationFailedException exception) {
         return response(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", exception.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    ResponseEntity<ApiError> handleInvalidRefreshToken(InvalidRefreshTokenException exception) {
+        return response(HttpStatus.UNAUTHORIZED, "INVALID_REFRESH_TOKEN", exception.getMessage(), List.of());
     }
 
     @ExceptionHandler(Exception.class)

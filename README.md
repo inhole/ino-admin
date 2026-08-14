@@ -60,9 +60,12 @@ $env:APP_BOOTSTRAP_ADMIN_DISPLAY_NAME='시스템 관리자'
 $body = @{ email = 'admin@example.com'; password = '<관리자 비밀번호>' } | ConvertTo-Json
 $login = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/v1/auth/login -ContentType 'application/json' -Body $body
 Invoke-RestMethod -Uri http://localhost:8080/api/v1/auth/me -Headers @{ Authorization = "Bearer $($login.accessToken)" }
+$refreshBody = @{ refreshToken = $login.refreshToken } | ConvertTo-Json
+$rotated = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/v1/auth/refresh -ContentType 'application/json' -Body $refreshBody
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/v1/auth/logout -ContentType 'application/json' -Body (@{ refreshToken = $rotated.refreshToken } | ConvertTo-Json)
 ```
 
-access token의 기본 만료 시간은 15분입니다. `/api/v1/auth/login`, health와 OpenAPI 경로를 제외한 API는 유효한 bearer token이 필요합니다.
+access token의 기본 만료 시간은 15분, refresh token은 30일입니다. refresh token은 갱신할 때마다 교체되며 이전 token이 재사용되면 같은 로그인 세션의 token이 모두 폐기됩니다. 서버에는 refresh token 원문 대신 SHA-256 hash만 저장됩니다. `/api/v1/auth/login`, `/refresh`, `/logout`, health와 OpenAPI 경로를 제외한 API는 유효한 bearer token이 필요합니다.
 
 ## 검증
 

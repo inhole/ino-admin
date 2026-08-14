@@ -36,6 +36,7 @@ app:
     issuer: ${APP_JWT_ISSUER:ino-admin}
     audience: ${APP_JWT_AUDIENCE:ino-admin-web}
     access-token-ttl: ${APP_JWT_ACCESS_TOKEN_TTL:15m}
+    refresh-token-ttl: ${APP_JWT_REFRESH_TOKEN_TTL:30d}
   bootstrap-admin:
     enabled: ${APP_BOOTSTRAP_ADMIN_ENABLED:false}
     email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
