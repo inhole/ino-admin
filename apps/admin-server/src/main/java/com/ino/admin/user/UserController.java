@@ -44,6 +44,11 @@ public class UserController {
         return userDirectory.findUsers(query, page, size);
     }
 
+    @GetMapping("/{userId}")
+    UserDirectoryUseCase.UserSummary findOne(@PathVariable UUID userId) {
+        return userDirectory.findUser(userId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     UserManagementUseCase.CreatedUser create(@Valid @RequestBody CreateUserRequest request) {
@@ -65,4 +70,13 @@ public class UserController {
     }
 
     record ChangeStatusRequest(@NotBlank String status) {}
+
+    @PatchMapping("/{userId}")
+    UserManagementUseCase.UpdatedProfile updateProfile(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID userId,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return userManagement.updateProfile(UUID.fromString(jwt.getSubject()), userId,
+                new UserManagementUseCase.UpdateProfile(request.displayName(), request.role()));
+    }
+
+    record UpdateProfileRequest(@NotBlank @Size(max = 100) String displayName, @NotBlank String role) {}
 }

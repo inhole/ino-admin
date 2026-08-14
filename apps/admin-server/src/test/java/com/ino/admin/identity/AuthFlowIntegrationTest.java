@@ -145,6 +145,35 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void superAdminReadsAndUpdatesAnotherUserButCannotChangeSelfRole() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        String token = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
+        var created = mockMvc.perform(post("/api/v1/users").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                {"email":"profile@example.com","password":"Profile-Password-2026!","displayName":"프로필 사용자","role":"VIEWER"}
+                                """))
+                .andExpect(status().isCreated()).andReturn();
+        String userId = JsonPath.read(created.getResponse().getContentAsString(), "$.id");
+
+        mockMvc.perform(get("/api/v1/users/{userId}", userId).header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.email").value("profile@example.com"));
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/users/{userId}", userId).header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"운영 관리자\",\"role\":\"ADMIN\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.displayName").value("운영 관리자"))
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+
+        var actor = userRepository.findByEmail(EMAIL).orElseThrow();
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/users/{userId}", actor.id()).header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"관리자\",\"role\":\"ADMIN\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("SELF_ROLE_CHANGE_NOT_ALLOWED"));
+    }
+
+    @Test
     void rotatesRefreshTokenAndRejectsReusedTokenFamily() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         String first = loginAndGetRefreshToken();

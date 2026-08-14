@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { ApiClientError, createUser, getUsers, updateUserStatus } from '@/api/client'
+import { ApiClientError, createUser, getUser, getUsers, updateUserProfile, updateUserStatus, type UserSummary } from '@/api/client'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,6 +14,7 @@ export function UsersPage() {
   const [createError, setCreateError] = useState<string | null>(null)
   const [createdMessage, setCreatedMessage] = useState<string | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
+  const [editing, setEditing] = useState<UserSummary | null>(null)
   const create = useMutation({ mutationFn: createUser, onSuccess: async (created) => {
     setCreatedMessage(`${created.displayName} 사용자를 생성했습니다.`)
     await queryClient.invalidateQueries({ queryKey: ['users'] })
@@ -22,6 +23,13 @@ export function UsersPage() {
     setStatusError(null)
     await queryClient.invalidateQueries({ queryKey: ['users'] })
   }, onError: (error) => setStatusError(error instanceof ApiClientError ? error.message : '사용자 상태를 변경할 수 없습니다.') })
+  const update = useMutation({ mutationFn: ({ id, displayName, role }: { id: string; displayName: string; role: 'ADMIN' | 'VIEWER' }) => updateUserProfile(id, { displayName, role }), onSuccess: async () => {
+    setEditing(null); setStatusError(null); await queryClient.invalidateQueries({ queryKey: ['users'] })
+  }, onError: (error) => setStatusError(error instanceof ApiClientError ? error.message : '사용자 정보를 변경할 수 없습니다.') })
+  const startEditing = async (id: string) => {
+    try { setEditing(await getUser(id)); setStatusError(null) }
+    catch (error) { setStatusError(error instanceof ApiClientError ? error.message : '사용자 정보를 불러올 수 없습니다.') }
+  }
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setCreateError(null); setCreatedMessage(null)
     const form = event.currentTarget; const data = new FormData(form)
@@ -46,7 +54,8 @@ export function UsersPage() {
       {users.isPending && <p role="status">사용자를 불러오는 중…</p>}
       {users.isError && <Alert variant="destructive" role="alert"><AlertTitle>조회 오류</AlertTitle><AlertDescription>{users.error instanceof ApiClientError && users.error.status === 403 ? '사용자 목록을 볼 권한이 없습니다.' : users.error.message}</AlertDescription><Button className="mt-3" onClick={() => users.refetch()} size="sm" variant="outline">다시 시도</Button></Alert>}
       {users.data?.content.length === 0 && <p>등록된 사용자가 없습니다.</p>}
-      {users.data && users.data.content.length > 0 && <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b text-muted-foreground"><tr><th className="py-3">이름</th><th>이메일</th><th>역할</th><th>상태</th><th>등록일</th><th>관리</th></tr></thead><tbody className="divide-y">{users.data.content.map(user => <tr key={user.id}><td className="py-4 font-medium">{user.displayName}</td><td>{user.email}</td><td>{user.role}</td><td>{user.status}</td><td>{new Date(user.createdAt).toLocaleDateString('ko-KR')}</td><td>{currentUser?.role === 'SUPER_ADMIN' && currentUser.id !== user.id && <Button disabled={changeStatus.isPending} onClick={() => changeStatus.mutate({ id: user.id, status: user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE' })} size="sm" variant="outline">{user.status === 'ACTIVE' ? '비활성화' : user.status === 'LOCKED' ? '잠금 해제' : '활성화'}</Button>}</td></tr>)}</tbody></table></div>}
+      {editing && <form className="mb-5 grid gap-3 rounded-md border p-4 md:grid-cols-3" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); update.mutate({ id: editing.id, displayName: String(data.get('displayName')), role: String(data.get('role')) as 'ADMIN' | 'VIEWER' }) }}><Input aria-label="수정할 이름" defaultValue={editing.displayName} maxLength={100} name="displayName" required /><select aria-label="수정할 역할" className="h-9 rounded-md border bg-background px-3 text-sm" defaultValue={editing.role} name="role"><option value="ADMIN">ADMIN</option><option value="VIEWER">VIEWER</option></select><div className="flex gap-2"><Button disabled={update.isPending} type="submit">저장</Button><Button onClick={() => setEditing(null)} type="button" variant="outline">취소</Button></div></form>}
+      {users.data && users.data.content.length > 0 && <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b text-muted-foreground"><tr><th className="py-3">이름</th><th>이메일</th><th>역할</th><th>상태</th><th>등록일</th><th>관리</th></tr></thead><tbody className="divide-y">{users.data.content.map(user => <tr key={user.id}><td className="py-4 font-medium">{user.displayName}</td><td>{user.email}</td><td>{user.role}</td><td>{user.status}</td><td>{new Date(user.createdAt).toLocaleDateString('ko-KR')}</td><td>{currentUser?.role === 'SUPER_ADMIN' && currentUser.id !== user.id && <div className="flex gap-2"><Button onClick={() => startEditing(user.id)} size="sm" variant="outline">수정</Button><Button disabled={changeStatus.isPending} onClick={() => changeStatus.mutate({ id: user.id, status: user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE' })} size="sm" variant="outline">{user.status === 'ACTIVE' ? '비활성화' : user.status === 'LOCKED' ? '잠금 해제' : '활성화'}</Button></div>}</td></tr>)}</tbody></table></div>}
     </CardContent></Card>
   </>
 }
