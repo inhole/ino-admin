@@ -3,6 +3,7 @@ package com.ino.admin.web;
 import com.ino.admin.core.BusinessException;
 import com.ino.admin.identity.api.AuthenticationFailedException;
 import com.ino.admin.identity.api.InvalidRefreshTokenException;
+import com.ino.admin.file.api.FileNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Clock;
 import java.time.Instant;
@@ -56,6 +57,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     ResponseEntity<ApiError> handleBusiness(BusinessException exception) {
         return response(HttpStatus.BAD_REQUEST, exception.code(), exception.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(FileNotFoundException.class)
+    ResponseEntity<ApiError> handleFileNotFound(FileNotFoundException exception) {
+        return response(HttpStatus.NOT_FOUND, "FILE_NOT_FOUND", exception.getMessage(), List.of());
     }
 
     @ExceptionHandler(AuthenticationFailedException.class)

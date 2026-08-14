@@ -13,6 +13,7 @@ tasks.withType<JavaCompile>().configureEach { options.release = 25 }
 dependencies {
     implementation(project(":features:identity"))
     implementation(project(":features:menu"))
+    implementation(project(":features:file-management"))
     implementation(project(":modules:common-core"))
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

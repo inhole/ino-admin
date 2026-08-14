@@ -43,6 +43,10 @@ class SecurityConfig {
                                 .hasAuthority("menu:update")
                         .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/menus/**")
                                 .hasAuthority("menu:update")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/files/**")
+                                .hasAuthority("file:read")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/files/**")
+                                .hasAuthority("file:write")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(token -> new JwtAuthenticationToken(token,
