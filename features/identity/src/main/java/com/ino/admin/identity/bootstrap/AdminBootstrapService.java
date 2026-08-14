@@ -1,4 +1,8 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.bootstrap;
+
+import com.ino.admin.identity.domain.PasswordPolicy;
+import com.ino.admin.identity.domain.User;
+import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -9,22 +13,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-class AdminBootstrapService {
+public class AdminBootstrapService {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
-    enum Result { CREATED, ALREADY_EXISTS }
+    public enum Result { CREATED, ALREADY_EXISTS }
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
 
-    AdminBootstrapService(UserRepository userRepository, PasswordEncoder passwordEncoder, Clock clock) {
+    public AdminBootstrapService(UserRepository userRepository, PasswordEncoder passwordEncoder, Clock clock) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.clock = clock;
     }
 
     @Transactional
-    Result bootstrap(String email, String password, String displayName) {
+    public Result bootstrap(String email, String password, String displayName) {
         var normalizedEmail = requireEmail(email);
         requireDisplayName(displayName);
         var violations = PasswordPolicy.violations(password);

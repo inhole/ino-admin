@@ -1,4 +1,7 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.application;
+
+import com.ino.admin.identity.domain.User;
+import com.ino.admin.identity.domain.UserStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

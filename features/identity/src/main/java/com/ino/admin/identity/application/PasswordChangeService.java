@@ -1,6 +1,11 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.application;
 
 import com.ino.admin.core.BusinessException;
+import com.ino.admin.identity.api.AuthenticationFailedException;
+import com.ino.admin.identity.api.PasswordChangeUseCase;
+import com.ino.admin.identity.domain.PasswordPolicy;
+import com.ino.admin.identity.domain.UserStatus;
+import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
@@ -9,13 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class PasswordChangeService {
+public class PasswordChangeService implements PasswordChangeUseCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final Clock clock;
 
-    PasswordChangeService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+    public PasswordChangeService(UserRepository userRepository, PasswordEncoder passwordEncoder,
             RefreshTokenService refreshTokenService, Clock clock) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -24,6 +29,7 @@ public class PasswordChangeService {
     }
 
     @Transactional
+    @Override
     public void change(UUID userId, String currentPassword, String newPassword) {
         var user = userRepository.findById(userId)
                 .filter(found -> found.status() == UserStatus.ACTIVE)

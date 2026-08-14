@@ -1,4 +1,4 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens")
-class RefreshToken {
+public class RefreshToken {
     @Id
     private UUID id;
 
@@ -40,7 +40,7 @@ class RefreshToken {
 
     protected RefreshToken() {}
 
-    static RefreshToken issue(User user, String tokenHash, UUID familyId, Instant now, Instant expiresAt) {
+    public static RefreshToken issue(User user, String tokenHash, UUID familyId, Instant now, Instant expiresAt) {
         var token = new RefreshToken();
         token.id = UUID.randomUUID();
         token.user = user;
@@ -51,12 +51,12 @@ class RefreshToken {
         return token;
     }
 
-    boolean isExpiredAt(Instant now) { return !expiresAt.isAfter(now); }
-    boolean isRevoked() { return revokedAt != null; }
-    void revoke(Instant now) { if (revokedAt == null) revokedAt = now; }
-    void replaceWith(UUID replacementId, Instant now) { revoke(now); replacedBy = replacementId; }
-    UUID id() { return id; }
-    User user() { return user; }
-    UUID familyId() { return familyId; }
-    String tokenHash() { return tokenHash; }
+    public boolean isExpiredAt(Instant now) { return !expiresAt.isAfter(now); }
+    public boolean isRevoked() { return revokedAt != null; }
+    public void revoke(Instant now) { if (revokedAt == null) revokedAt = now; }
+    public void replaceWith(UUID replacementId, Instant now) { revoke(now); replacedBy = replacementId; }
+    public UUID id() { return id; }
+    public User user() { return user; }
+    public UUID familyId() { return familyId; }
+    public String tokenHash() { return tokenHash; }
 }

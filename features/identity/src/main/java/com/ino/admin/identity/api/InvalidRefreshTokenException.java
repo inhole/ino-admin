@@ -1,4 +1,4 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.api;
 
 public class InvalidRefreshTokenException extends RuntimeException {
     public InvalidRefreshTokenException() {

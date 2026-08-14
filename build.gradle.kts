@@ -9,7 +9,7 @@ allprojects {
     version = "0.1.0-SNAPSHOT"
 }
 
-val verifyModuleDependencies by tasks.registering {
+val verifyModuleDependencies = tasks.register("verifyModuleDependencies") {
     group = "verification"
     description = "Verifies modular-monolith project dependency direction."
 

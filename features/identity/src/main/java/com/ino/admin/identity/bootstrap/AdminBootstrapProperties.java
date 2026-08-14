@@ -1,4 +1,4 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.bootstrap;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

@@ -1,6 +1,6 @@
 package com.ino.admin.auth;
 
-import com.ino.admin.identity.AccessTokenIssuer;
+import com.ino.admin.identity.application.port.AccessTokenIssuer;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;

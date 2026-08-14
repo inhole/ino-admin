@@ -1,4 +1,4 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.application.port;
 
 import java.util.UUID;
 

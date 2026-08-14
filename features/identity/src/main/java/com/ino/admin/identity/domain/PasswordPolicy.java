@@ -1,12 +1,12 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.domain;
 
 import java.util.ArrayList;
 import java.util.List;
 
-final class PasswordPolicy {
+public final class PasswordPolicy {
     private PasswordPolicy() {}
 
-    static List<String> violations(String password) {
+    public static List<String> violations(String password) {
         var violations = new ArrayList<String>();
         if (password == null || password.length() < 12) violations.add("12자 이상이어야 합니다.");
         if (password != null && password.length() > 128) violations.add("128자를 초과할 수 없습니다.");

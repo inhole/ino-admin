@@ -1,4 +1,6 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.infrastructure.persistence;
+
+import com.ino.admin.identity.domain.RefreshToken;
 
 import jakarta.persistence.LockModeType;
 import java.util.List;
@@ -7,7 +9,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 
-interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID> {
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<RefreshToken> findByTokenHash(String tokenHash);
 

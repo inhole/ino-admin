@@ -1,4 +1,11 @@
-package com.ino.admin.identity;
+package com.ino.admin.identity.application;
+
+import com.ino.admin.identity.api.AuthenticationFailedException;
+import com.ino.admin.identity.api.LoginUseCase;
+import com.ino.admin.identity.application.port.AccessTokenIssuer;
+import com.ino.admin.identity.config.LoginSecurityProperties;
+import com.ino.admin.identity.domain.UserStatus;
+import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -9,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class LoginService {
+public class LoginService implements LoginUseCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccessTokenIssuer accessTokenIssuer;
@@ -18,7 +25,7 @@ public class LoginService {
     private final Clock clock;
     private final String dummyPasswordHash;
 
-    LoginService(UserRepository userRepository, PasswordEncoder passwordEncoder, AccessTokenIssuer accessTokenIssuer,
+    public LoginService(UserRepository userRepository, PasswordEncoder passwordEncoder, AccessTokenIssuer accessTokenIssuer,
             RefreshTokenService refreshTokenService, LoginSecurityProperties securityProperties, Clock clock) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -30,6 +37,7 @@ public class LoginService {
     }
 
     @Transactional(noRollbackFor = AuthenticationFailedException.class)
+    @Override
     public LoginResult login(String email, String password) {
         var normalizedEmail = email.strip().toLowerCase(Locale.ROOT);
         var user = userRepository.findByEmailForUpdate(normalizedEmail).orElse(null);
@@ -48,6 +56,7 @@ public class LoginService {
     }
 
     @Transactional(readOnly = true)
+    @Override
     public CurrentUser currentUser(UUID userId) {
         var user = userRepository.findById(userId)
                 .filter(found -> found.status() == UserStatus.ACTIVE)
@@ -55,6 +64,4 @@ public class LoginService {
         return new CurrentUser(user.id(), user.email(), user.displayName(), user.status().name());
     }
 
-    public record LoginResult(String accessToken, long expiresInSeconds, String refreshToken) {}
-    public record CurrentUser(UUID id, String email, String displayName, String status) {}
 }
