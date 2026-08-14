@@ -7,7 +7,9 @@ public enum Permission {
     PERMISSION_READ("permission:read"),
     MENU_READ("menu:read"),
     MENU_UPDATE("menu:update"),
-    PERMISSION_UPDATE("permission:update");
+    PERMISSION_UPDATE("permission:update"),
+    FILE_READ("file:read"),
+    FILE_WRITE("file:write");
 
     private final String key;
 

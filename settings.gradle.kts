@@ -19,4 +19,5 @@ rootProject.name = "ino-admin"
 include("apps:admin-server")
 include("features:identity")
 include("features:menu")
+include("features:file-management")
 include("modules:common-core")
