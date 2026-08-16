@@ -60,6 +60,7 @@ import { formatDate } from "@/i18n/format";
 
 export function UsersPage() {
   const { t } = useTranslation("users");
+  const { t: common } = useTranslation("common");
   const users = useQuery({ queryKey: userKeys.all, queryFn: getUsers });
   const roles = useQuery({
     queryKey: permissionKeys.all,
@@ -261,7 +262,7 @@ export function UsersPage() {
                 onClick={() => users.refetch()}
                 variant="outline"
               >
-                다시 시도
+                {common("retry")}
               </Button>
             </Alert>
           )}
@@ -299,14 +300,14 @@ export function UsersPage() {
               <div className="flex gap-2">
                 <Button disabled={update.isPending} type="submit">
                   {update.isPending && <Spinner data-icon="inline-start" />}
-                  저장
+                  {common("save")}
                 </Button>
                 <Button
                   onClick={() => setEditing(null)}
                   type="button"
                   variant="outline"
                 >
-                  취소
+                  {common("cancel")}
                 </Button>
               </div>
               </FieldGroup>
@@ -353,7 +354,7 @@ export function UsersPage() {
                               size="sm"
                               variant="outline"
                             >
-                              {t("editName").replace("할 이름", "")}
+                              {common("edit")}
                             </Button>
                             <AlertDialog
                               onOpenChange={(open) =>
@@ -372,11 +373,11 @@ export function UsersPage() {
                               } />
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>{statusLabel(user)}할까요?</AlertDialogTitle>
-                                  <AlertDialogDescription>{user.displayName} 사용자의 상태를 변경합니다.</AlertDialogDescription>
+                                  <AlertDialogTitle>{t("statusConfirmTitle", { action: statusLabel(user) })}</AlertDialogTitle>
+                                  <AlertDialogDescription>{t("statusConfirmDescription", { name: user.displayName })}</AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>취소</AlertDialogCancel>
+                                  <AlertDialogCancel>{common("cancel")}</AlertDialogCancel>
                                   <AlertDialogAction variant={user.status === "ACTIVE" ? "destructive" : "default"} onClick={() => {
                                     changeStatus.mutate(statusAction(user));
                                     setStatusDialogId(null);

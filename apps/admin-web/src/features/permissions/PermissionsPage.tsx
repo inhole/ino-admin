@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   createRole,
   getAvailablePermissions,
@@ -33,6 +34,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { LoadingPanel, PageHeader } from "@/components/layout/Page";
 
 export function PermissionsPage() {
+  const { t } = useTranslation("permissions");
+  const { t: common } = useTranslation("common");
   const catalog = useQuery({
     queryKey: permissionKeys.all,
     queryFn: getPermissionCatalog,
@@ -68,14 +71,14 @@ export function PermissionsPage() {
   return (
     <>
       <PageHeader
-        description="역할별 서버 접근 권한을 관리합니다."
-        eyebrow="IDENTITY"
-        title="권한 카탈로그"
+        description={t("description")}
+        eyebrow={t("eyebrow")}
+        title={t("title")}
       />
       {user?.permissions.includes("permission:update") && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>커스텀 역할 생성</CardTitle>
+            <CardTitle>{t("createTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             <form
@@ -92,24 +95,24 @@ export function PermissionsPage() {
             >
               <FieldGroup className="grid gap-3 md:grid-cols-3">
               <Field>
-              <FieldLabel htmlFor="role-key">역할 키</FieldLabel>
+              <FieldLabel htmlFor="role-key">{t("roleKey")}</FieldLabel>
               <Input id="role-key"
-                aria-label="역할 키"
+                aria-label={t("roleKey")}
                 name="role"
                 placeholder="CONTENT_EDITOR"
                 required
               /></Field>
               <Field>
-              <FieldLabel htmlFor="role-name">역할 이름</FieldLabel>
+              <FieldLabel htmlFor="role-name">{t("roleName")}</FieldLabel>
               <Input id="role-name"
-                aria-label="역할 이름"
+                aria-label={t("roleName")}
                 name="displayName"
-                placeholder="콘텐츠 편집자"
+                placeholder={t("roleNamePlaceholder")}
                 required
               /></Field>
               <Button className="self-end" disabled={create.isPending} type="submit">
                 {create.isPending && <Spinner data-icon="inline-start" />}
-                역할 생성
+                {t("create")}
               </Button>
               </FieldGroup>
             </form>
@@ -118,22 +121,22 @@ export function PermissionsPage() {
       )}
       <Card>
         <CardHeader>
-          <CardTitle>역할별 권한</CardTitle>
+          <CardTitle>{t("listTitle")}</CardTitle>
           <CardDescription>
-            API 접근에 사용되는 서버 권한 키입니다.
+            {t("listDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {catalog.isPending && (
-            <LoadingPanel label="권한을 불러오는 중…" />
+            <LoadingPanel label={t("loading")} />
           )}
           {catalog.isError && (
             <Alert variant="destructive" role="alert">
-              <AlertTitle>조회 오류</AlertTitle>
+              <AlertTitle>{t("errorTitle")}</AlertTitle>
               <AlertDescription>
                 {catalog.error instanceof ApiClientError
                   ? catalog.error.message
-                  : "권한을 불러올 수 없습니다."}
+                  : t("loadError")}
               </AlertDescription>
             </Alert>
           )}
@@ -163,14 +166,14 @@ export function PermissionsPage() {
                         size="sm"
                         variant="outline"
                       >
-                        {item.enabled ? "비활성화" : "활성화"}
+                        {item.enabled ? common("disable") : common("enable")}
                       </Button>
                       </CardAction>
                     )}
                   </CardHeader>
                   <CardContent>
                   <FieldSet>
-                    <FieldLegend className="sr-only">{item.displayName || item.role} 권한</FieldLegend>
+                    <FieldLegend className="sr-only">{t("permissionLegend", { name: item.displayName || item.role })}</FieldLegend>
                     <FieldGroup className="gap-1">
                     {available.data?.map((permission) => {
                       const checked = item.permissions.includes(permission);
@@ -213,7 +216,7 @@ export function PermissionsPage() {
                   </FieldSet>
                   {item.permissions.length === 0 && (
                     <p className="mt-2 text-sm text-muted-foreground">
-                      부여된 권한 없음
+                      {t("empty")}
                     </p>
                   )}
                   {update.isError && (
@@ -221,7 +224,7 @@ export function PermissionsPage() {
                       <AlertDescription>
                         {update.error instanceof ApiClientError
                           ? update.error.message
-                          : "권한을 변경할 수 없습니다."}
+                          : t("updateError")}
                       </AlertDescription>
                     </Alert>
                   )}
