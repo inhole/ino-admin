@@ -19,7 +19,7 @@ async function json(route: Route, body: unknown, status = 200) {
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
 }
 
-async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER') {
+async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: unknown[] = []) {
   const isSuperAdmin = role === 'SUPER_ADMIN'
   await page.route('**/api/v1/**', async (route) => {
     const path = new URL(route.request().url()).pathname
@@ -34,7 +34,9 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER') {
       ? json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
       : json(route, { code: 'FORBIDDEN', message: '접근 권한이 없습니다.' }, 403)
     if (path === '/api/v1/permissions') return json(route, [])
-    if (path === '/api/v1/files') return json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+    if (path === '/api/v1/files') return json(route, {
+      content: files, page: 0, size: 20, totalElements: files.length, totalPages: files.length > 0 ? 1 : 0,
+    })
     if (path === '/api/v1/samples') return json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
     return json(route, { code: 'NOT_FOUND', message: path }, 404)
   })
@@ -76,6 +78,24 @@ test('모바일에서 메뉴를 열어 파일 관리로 이동한다', async ({ 
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.getByRole('dialog').getByRole('link', { name: '파일 관리' }).click()
   await expect(page.getByRole('heading', { name: '파일 관리' })).toBeVisible()
+})
+
+test('파일 작업 메뉴에서 상세 정보를 확인한다', async ({ page }) => {
+  await authenticate(page, 'SUPER_ADMIN', [{
+    id: 'file-1', originalName: 'report.pdf', contentType: 'application/pdf',
+    size: 2048, createdAt: '2026-08-16T00:00:00Z',
+  }])
+  await page.getByRole('link', { name: '파일 관리' }).click()
+
+  await page.getByRole('button', { name: 'report.pdf 작업 메뉴' }).click()
+  await page.getByRole('menuitem', { name: '상세 보기' }).click()
+
+  const sheet = page.getByRole('dialog', { name: '파일 상세' })
+  await expect(sheet).toBeVisible()
+  await expect(sheet.getByText('application/pdf')).toBeVisible()
+  await expect(sheet.getByText('2 KB')).toBeVisible()
+  await sheet.getByRole('button', { name: '닫기' }).click()
+  await expect(sheet).toBeHidden()
 })
 
 test('선택한 다크 테마를 새로고침 후에도 유지한다', async ({ page }) => {
