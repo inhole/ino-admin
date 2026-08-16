@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ApiClientError } from "@/api/client";
@@ -30,6 +31,23 @@ function renderPage() {
   );
 }
 
+const storedFile = {
+  id: "file-1",
+  originalName: "report.pdf",
+  contentType: "application/pdf",
+  size: 2048,
+  createdAt: "2026-08-16T00:00:00Z",
+};
+
+async function chooseFileAction(name: string) {
+  fireEvent.click(
+    screen.getByRole("button", { name: "report.pdf 작업 메뉴" }),
+  );
+  const item = await screen.findByRole("menuitem", { name });
+  fireEvent.pointerDown(item, { pointerType: "mouse" });
+  fireEvent.click(item);
+}
+
 beforeEach(() => {
   Object.values(fileApi).forEach((mock) => mock.mockReset());
   fileApi.getMyFiles.mockResolvedValue({
@@ -41,7 +59,11 @@ beforeEach(() => {
   });
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 test("queues multiple dropped files and retries only the failed upload", async () => {
   const successful = new File(["ok"], "guide.pdf", {
@@ -181,4 +203,71 @@ test("resets applied file filters", async () => {
       direction: "desc",
     });
   });
+});
+
+test("opens file details from the row action menu", async () => {
+  fileApi.getMyFiles.mockResolvedValue({
+    content: [storedFile],
+    page: 0,
+    size: 20,
+    totalElements: 1,
+    totalPages: 1,
+  });
+  renderPage();
+  await screen.findByText("report.pdf");
+
+  await chooseFileAction("상세 보기");
+
+  const sheet = await screen.findByRole("dialog", { name: "파일 상세" });
+  expect(within(sheet).getByText("application/pdf")).toBeInTheDocument();
+  expect(within(sheet).getByText("2 KB")).toBeInTheDocument();
+  expect(within(sheet).getByText("file-1")).toBeInTheDocument();
+  fireEvent.click(within(sheet).getByRole("button", { name: "닫기" }));
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog", { name: "파일 상세" })).toBeNull(),
+  );
+});
+
+test("downloads a file from the row action menu", async () => {
+  fileApi.getMyFiles.mockResolvedValue({
+    content: [storedFile],
+    page: 0,
+    size: 20,
+    totalElements: 1,
+    totalPages: 1,
+  });
+  fileApi.downloadFile.mockResolvedValue(new Blob(["pdf"]));
+  vi.stubGlobal("URL", {
+    createObjectURL: vi.fn(() => "blob:file"),
+    revokeObjectURL: vi.fn(),
+  });
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  renderPage();
+  await screen.findByText("report.pdf");
+
+  await chooseFileAction("다운로드");
+
+  await waitFor(() => expect(fileApi.downloadFile).toHaveBeenCalledWith("file-1"));
+});
+
+test("confirms file deletion from the row action menu", async () => {
+  fileApi.getMyFiles.mockResolvedValue({
+    content: [storedFile],
+    page: 0,
+    size: 20,
+    totalElements: 1,
+    totalPages: 1,
+  });
+  fileApi.deleteFile.mockResolvedValue(undefined);
+  renderPage();
+  await screen.findByText("report.pdf");
+
+  await chooseFileAction("삭제");
+
+  const dialog = await screen.findByRole("alertdialog", {
+    name: "파일을 삭제할까요?",
+  });
+  expect(within(dialog).getByText(/report\.pdf/)).toBeInTheDocument();
+  fireEvent.click(within(dialog).getByRole("button", { name: "삭제" }));
+  await waitFor(() => expect(fileApi.deleteFile.mock.calls[0][0]).toBe("file-1"));
 });

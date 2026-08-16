@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   RiCloseLine,
-  RiDeleteBinLine,
-  RiDownloadLine,
   RiRefreshLine,
   RiUploadCloud2Line,
 } from "@remixicon/react";
@@ -11,17 +9,6 @@ import { useTranslation } from "react-i18next";
 import { ApiClientError } from "@/api/client";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +42,7 @@ import {
   type StoredFileSummary,
 } from "@/features/files/api/filesApi";
 import { FileListFilters } from "@/features/files/component/FileListFilters";
+import { FileRowActions } from "@/features/files/component/FileRowActions";
 import { fileKeys } from "@/features/files/hook/fileKeys";
 import {
   defaultFileListFilters,
@@ -119,7 +107,6 @@ export function FileManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [uploadItems, setUploadItems] = useState<UploadQueueItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
   const isUploading = uploadItems.some((item) => item.status === "uploading");
   const hasListFilters = Boolean(
     listParams.name ||
@@ -417,58 +404,13 @@ export function FileManagementPage() {
                       {formatDateTime(file.createdAt)}
                     </ItemDescription>
                   </ItemContent>
-                  <ItemActions className="w-full sm:w-auto">
-                    <Button
-                      className="min-h-11 flex-1 sm:flex-none"
-                      onClick={() => download(file)}
-                      variant="outline"
-                    >
-                      <RiDownloadLine data-icon="inline-start" />
-                      {common("download")}
-                    </Button>
-                    <AlertDialog
-                      onOpenChange={(open) =>
-                        setDeleteDialogId(open ? file.id : null)
-                      }
-                      open={deleteDialogId === file.id}
-                    >
-                      <AlertDialogTrigger
-                        render={
-                          <Button
-                            className="min-h-11 flex-1 sm:flex-none"
-                            disabled={remove.isPending}
-                            variant="destructive"
-                          >
-                            <RiDeleteBinLine data-icon="inline-start" />
-                            {common("remove")}
-                          </Button>
-                        }
-                      />
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            {t("deleteDescription", {
-                              name: file.originalName,
-                            })}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>
-                            {common("cancel")}
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => {
-                              remove.mutate(file.id);
-                              setDeleteDialogId(null);
-                            }}
-                            variant="destructive"
-                          >
-                            {common("remove")}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                  <ItemActions>
+                    <FileRowActions
+                      deleting={remove.isPending}
+                      file={file}
+                      onDelete={(fileId) => remove.mutate(fileId)}
+                      onDownload={download}
+                    />
                   </ItemActions>
                 </Item>
               ))}
