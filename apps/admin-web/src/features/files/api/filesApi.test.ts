@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { uploadFile } from "@/features/files/api/filesApi";
+import { getMyFiles, uploadFile } from "@/features/files/api/filesApi";
 
 interface XhrResult {
   status: number;
@@ -161,4 +161,37 @@ test("refreshes an expired session once and retries the upload", async () => {
   expect(sessionStorage.getItem("ino-admin.refresh-token")).toBe(
     "refresh-new",
   );
+});
+
+test("serializes file list filters and sorting as query parameters", async () => {
+  const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        content: [],
+        page: 0,
+        size: 20,
+        totalElements: 0,
+        totalPages: 0,
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    ),
+  );
+
+  await getMyFiles({
+    name: "report",
+    contentType: "application/pdf",
+    createdFrom: "2026-08-01T00:00:00.000Z",
+    createdTo: "2026-09-01T00:00:00.000Z",
+    sort: "originalName",
+    direction: "asc",
+  });
+
+  const requestedPath = fetchMock.mock.calls[0][0] as string;
+  const search = new URL(requestedPath, "http://localhost").searchParams;
+  expect(search.get("name")).toBe("report");
+  expect(search.get("contentType")).toBe("application/pdf");
+  expect(search.get("createdFrom")).toBe("2026-08-01T00:00:00.000Z");
+  expect(search.get("createdTo")).toBe("2026-09-01T00:00:00.000Z");
+  expect(search.get("sort")).toBe("originalName");
+  expect(search.get("direction")).toBe("asc");
 });

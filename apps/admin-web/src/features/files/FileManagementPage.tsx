@@ -6,7 +6,7 @@ import {
   RiRefreshLine,
   RiUploadCloud2Line,
 } from "@remixicon/react";
-import { useState, type ChangeEvent, type DragEvent } from "react";
+import { useMemo, useState, type ChangeEvent, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiClientError } from "@/api/client";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
@@ -51,9 +51,15 @@ import {
   downloadFile,
   getMyFiles,
   uploadFile,
+  type FileListParams,
   type StoredFileSummary,
 } from "@/features/files/api/filesApi";
+import { FileListFilters } from "@/features/files/component/FileListFilters";
 import { fileKeys } from "@/features/files/hook/fileKeys";
+import {
+  defaultFileListFilters,
+  type FileListFiltersValue,
+} from "@/features/files/model/fileListFilters";
 import { formatDateTime, formatFileSize } from "@/i18n/format";
 
 type UploadStatus = "queued" | "uploading" | "success" | "error";
@@ -78,16 +84,49 @@ function createUploadItem(file: File): UploadQueueItem {
   };
 }
 
+function localDateBoundary(value: string, nextDay = false) {
+  if (!value) return undefined;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day + (nextDay ? 1 : 0)).toISOString();
+}
+
+function toListParams(filters: FileListFiltersValue): FileListParams {
+  const [sort, direction] = filters.order.split(",") as [
+    FileListParams["sort"],
+    FileListParams["direction"],
+  ];
+  return {
+    name: filters.name.trim() || undefined,
+    contentType:
+      filters.contentType === "all" ? undefined : filters.contentType,
+    createdFrom: localDateBoundary(filters.createdFrom),
+    createdTo: localDateBoundary(filters.createdTo, true),
+    sort,
+    direction,
+  };
+}
+
 export function FileManagementPage() {
   const { t } = useTranslation("files");
   const { t: common } = useTranslation("common");
   const queryClient = useQueryClient();
-  const files = useQuery({ queryKey: fileKeys.all, queryFn: getMyFiles });
+  const [listFilters, setListFilters] = useState(defaultFileListFilters);
+  const listParams = useMemo(() => toListParams(listFilters), [listFilters]);
+  const files = useQuery({
+    queryKey: fileKeys.list(listParams),
+    queryFn: () => getMyFiles(listParams),
+  });
   const [error, setError] = useState<string | null>(null);
   const [uploadItems, setUploadItems] = useState<UploadQueueItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
   const isUploading = uploadItems.some((item) => item.status === "uploading");
+  const hasListFilters = Boolean(
+    listParams.name ||
+      listParams.contentType ||
+      listParams.createdFrom ||
+      listParams.createdTo,
+  );
 
   const remove = useMutation({
     mutationFn: deleteFile,
@@ -345,7 +384,9 @@ export function FileManagementPage() {
           <CardTitle>{t("listTitle")}</CardTitle>
           <CardDescription>{t("listDescription")}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-5">
+          <FileListFilters onApply={setListFilters} value={listFilters} />
+          <Separator />
           {files.isPending && (
             <div className="grid gap-3" role="status" aria-label={t("loading")}>
               {[1, 2, 3].map((row) => (
@@ -359,7 +400,9 @@ export function FileManagementPage() {
             </Alert>
           )}
           {files.data?.content.length === 0 && (
-            <StatusPanel>{t("empty")}</StatusPanel>
+            <StatusPanel>
+              {hasListFilters ? t("filter.empty") : t("empty")}
+            </StatusPanel>
           )}
           {files.data && files.data.content.length > 0 && (
             <ItemGroup>

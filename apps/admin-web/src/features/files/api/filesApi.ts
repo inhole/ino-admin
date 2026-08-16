@@ -13,8 +13,26 @@ export interface StoredFileSummary {
   createdAt: string;
 }
 
-export function getMyFiles() {
-  return request<PageResponse<StoredFileSummary>>("/api/v1/files");
+export interface FileListParams {
+  page?: number;
+  size?: number;
+  name?: string;
+  contentType?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  sort?: "createdAt" | "originalName" | "size";
+  direction?: "asc" | "desc";
+}
+
+export function getMyFiles(params: FileListParams = {}) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") search.set(key, String(value));
+  });
+  const query = search.toString();
+  return request<PageResponse<StoredFileSummary>>(
+    `/api/v1/files${query ? `?${query}` : ""}`,
+  );
 }
 export function deleteFile(fileId: string) {
   return request<void>(`/api/v1/files/${fileId}`, { method: "DELETE" });

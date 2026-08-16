@@ -115,3 +115,70 @@ test("adds multiple files through the labelled file input", async () => {
   expect(screen.getByText("two.txt")).toBeInTheDocument();
   expect(screen.getByText("업로드 목록 2개")).toBeInTheDocument();
 });
+
+test("applies name, type, date, and sort filters to the file query", async () => {
+  renderPage();
+  await waitFor(() => expect(fileApi.getMyFiles).toHaveBeenCalled());
+
+  fireEvent.change(screen.getByLabelText("파일 이름"), {
+    target: { value: " report " },
+  });
+  fireEvent.change(screen.getByLabelText("업로드 시작일"), {
+    target: { value: "2026-08-01" },
+  });
+  fireEvent.change(screen.getByLabelText("업로드 종료일"), {
+    target: { value: "2026-08-31" },
+  });
+
+  fireEvent.click(screen.getByRole("combobox", { name: "파일 유형" }));
+  const pdfOption = await screen.findByRole("option", { name: "PDF" });
+  fireEvent.pointerDown(pdfOption, { pointerType: "mouse" });
+  fireEvent.click(pdfOption);
+  fireEvent.click(screen.getByRole("combobox", { name: "정렬" }));
+  const nameOption = await screen.findByRole("option", {
+    name: "이름 오름차순",
+  });
+  fireEvent.pointerDown(nameOption, { pointerType: "mouse" });
+  fireEvent.click(nameOption);
+  fireEvent.click(screen.getByRole("button", { name: "검색" }));
+
+  const createdFrom = new Date(2026, 7, 1).toISOString();
+  const createdTo = new Date(2026, 8, 1).toISOString();
+  await waitFor(() => {
+    expect(fileApi.getMyFiles).toHaveBeenLastCalledWith({
+      name: "report",
+      contentType: "application/pdf",
+      createdFrom,
+      createdTo,
+      sort: "originalName",
+      direction: "asc",
+    });
+  });
+});
+
+test("resets applied file filters", async () => {
+  renderPage();
+  await waitFor(() => expect(fileApi.getMyFiles).toHaveBeenCalled());
+  fireEvent.change(screen.getByLabelText("파일 이름"), {
+    target: { value: "report" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "검색" }));
+  await waitFor(() =>
+    expect(fileApi.getMyFiles).toHaveBeenLastCalledWith(
+      expect.objectContaining({ name: "report" }),
+    ),
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "초기화" }));
+
+  await waitFor(() => {
+    expect(fileApi.getMyFiles).toHaveBeenLastCalledWith({
+      name: undefined,
+      contentType: undefined,
+      createdFrom: undefined,
+      createdTo: undefined,
+      sort: "createdAt",
+      direction: "desc",
+    });
+  });
+});

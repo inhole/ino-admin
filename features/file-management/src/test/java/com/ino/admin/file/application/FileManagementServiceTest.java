@@ -18,7 +18,10 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -79,10 +82,37 @@ class FileManagementServiceTest {
     @Test void listsOnlyOwnersFiles() {
         var file = StoredFile.create(ownerId, "report.pdf", "key", "application/pdf", 4,
                 Instant.parse("2026-08-14T00:00:00Z"));
-        when(repository.findAllByOwnerIdAndStatus(org.mockito.ArgumentMatchers.eq(ownerId),
-                org.mockito.ArgumentMatchers.eq(com.ino.admin.file.domain.FileStatus.READY), any()))
+        when(repository.search(org.mockito.ArgumentMatchers.eq(ownerId),
+                org.mockito.ArgumentMatchers.eq(com.ino.admin.file.domain.FileStatus.READY),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.isNull(), any()))
                 .thenReturn(new PageImpl<>(java.util.List.of(file)));
-        assertThat(service.list(ownerId, 0, 20).content()).extracting("originalName").containsExactly("report.pdf");
+        var query = new com.ino.admin.file.api.FileManagementUseCase.FileListQuery(null, null, null, null,
+                com.ino.admin.file.api.FileManagementUseCase.FileSort.CREATED_AT,
+                com.ino.admin.file.api.FileManagementUseCase.SortDirection.DESC);
+        assertThat(service.list(ownerId, query, 0, 20).content()).extracting("originalName").containsExactly("report.pdf");
+    }
+
+    @Test void appliesFileFiltersAndWhitelistedSort() {
+        var from = Instant.parse("2026-08-01T00:00:00Z");
+        var to = Instant.parse("2026-09-01T00:00:00Z");
+        when(repository.search(org.mockito.ArgumentMatchers.eq(ownerId),
+                org.mockito.ArgumentMatchers.eq(com.ino.admin.file.domain.FileStatus.READY),
+                org.mockito.ArgumentMatchers.eq("report"), org.mockito.ArgumentMatchers.eq("application/pdf"),
+                org.mockito.ArgumentMatchers.eq(from), org.mockito.ArgumentMatchers.eq(to), any()))
+                .thenReturn(Page.empty());
+        var query = new com.ino.admin.file.api.FileManagementUseCase.FileListQuery("  report  ", "application/pdf", from, to,
+                com.ino.admin.file.api.FileManagementUseCase.FileSort.ORIGINAL_NAME,
+                com.ino.admin.file.api.FileManagementUseCase.SortDirection.ASC);
+
+        service.list(ownerId, query, 0, 20);
+
+        var pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(repository).search(org.mockito.ArgumentMatchers.eq(ownerId),
+                org.mockito.ArgumentMatchers.eq(com.ino.admin.file.domain.FileStatus.READY),
+                org.mockito.ArgumentMatchers.eq("report"), org.mockito.ArgumentMatchers.eq("application/pdf"),
+                org.mockito.ArgumentMatchers.eq(from), org.mockito.ArgumentMatchers.eq(to), pageable.capture());
+        assertThat(pageable.getValue().getSort().getOrderFor("originalName").getDirection()).isEqualTo(Sort.Direction.ASC);
     }
 
     @Test void deletesOwnedObjectAndMetadata() {
