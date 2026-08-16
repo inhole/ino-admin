@@ -1,5 +1,11 @@
 import '@testing-library/jest-dom/vitest'
-import '@/i18n'
+import { beforeEach } from 'vitest'
+import i18n from '@/i18n'
+
+beforeEach(async () => {
+  localStorage.removeItem('ino-admin.locale')
+  await i18n.changeLanguage('ko')
+})
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/features/auth/hook/useAuth";
-import { ThemeMenu } from "@/features/settings";
+import { LanguageMenu, ThemeMenu } from "@/features/settings";
 
 export function LoginPage() {
   const { t } = useTranslation("auth");
@@ -64,7 +64,8 @@ export function LoginPage() {
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent_34%),radial-gradient(circle_at_90%_90%,color-mix(in_oklch,var(--accent)_55%,transparent),transparent_32%)]"
       />
-      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+      <div className="absolute right-4 top-4 flex gap-1 sm:right-6 sm:top-6">
+        <LanguageMenu />
         <ThemeMenu />
       </div>
       <Card className="relative w-full max-w-md border-border/80 shadow-2xl shadow-primary/10">

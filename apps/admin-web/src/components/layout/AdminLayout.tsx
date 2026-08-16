@@ -32,7 +32,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/hook/useAuth";
-import { ThemeMenu } from "@/features/settings";
+import { LanguageMenu, ThemeMenu } from "@/features/settings";
 
 const iconMap = {
   users: Users,
@@ -41,6 +41,14 @@ const iconMap = {
   file: File,
   "layout-dashboard": LayoutDashboard,
 };
+
+const menuLabelKeys = {
+  dashboard: "navDashboard",
+  users: "navUsers",
+  permissions: "navPermissions",
+  "menu-management": "navMenuManagement",
+  files: "navFiles",
+} as const;
 
 function CloseMobileSidebarOnNavigation() {
   const { pathname } = useLocation();
@@ -65,6 +73,10 @@ export function AdminLayout() {
       ? location.pathname === "/"
       : location.pathname.startsWith(menu.route),
   );
+  const menuLabel = (menu: { id: string; label: string }) => {
+    const key = menuLabelKeys[menu.id as keyof typeof menuLabelKeys];
+    return key ? t(key) : menu.label;
+  };
 
   const signOut = async () => {
     queryClient.clear();
@@ -86,6 +98,7 @@ export function AdminLayout() {
             ))}
             {menus.data?.map((menu) => {
               const Icon = iconMap[menu.icon as keyof typeof iconMap] ?? LayoutDashboard;
+              const label = menuLabel(menu);
               const active = menu.route === "/"
                 ? location.pathname === "/"
                 : location.pathname.startsWith(menu.route);
@@ -94,10 +107,10 @@ export function AdminLayout() {
                   <SidebarMenuButton
                     isActive={active}
                     render={<NavLink to={menu.route} />}
-                    tooltip={menu.label}
+                    tooltip={label}
                   >
                     <Icon aria-hidden="true" />
-                    <span>{menu.label}</span>
+                    <span>{label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );
@@ -126,13 +139,14 @@ export function AdminLayout() {
                   <BreadcrumbSeparator className="hidden sm:block" />
                   <BreadcrumbItem className="min-w-0">
                     <BreadcrumbPage className="truncate font-semibold">
-                      {currentMenu?.label ?? t("appName")}
+                      {currentMenu ? menuLabel(currentMenu) : t("appName")}
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
               )}
             </BreadcrumbList>
           </Breadcrumb>
+          <LanguageMenu />
           <ThemeMenu />
           <DropdownMenu>
             <DropdownMenuTrigger

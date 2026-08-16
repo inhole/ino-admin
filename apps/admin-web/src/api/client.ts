@@ -59,7 +59,7 @@ export function onSessionExpired(listener: () => void) {
 async function errorFrom(response: Response) {
   const error = (await response.json().catch(() => null)) as ApiError | null;
   return new ApiClientError(
-    error?.message ?? "서버에 연결할 수 없습니다.",
+    error?.message ?? i18n.t("common.connectionError"),
     response.status,
     error?.code,
   );
@@ -126,7 +126,7 @@ export async function refreshSession() {
   if (refreshRequest) return refreshRequest;
   const refreshToken = sessionStorage.getItem(refreshTokenKey);
   if (!refreshToken) {
-    throw new ApiClientError("인증이 필요합니다.", 401, "UNAUTHORIZED");
+    throw new ApiClientError(i18n.t("common.authenticationRequired"), 401, "UNAUTHORIZED");
   }
   refreshRequest = (async () => {
     const response = await fetch(`${apiBaseUrl}/api/v1/auth/refresh`, {
@@ -157,3 +157,4 @@ export async function destroySession() {
   });
   if (!response.ok) throw await errorFrom(response);
 }
+import i18n from "@/i18n";

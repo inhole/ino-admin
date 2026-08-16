@@ -219,11 +219,11 @@ export function FileManagementPage() {
                       } />
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>파일을 삭제할까요?</AlertDialogTitle>
-                          <AlertDialogDescription>{file.originalName} 파일은 삭제 후 복구할 수 없습니다.</AlertDialogDescription>
+                          <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
+                          <AlertDialogDescription>{t("deleteDescription", { name: file.originalName })}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogCancel>{common("cancel")}</AlertDialogCancel>
                           <AlertDialogAction variant="destructive" onClick={() => {
                             remove.mutate(file.id);
                             setDeleteDialogId(null);
