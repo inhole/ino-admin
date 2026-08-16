@@ -1,3 +1,5 @@
+import i18n from "@/i18n";
+
 export interface PageResponse<T> {
   content: T[];
   page: number;
@@ -94,14 +96,65 @@ export async function request<T>(
   return response.json() as Promise<T>;
 }
 
-export async function requestForm<T>(path: string, form: FormData) {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    method: "POST",
-    headers: authorizedHeaders(),
-    body: form,
+function formErrorFrom(request: XMLHttpRequest) {
+  const error = request.response as ApiError | null;
+  return new ApiClientError(
+    error?.message ?? i18n.t("common.connectionError"),
+    request.status,
+    error?.code,
+  );
+}
+
+function sendForm<T>(
+  path: string,
+  form: FormData,
+  onProgress?: (percentage: number) => void,
+) {
+  return new Promise<T>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", `${apiBaseUrl}${path}`);
+    request.responseType = "json";
+    authorizedHeaders().forEach((value, name) =>
+      request.setRequestHeader(name, value),
+    );
+    request.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) {
+        onProgress?.(Math.round((event.loaded / event.total) * 100));
+      }
+    });
+    request.addEventListener("load", () => {
+      if (request.status >= 200 && request.status < 300) {
+        onProgress?.(100);
+        resolve(request.response as T);
+        return;
+      }
+      reject(formErrorFrom(request));
+    });
+    request.addEventListener("error", () => reject(formErrorFrom(request)));
+    request.send(form);
   });
-  if (!response.ok) throw await errorFrom(response);
-  return response.json() as Promise<T>;
+}
+
+export async function requestForm<T>(
+  path: string,
+  form: FormData,
+  onProgress?: (percentage: number) => void,
+  retryAfterRefresh = true,
+): Promise<T> {
+  try {
+    return await sendForm<T>(path, form, onProgress);
+  } catch (caught) {
+    if (
+      caught instanceof ApiClientError &&
+      caught.status === 401 &&
+      retryAfterRefresh &&
+      hasRefreshToken()
+    ) {
+      await refreshSession();
+      return requestForm<T>(path, form, onProgress, false);
+    }
+    throw caught;
+  }
 }
 
 export async function requestBlob(path: string) {
@@ -157,4 +210,3 @@ export async function destroySession() {
   });
   if (!response.ok) throw await errorFrom(response);
 }
-import i18n from "@/i18n";

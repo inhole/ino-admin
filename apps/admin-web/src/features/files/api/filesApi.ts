@@ -19,10 +19,13 @@ export function getMyFiles() {
 export function deleteFile(fileId: string) {
   return request<void>(`/api/v1/files/${fileId}`, { method: "DELETE" });
 }
-export function uploadFile(file: File) {
+export function uploadFile(
+  file: File,
+  onProgress?: (percentage: number) => void,
+) {
   const form = new FormData();
   form.append("file", file);
-  return requestForm<StoredFileSummary>("/api/v1/files", form);
+  return requestForm<StoredFileSummary>("/api/v1/files", form, onProgress);
 }
 export function downloadFile(fileId: string) {
   return requestBlob(`/api/v1/files/${fileId}/content`);

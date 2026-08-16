@@ -1,16 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, FileUp, Trash2 } from "lucide-react";
-import { useState, type ChangeEvent } from "react";
-import { useTranslation } from "react-i18next";
 import {
-  deleteFile,
-  downloadFile,
-  getMyFiles,
-  uploadFile,
-  type StoredFileSummary,
-} from "@/features/files/api/filesApi";
+  RiCloseLine,
+  RiDeleteBinLine,
+  RiDownloadLine,
+  RiRefreshLine,
+  RiUploadCloud2Line,
+} from "@remixicon/react";
+import { useState, type ChangeEvent, type DragEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { ApiClientError } from "@/api/client";
-import { fileKeys } from "@/features/files/hook/fileKeys";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -24,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,22 +31,52 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Field, FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Field,
-  FieldDescription,
-} from "@/components/ui/field";
 import {
   Item,
   ItemActions,
   ItemContent,
   ItemDescription,
+  ItemFooter,
   ItemGroup,
   ItemTitle,
 } from "@/components/ui/item";
+import { Progress, ProgressValue } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import {
+  deleteFile,
+  downloadFile,
+  getMyFiles,
+  uploadFile,
+  type StoredFileSummary,
+} from "@/features/files/api/filesApi";
+import { fileKeys } from "@/features/files/hook/fileKeys";
 import { formatDateTime, formatFileSize } from "@/i18n/format";
+
+type UploadStatus = "queued" | "uploading" | "success" | "error";
+
+interface UploadQueueItem {
+  id: string;
+  file: File;
+  status: UploadStatus;
+  progress: number;
+  error?: string;
+}
+
+let uploadSequence = 0;
+
+function createUploadItem(file: File): UploadQueueItem {
+  uploadSequence += 1;
+  return {
+    id: `${file.name}-${file.lastModified}-${uploadSequence}`,
+    file,
+    status: "queued",
+    progress: 0,
+  };
+}
 
 export function FileManagementPage() {
   const { t } = useTranslation("files");
@@ -55,21 +84,11 @@ export function FileManagementPage() {
   const queryClient = useQueryClient();
   const files = useQuery({ queryKey: fileKeys.all, queryFn: getMyFiles });
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [uploadItems, setUploadItems] = useState<UploadQueueItem[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
-  const upload = useMutation({
-    mutationFn: uploadFile,
-    onSuccess: async () => {
-      setError(null);
-      toast.add({ title: t("uploaded") });
-      setSelected(null);
-      await queryClient.invalidateQueries({ queryKey: fileKeys.all });
-    },
-    onError: (caught) =>
-      setError(
-        caught instanceof ApiClientError ? caught.message : t("uploadError"),
-      ),
-  });
+  const isUploading = uploadItems.some((item) => item.status === "uploading");
+
   const remove = useMutation({
     mutationFn: deleteFile,
     onSuccess: async () => {
@@ -82,12 +101,88 @@ export function FileManagementPage() {
         caught instanceof ApiClientError ? caught.message : t("deleteError"),
       ),
   });
+
+  const addFiles = (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) return;
+    setUploadItems((current) => [
+      ...current,
+      ...selectedFiles.map(createUploadItem),
+    ]);
+  };
+
   const select = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    setSelected(file?.name ?? null);
-    if (file) upload.mutate(file);
+    addFiles(Array.from(event.target.files ?? []));
     event.target.value = "";
   };
+
+  const drop = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    addFiles(Array.from(event.dataTransfer.files));
+  };
+
+  const updateUploadItem = (
+    id: string,
+    update: Partial<Omit<UploadQueueItem, "id" | "file">>,
+  ) => {
+    setUploadItems((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...update } : item)),
+    );
+  };
+
+  const uploadTargets = async (targets: UploadQueueItem[]) => {
+    if (targets.length === 0 || isUploading) return;
+    targets.forEach((item) =>
+      updateUploadItem(item.id, {
+        status: "uploading",
+        progress: 0,
+        error: undefined,
+      }),
+    );
+
+    const outcomes = await Promise.all(
+      targets.map(async (item) => {
+        try {
+          await uploadFile(item.file, (progress) =>
+            updateUploadItem(item.id, { progress }),
+          );
+          updateUploadItem(item.id, { status: "success", progress: 100 });
+          return true;
+        } catch (caught) {
+          updateUploadItem(item.id, {
+            status: "error",
+            error:
+              caught instanceof ApiClientError
+                ? caught.message
+                : t("uploadError"),
+          });
+          return false;
+        }
+      }),
+    );
+
+    const successCount = outcomes.filter(Boolean).length;
+    const failureCount = outcomes.length - successCount;
+    if (successCount > 0) {
+      await queryClient.invalidateQueries({ queryKey: fileKeys.all });
+    }
+    toast.add({
+      title: t("uploadSummary", { successCount, failureCount }),
+    });
+  };
+
+  const uploadQueued = () => {
+    void uploadTargets(
+      uploadItems.filter(
+        (item) => item.status === "queued" || item.status === "error",
+      ),
+    );
+  };
+
+  const removeUploadItem = (id: string) => {
+    setUploadItems((current) => current.filter((item) => item.id !== id));
+  };
+
   const download = async (file: StoredFileSummary) => {
     try {
       const blob = await downloadFile(file.id);
@@ -103,6 +198,17 @@ export function FileManagementPage() {
       );
     }
   };
+
+  const statusBadge = (item: UploadQueueItem) => {
+    const variant =
+      item.status === "error"
+        ? "destructive"
+        : item.status === "queued"
+          ? "outline"
+          : "secondary";
+    return <Badge variant={variant}>{t(`status.${item.status}`)}</Badge>;
+  };
+
   return (
     <>
       <PageHeader
@@ -115,41 +221,117 @@ export function FileManagementPage() {
           <CardTitle>{t("uploadTitle")}</CardTitle>
           <CardDescription>{t("uploadDescription")}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-5">
           <Field>
-          <Button
-            className="min-h-32 w-full flex-col"
-            nativeButton={false}
-            render={<label htmlFor="file-upload" />}
-            variant="outline"
-          >
-            <FileUp aria-hidden="true" data-icon="inline-start" />
-            {t("input")}
-            <Input
-              aria-label={t("input")}
-              accept=".pdf,.png,.jpg,.jpeg,.txt"
-              className="sr-only"
-              disabled={upload.isPending}
-              id="file-upload"
-              onChange={select}
-              type="file"
-            />
-          </Button>
-          {selected && (
-            <FieldDescription className="break-all">
-              {t("selected", { name: selected })}
-            </FieldDescription>
-          )}
-          </Field>
-          {upload.isPending && (
-            <div
-              className="mt-4 grid gap-2"
-              role="status"
-              aria-label={t("uploading")}
+            <Button
+              className="min-h-32 w-full flex-col"
+              disabled={isUploading}
+              nativeButton={false}
+              onDragEnter={() => setIsDragging(true)}
+              onDragLeave={() => setIsDragging(false)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={drop}
+              render={<label htmlFor="file-upload" />}
+              variant="outline"
             >
-              <Skeleton className="h-2 w-full" />
-              <p className="text-sm">{t("uploading")}</p>
-            </div>
+              <RiUploadCloud2Line aria-hidden="true" data-icon="inline-start" />
+              {isDragging ? t("dropActive") : t("input")}
+              <Input
+                accept=".pdf,.png,.jpg,.jpeg,.txt"
+                aria-label={t("input")}
+                className="sr-only"
+                disabled={isUploading}
+                id="file-upload"
+                multiple
+                onChange={select}
+                type="file"
+              />
+            </Button>
+            <FieldDescription>{t("dropHint")}</FieldDescription>
+          </Field>
+
+          {uploadItems.length > 0 && (
+            <>
+              <Separator />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-medium">
+                  {t("queueTitle", { count: uploadItems.length })}
+                </p>
+                <Button
+                  disabled={
+                    isUploading ||
+                    !uploadItems.some(
+                      (item) =>
+                        item.status === "queued" || item.status === "error",
+                    )
+                  }
+                  onClick={uploadQueued}
+                >
+                  <RiUploadCloud2Line data-icon="inline-start" />
+                  {isUploading ? t("uploading") : t("uploadAll")}
+                </Button>
+              </div>
+              <ItemGroup aria-live="polite">
+                {uploadItems.map((item) => (
+                  <Item key={item.id} variant="outline">
+                    <ItemContent className="min-w-0">
+                      <ItemTitle className="break-all">
+                        {item.file.name}
+                      </ItemTitle>
+                      <ItemDescription>
+                        {formatFileSize(item.file.size)} ·{" "}
+                        {item.file.type || t("unknownType")}
+                      </ItemDescription>
+                    </ItemContent>
+                    {statusBadge(item)}
+                    <ItemActions>
+                      {item.status === "error" && (
+                        <Button
+                          aria-label={t("retryFile", { name: item.file.name })}
+                          disabled={isUploading}
+                          onClick={() => void uploadTargets([item])}
+                          size="icon-sm"
+                          title={common("retry")}
+                          variant="outline"
+                        >
+                          <RiRefreshLine />
+                        </Button>
+                      )}
+                      {item.status !== "uploading" && (
+                        <Button
+                          aria-label={t("removeFile", { name: item.file.name })}
+                          disabled={isUploading}
+                          onClick={() => removeUploadItem(item.id)}
+                          size="icon-sm"
+                          title={t("removeFromQueue")}
+                          variant="ghost"
+                        >
+                          <RiCloseLine />
+                        </Button>
+                      )}
+                    </ItemActions>
+                    {item.status === "uploading" && (
+                      <ItemFooter className="w-full">
+                        <Progress
+                          aria-label={t("fileProgress", {
+                            name: item.file.name,
+                          })}
+                          className="w-full"
+                          value={item.progress}
+                        >
+                          <ProgressValue />
+                        </Progress>
+                      </ItemFooter>
+                    )}
+                    {item.status === "error" && item.error && (
+                      <ItemFooter className="w-full">
+                        <p className="text-sm text-destructive">{item.error}</p>
+                      </ItemFooter>
+                    )}
+                  </Item>
+                ))}
+              </ItemGroup>
+            </>
           )}
         </CardContent>
       </Card>
@@ -198,7 +380,7 @@ export function FileManagementPage() {
                       onClick={() => download(file)}
                       variant="outline"
                     >
-                      <Download data-icon="inline-start" />
+                      <RiDownloadLine data-icon="inline-start" />
                       {common("download")}
                     </Button>
                     <AlertDialog
@@ -207,27 +389,40 @@ export function FileManagementPage() {
                       }
                       open={deleteDialogId === file.id}
                     >
-                      <AlertDialogTrigger render={
-                        <Button
-                          className="min-h-11 flex-1 sm:flex-none"
-                          disabled={remove.isPending}
-                          variant="destructive"
-                        >
-                          <Trash2 data-icon="inline-start" />
-                          {common("remove")}
-                        </Button>
-                      } />
+                      <AlertDialogTrigger
+                        render={
+                          <Button
+                            className="min-h-11 flex-1 sm:flex-none"
+                            disabled={remove.isPending}
+                            variant="destructive"
+                          >
+                            <RiDeleteBinLine data-icon="inline-start" />
+                            {common("remove")}
+                          </Button>
+                        }
+                      />
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
-                          <AlertDialogDescription>{t("deleteDescription", { name: file.originalName })}</AlertDialogDescription>
+                          <AlertDialogDescription>
+                            {t("deleteDescription", {
+                              name: file.originalName,
+                            })}
+                          </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>{common("cancel")}</AlertDialogCancel>
-                          <AlertDialogAction variant="destructive" onClick={() => {
-                            remove.mutate(file.id);
-                            setDeleteDialogId(null);
-                          }}>{common("remove")}</AlertDialogAction>
+                          <AlertDialogCancel>
+                            {common("cancel")}
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              remove.mutate(file.id);
+                              setDeleteDialogId(null);
+                            }}
+                            variant="destructive"
+                          >
+                            {common("remove")}
+                          </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
