@@ -49,8 +49,8 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER') {
 test('SUPER_ADMIN에게 관리 메뉴를 모두 노출한다', async ({ page }) => {
   await authenticate(page, 'SUPER_ADMIN')
 
-  await expect(page.getByRole('link', { name: '사용자 관리' })).toBeVisible()
-  await expect(page.getByRole('link', { name: '권한 관리' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '사용자' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '권한' })).toBeVisible()
   await expect(page.getByRole('link', { name: '메뉴 관리' })).toBeVisible()
   await page.getByRole('button', { name: '계정 메뉴' }).click()
   await expect(page.getByRole('menuitem', { name: '로그아웃' })).toBeVisible()
@@ -63,8 +63,8 @@ test('SUPER_ADMIN에게 관리 메뉴를 모두 노출한다', async ({ page }) 
 test('VIEWER는 관리 메뉴가 없고 직접 접근해도 서버의 403을 처리한다', async ({ page }) => {
   await authenticate(page, 'VIEWER')
 
-  await expect(page.getByRole('link', { name: '사용자 관리' })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: '권한 관리' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: '사용자' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: '권한' })).toHaveCount(0)
   await page.goto('/users')
   await expect(page.getByRole('alert')).toContainText('사용자 목록을 볼 권한이 없습니다.')
 })
