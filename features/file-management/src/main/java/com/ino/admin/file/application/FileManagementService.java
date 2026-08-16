@@ -56,9 +56,17 @@ public class FileManagementService implements FileManagementUseCase {
     }
 
     @Override @Transactional(readOnly = true)
-    public FilePage list(UUID ownerId, int page, int size) {
-        var result = repository.findAllByOwnerIdAndStatus(ownerId, com.ino.admin.file.domain.FileStatus.READY,
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+    public FilePage list(UUID ownerId, FileListQuery query, int page, int size) {
+        var direction = query.direction() == SortDirection.ASC ? Sort.Direction.ASC : Sort.Direction.DESC;
+        var property = switch (query.sort()) {
+            case CREATED_AT -> "createdAt";
+            case ORIGINAL_NAME -> "originalName";
+            case SIZE -> "size";
+        };
+        var pageable = PageRequest.of(page, size, Sort.by(direction, property).and(Sort.by(Sort.Direction.ASC, "id")));
+        var name = query.name() == null || query.name().isBlank() ? null : query.name().strip();
+        var result = repository.search(ownerId, com.ino.admin.file.domain.FileStatus.READY, name,
+                query.contentType(), query.createdFrom(), query.createdTo(), pageable);
         return new FilePage(result.getContent().stream().map(file -> new FileSummary(file.id(), file.originalName(),
                 file.contentType(), file.size(), file.createdAt())).toList(), page, size, result.getTotalElements(), result.getTotalPages());
     }
