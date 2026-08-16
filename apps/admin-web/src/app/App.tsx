@@ -11,7 +11,15 @@ export function App() {
   return (
     <Routes>
       <Route element={<LoginPage />} path="/login" />
-      <Route element={<ProtectedRoute />}><Route element={<AdminLayout />}><Route element={<DashboardPage />} path="/" /><Route element={<UsersPage />} path="/users" /><Route element={<PermissionsPage />} path="/permissions" /><Route element={<MenuManagementPage />} path="/menu-management" /><Route element={<FileManagementPage />} path="/files" /></Route></Route>
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route element={<DashboardPage />} path="/" />
+          <Route element={<UsersPage />} path="/users" />
+          <Route element={<PermissionsPage />} path="/permissions" />
+          <Route element={<MenuManagementPage />} path="/menu-management" />
+          <Route element={<FileManagementPage />} path="/files" />
+        </Route>
+      </Route>
     </Routes>
   )
 }
