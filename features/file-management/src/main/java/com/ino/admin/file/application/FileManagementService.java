@@ -5,12 +5,17 @@ import com.ino.admin.file.api.FileNotFoundException;
 import com.ino.admin.file.api.InvalidFileException;
 import com.ino.admin.file.application.port.FileStorage;
 import com.ino.admin.file.config.FileStorageProperties;
+import com.ino.admin.file.domain.FileStatus;
 import com.ino.admin.file.domain.StoredFile;
 import com.ino.admin.file.infrastructure.persistence.StoredFileRepository;
+import jakarta.persistence.criteria.Predicate;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
@@ -65,8 +70,7 @@ public class FileManagementService implements FileManagementUseCase {
         };
         var pageable = PageRequest.of(page, size, Sort.by(direction, property).and(Sort.by(Sort.Direction.ASC, "id")));
         var name = query.name() == null || query.name().isBlank() ? null : query.name().strip();
-        var result = repository.search(ownerId, com.ino.admin.file.domain.FileStatus.READY, name,
-                query.contentType(), query.createdFrom(), query.createdTo(), pageable);
+        var result = repository.findAll(fileListSpecification(ownerId, name, query), pageable);
         return new FilePage(result.getContent().stream().map(file -> new FileSummary(file.id(), file.originalName(),
                 file.contentType(), file.size(), file.createdAt())).toList(), page, size, result.getTotalElements(), result.getTotalPages());
     }
@@ -74,6 +78,29 @@ public class FileManagementService implements FileManagementUseCase {
     @Override
     public void delete(UUID requesterId, UUID fileId) {
         deletionCoordinator.delete(requesterId, fileId);
+    }
+
+    private Specification<com.ino.admin.file.domain.StoredFile> fileListSpecification(
+            UUID ownerId, String name, FileListQuery query) {
+        return (root, ignored, criteriaBuilder) -> {
+            var predicates = new ArrayList<Predicate>();
+            predicates.add(criteriaBuilder.equal(root.get("ownerId"), ownerId));
+            predicates.add(criteriaBuilder.equal(root.get("status"), FileStatus.READY));
+            if (name != null) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("originalName")),
+                        "%" + name.toLowerCase(Locale.ROOT) + "%"));
+            }
+            if (query.contentType() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("contentType"), query.contentType()));
+            }
+            if (query.createdFrom() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), query.createdFrom()));
+            }
+            if (query.createdTo() != null) {
+                predicates.add(criteriaBuilder.lessThan(root.get("createdAt"), query.createdTo()));
+            }
+            return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
+        };
     }
 
     private void validate(UploadFile command) {
