@@ -14,15 +14,18 @@
 ## Workflow
 - Preserve unrelated user changes and keep each change focused on one verifiable objective.
 - Write commit summaries in Korean using `type: 변경사항`. Use the `ino-admin-deliver-change` skill when preparing commits and pull requests.
+- Use `dev` as the long-lived integration branch. Send small, isolated changes directly to `dev`; use a feature branch for risky, long-running, or parallel work and merge it into `dev` with a merge commit.
+- Only a `dev` → `main` batch PR may target `main`. Keep logical commits by avoiding squash and rebase merges, and fast-forward `dev` from `main` after the batch merge.
+- Link ordinary commits with `Refs: #123`; list every completed issue in a batch PR with `Closes #123`.
 - Add or update tests whenever behavior changes.
 - Manage every database change with Flyway. Never edit an applied migration; add a new migration instead.
 - Store server timestamps in UTC and inject `Clock` into time-dependent domain logic.
 - Do not add speculative reusable abstractions; extract a common module only after its behavior and boundary are validated.
 
 ## Verification
-- Backend changes: run affected module tests and architecture tests; for a phase gate run `gradlew clean test integrationTest architectureTest` when those tasks exist.
-- Frontend changes: run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` from `apps/admin-web`.
-- Infrastructure changes: run `docker compose -f infra/compose.yaml config` and relevant health checks.
+- Write tests first. GitHub Actions runs the verification that matches the changed surface: `Dev CI` for `dev`, `Dev Infra CI` for `infra/**`, and `Main Integration CI` for a `dev` → `main` batch PR.
+- Local tests are optional for debugging or a focused single-test check; do not represent an unobserved local RED-GREEN cycle as local TDD.
+- Report completion only after the required GitHub Actions checks pass. If Actions is unavailable, report the work as unverified and do not merge it.
 - Report commands executed, results, and checks that could not be run.
 
 ## Security

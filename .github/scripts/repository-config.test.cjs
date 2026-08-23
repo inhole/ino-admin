@@ -14,6 +14,10 @@ function readWorkflow(fileName) {
   return readFileSync(path.join(repositoryRoot, '.github', 'workflows', fileName), 'utf8');
 }
 
+function readRepositoryFile(...segments) {
+  return readFileSync(path.join(repositoryRoot, ...segments), 'utf8');
+}
+
 function assertIncludesAll(content, values) {
   for (const value of values) {
     assert.ok(content.includes(value), `expected form to include ${value}`);
@@ -131,4 +135,28 @@ test('main 통합 CI는 main 대상 PR과 수동 실행에서 전체 검증을 �
     'npm run test:e2e',
   ]);
   assert.ok(!content.includes('push:'), 'main 통합 CI는 push에서 실행하면 안 됩니다');
+});
+
+test('개발 규칙 문서는 dev 배치 흐름과 이슈 연결 규칙을 일관되게 설명한다', () => {
+  assertIncludesAll(readRepositoryFile('AGENTS.md'), [
+    'dev',
+    'GitHub Actions',
+    'Refs: #',
+    'Closes #',
+  ]);
+  assertIncludesAll(readRepositoryFile('docs', 'development', 'branch-strategy.md'), [
+    'feature branch → dev',
+    'dev → main',
+    'merge commit',
+    'fast-forward',
+  ]);
+  assertIncludesAll(readRepositoryFile('docs', 'development', 'commit-convention.md'), [
+    'type: 한글 변경사항',
+    'Refs: #123',
+  ]);
+  assertIncludesAll(readRepositoryFile('.docs', 'PROJECT_PLAN.md'), [
+    '장기 dev',
+    'test-first',
+    'CI 검증 완료',
+  ]);
 });
