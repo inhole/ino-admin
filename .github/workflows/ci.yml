@@ -37,7 +37,7 @@ jobs:
             -e MINIO_ROOT_USER=ino_admin \
             -e MINIO_ROOT_PASSWORD=ino_admin_local_password \
             minio/minio:RELEASE.2025-07-23T15-54-02Z server /data
-          for attempt in {1..30}; do
+          for _ in {1..30}; do
             if curl --fail --silent http://localhost:9000/minio/health/ready; then exit 0; fi
             sleep 2
           done
