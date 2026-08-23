@@ -175,6 +175,29 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void anotherActorCannotDisableOrDemoteLastActiveSuperAdmin() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        var lastSuperAdmin = userRepository.findByEmail(EMAIL).orElseThrow();
+        var otherActorToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "SUPER_ADMIN");
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/users/{userId}/status", lastSuperAdmin.id())
+                        .header("Authorization", "Bearer " + otherActorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"DISABLED\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("LAST_SUPER_ADMIN_PROTECTED"));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/users/{userId}", lastSuperAdmin.id())
+                        .header("Authorization", "Bearer " + otherActorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"관리자\",\"role\":\"ADMIN\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("LAST_SUPER_ADMIN_PROTECTED"));
+    }
+
+    @Test
     void superAdminReadsAndUpdatesAnotherUserButCannotChangeSelfRole() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         String token = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
