@@ -189,6 +189,34 @@ test('배치 전달 스킬은 동기화된 원격 SHA와 원격 커밋 범위를
   ]);
 });
 
+test('최초 부트스트랩의 사전 정책 커밋 예외는 고정된 SHA와 이슈에만 한정된다', () => {
+  const skill = readRepositoryFile(
+    '.agents',
+    'skills',
+    'ino-admin-deliver-change',
+    'SKILL.md',
+  );
+  const verification = readRepositoryFile(
+    'docs',
+    'development',
+    'dev-batch-workflow-verification.md',
+  );
+
+  for (const content of [skill, verification]) {
+    assertIncludesAll(content, [
+      '최초 부트스트랩 커밋 예외',
+      'Issue #40',
+      '84f5623',
+      '0323e9d',
+      'c11dfad',
+      '1f30a85',
+      '4167f81',
+      'PR 본문',
+      '이후 커밋에는 적용하지 않는다',
+    ]);
+  }
+});
+
 test('부트스트랩 문서는 실제 Actions 체크와 수동 정책 검토를 구분한다', () => {
   const branchStrategy = readRepositoryFile('docs', 'development', 'branch-strategy.md');
   const implementationPlan = readRepositoryFile(

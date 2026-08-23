@@ -17,6 +17,18 @@ description: Use when INO Admin의 dev 변경을 main 배치 PR로 전달하거�
 6. 승인과 모든 통과 조건을 충족한 뒤 **merge commit**으로만 병합한다. squash merge, rebase merge, `main` 또는 `dev`의 force push는 금지한다.
 7. 병합 직후 추가 `dev` 작업 전에 `git fetch origin`, `git switch dev`, `git merge --ff-only origin/main`, `git push origin dev` 순서로 `dev`를 `origin/main`에 fast-forward한다. fast-forward가 실패하면 원인을 해결할 때까지 중단한다.
 
+## 최초 부트스트랩 커밋 예외
+
+정책 도입 전에 작성되어 커밋 본문에 `Refs`를 넣을 수 없었던 아래 커밋만 Issue #40에 연결된 것으로 감사한다.
+
+- `84f5623`: dev 배치 PR 워크플로 설계
+- `0323e9d`: dev 배치 PR 구현 계획
+- `c11dfad`: Codex worktree 경로 제외
+- `1f30a85`: PR 자동 리뷰 이슈 발행 설계
+- `4167f81`: PR 자동 리뷰 이슈 발행 설계 통합 전 커밋
+
+최초 `dev → main` PR 본문에 이 SHA와 Issue #40 매핑을 모두 기록한다. 이 예외는 위 SHA에만 적용하며 이후 커밋에는 적용하지 않는다. 다른 `Refs` 누락 커밋이 하나라도 있으면 기존 중단 조건을 그대로 적용한다.
+
 ## Actions 상태별 처리
 
 | 상태 | 처리 |

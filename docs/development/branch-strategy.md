@@ -17,6 +17,8 @@
 
 유지보수자는 기존 PR 정책을 사람이 직접 대조하여 같은 저장소의 `dev`인지, `type: 한글 변경사항` 제목인지, Issue·Milestone 연결이 맞는지 확인한다. 동시에 새 정책이 읽기 권한만 사용하고 `pull_request_target`에서 PR head 코드를 실행하지 않으며 `github.event.pull_request.base.sha`만 체크아웃하는지 보안 리뷰한다. branch protection이 실행되지 않는 `PR Policy / validate`를 required check로 요구한다면, 이 PR에 한해서만 관리자 우회 또는 required check 임시 조정을 기록하고 병합 직후 원복한다. 새 `PR Policy`가 통과했다고 기록하거나 head 브랜치의 워크플로를 수동 실행하지 않는다. 병합 후 `dev`를 `origin/main`으로 fast-forward하면 예외는 종료되며, 이후에는 이 문서의 표준 `feature branch → dev`와 `dev → main` 규칙만 적용한다.
 
+정책 도입 전에 생성된 `84f5623`, `0323e9d`, `c11dfad`, `1f30a85`, `4167f81`은 커밋 본문에 `Refs`가 없으므로 최초 부트스트랩 PR 본문에서만 Issue #40에 명시적으로 매핑한다. 이 고정 목록 이외의 누락 커밋과 이후 커밋에는 예외를 적용하지 않는다.
+
 ## 이슈부터 커밋까지
 
 작업 전에 Issue의 완료 조건, 테스트 시나리오, 위험을 확인하고 Milestone에 배정한다. 테스트는 구현보다 먼저 작성한다. 일반 이슈는 다음 순서로 `dev`에 누적한다.
