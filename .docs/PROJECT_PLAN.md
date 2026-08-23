@@ -722,14 +722,7 @@ MVP는 Phase 0~7의 실제 관리자 기능과 Phase 8의 핵심 모듈 추출�
 
 ### 10.4 Phase 공통 완료 확인
 
-각 Phase 완료 시 최소한 다음을 실행한다.
-
-```text
-backend: clean test + integrationTest + architectureTest
-frontend: lint + typecheck + unit test + build
-system: 핵심 Playwright E2E
-infra: docker compose config 및 health 확인
-```
+각 Phase는 테스트를 구현보다 먼저 작성하고, 변경 범위에 맞는 GitHub Actions 검증을 완료해야 한다. `dev` 변경은 `Dev CI`, `infra/**` 변경은 `Dev Infra CI`, `dev → main` 배치 PR은 `Main Integration CI`가 최종 판정 기준이다. 로컬 명령은 디버깅 또는 단일 테스트 확인이 필요한 경우에만 지정한다. Actions를 사용할 수 없으면 미검증 상태로 보고하고 병합하지 않는다.
 
 ---
 

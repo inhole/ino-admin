@@ -160,3 +160,25 @@ test('개발 규칙 문서는 dev 배치 흐름과 이슈 연결 규칙을 일�
     'CI 검증 완료',
   ]);
 });
+
+test('Phase 완료 검증은 로컬 전체 실행을 강제하지 않고 Actions와 동일 Milestone을 기준으로 한다', () => {
+  const agents = readRepositoryFile('AGENTS.md');
+  const projectPlan = readRepositoryFile('.docs', 'PROJECT_PLAN.md');
+
+  assertIncludesAll(agents, [
+    'GitHub Issue',
+    'same Milestone',
+  ]);
+  assert.ok(
+    !projectPlan.includes('각 Phase 완료 시 최소한 다음을 실행한다.'),
+    'Phase 완료에 로컬 전체 실행을 강제하면 안 됩니다',
+  );
+  assert.ok(
+    !projectPlan.includes('backend: clean test + integrationTest + architectureTest'),
+    'Phase 완료에 backend 전체 테스트를 강제하면 안 됩니다',
+  );
+  assertIncludesAll(projectPlan, [
+    'GitHub Actions',
+    '로컬 명령은 디버깅 또는 단일 테스트 확인이 필요한 경우에만 지정',
+  ]);
+});
