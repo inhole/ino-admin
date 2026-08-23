@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 보안 취약점 신고
+    url: https://github.com/inhole/ino-admin/security/advisories/new
+    about: 보안 취약점은 공개 이슈에 기록하지 말고 비공개 보안 권고로 신고해 주세요.
