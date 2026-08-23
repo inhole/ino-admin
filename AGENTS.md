@@ -13,9 +13,9 @@
 
 ## Workflow
 - Preserve unrelated user changes and keep each change focused on one verifiable objective.
-- Write commit summaries in Korean using `type: 변경사항`. Use the `ino-admin-deliver-change` skill when preparing commits and pull requests.
+- Write commit summaries in Korean using `type: 변경사항`. Use `ino-admin-work-on-issue` when implementing an Issue, preparing its commits, or preparing a feature/Codex → `dev` PR. Reserve `ino-admin-deliver-change` for `dev` → `main` batch delivery only.
 - Use `dev` as the long-lived integration branch. Send small, isolated changes directly to `dev`; use a feature branch for risky, long-running, or parallel work and merge it into `dev` with a merge commit.
-- Only a `dev` → `main` batch PR may target `main`. Keep logical commits by avoiding squash and rebase merges, and fast-forward `dev` from `main` after the batch merge.
+- After the one-time trusted policy bootstrap documented in `docs/development/branch-strategy.md`, only a `dev` → `main` batch PR may target `main`. Keep logical commits by avoiding squash and rebase merges, and fast-forward `dev` from `main` after the batch merge.
 - Track each change with a GitHub Issue and assign it to a Milestone before work begins. A `dev` → `main` batch PR closes only issues from the same Milestone.
 - Link ordinary commits with `Refs: #123`; list every completed issue in a batch PR with `Closes #123`.
 - Add or update tests whenever behavior changes.

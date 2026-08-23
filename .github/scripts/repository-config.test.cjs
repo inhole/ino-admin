@@ -161,6 +161,53 @@ test('개발 규칙 문서는 dev 배치 흐름과 이슈 연결 규칙을 일�
   ]);
 });
 
+test('루트 지침은 일반 이슈 작업과 dev 배치 전달 스킬의 책임을 분리한다', () => {
+  const agents = readRepositoryFile('AGENTS.md');
+
+  assertIncludesAll(agents, [
+    '`ino-admin-work-on-issue`',
+    'feature/Codex → `dev` PR',
+    '`ino-admin-deliver-change`',
+    'for `dev` → `main` batch delivery only',
+  ]);
+});
+
+test('배치 전달 스킬은 동기화된 원격 SHA와 원격 커밋 범위를 감사한다', () => {
+  const skill = readRepositoryFile(
+    '.agents',
+    'skills',
+    'ino-admin-deliver-change',
+    'SKILL.md',
+  );
+
+  assertIncludesAll(skill, [
+    'git fetch origin main dev',
+    'git rev-parse dev',
+    'git rev-parse origin/dev',
+    'origin/main..origin/dev',
+    '정확한 `origin/dev` SHA',
+  ]);
+});
+
+test('운영 문서와 구현 계획은 최초 정책 PR의 일회성 부트스트랩 경계를 설명한다', () => {
+  const branchStrategy = readRepositoryFile('docs', 'development', 'branch-strategy.md');
+  const implementationPlan = readRepositoryFile(
+    'docs',
+    'superpowers',
+    'plans',
+    '2026-08-23-dev-batch-pr-workflow.md',
+  );
+
+  for (const content of [branchStrategy, implementationPlan]) {
+    assertIncludesAll(content, [
+      '최초 1회 부트스트랩',
+      '새 `PR Policy`는 실행되지 않는다',
+      '기존 `PR Policy`와 `CI`',
+      '같은 저장소',
+    ]);
+  }
+});
+
 test('Phase 완료 검증은 로컬 전체 실행을 강제하지 않고 Actions와 동일 Milestone을 기준으로 한다', () => {
   const agents = readRepositoryFile('AGENTS.md');
   const projectPlan = readRepositoryFile('.docs', 'PROJECT_PLAN.md');

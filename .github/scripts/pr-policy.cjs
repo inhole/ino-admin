@@ -1,6 +1,6 @@
 const BRANCH_PATTERN = /^(feat|fix|docs|test|refactor|perf|style|build|ci|chore|revert)\/\d+-[a-z0-9][a-z0-9-]*$/;
 const CODEX_PATTERN = /^codex\/\d+-[a-z0-9][a-z0-9-]*$/;
-const TITLE_PATTERN = /^(feat|fix|docs|test|refactor|perf|style|build|ci|chore|revert): .+$/;
+const TITLE_PATTERN = /^(feat|fix|docs|test|refactor|perf|style|build|ci|chore|revert): (?=.*[가-힣]).+$/;
 
 function extractIssueReferences(body = '') {
   const collect = (keyword) => [...body.matchAll(new RegExp(`\\b(?:${keyword})\\s*:?[ \\t]*#(\\d+)`, 'gi'))]
@@ -12,12 +12,13 @@ function extractIssueReferences(body = '') {
 }
 
 function validatePullRequest(input) {
-  const { head, base, title, body, issues } = input;
+  const { head, base, headRepo, baseRepo, title, body, issues } = input;
   const errors = [];
   const isWorkBranch = BRANCH_PATTERN.test(head) || CODEX_PATTERN.test(head);
+  const isBatchPullRequest = head === 'dev' && base === 'main';
 
   if (!TITLE_PATTERN.test(title)) {
-    errors.push(`PR 제목 '${title}'은 'type: 변경사항' 형식이어야 합니다.`);
+    errors.push(`PR 제목 '${title}'은 'type: 한글 변경사항' 형식이며 변경사항에 한글이 포함되어야 합니다.`);
   }
 
   if (base === 'main' && head !== 'dev') {
@@ -29,6 +30,9 @@ function validatePullRequest(input) {
   if (base !== 'dev' && base !== 'main') {
     errors.push("PR의 base는 'dev' 또는 'main'이어야 합니다.");
   }
+  if (isBatchPullRequest && (!headRepo || !baseRepo || headRepo !== baseRepo)) {
+    errors.push('dev에서 main으로 가는 배치 PR은 같은 저장소의 브랜치 사이에서만 허용됩니다.');
+  }
 
   const references = extractIssueReferences(body);
   const numbers = [...new Set([...references.refs, ...references.closes])];
@@ -37,7 +41,7 @@ function validatePullRequest(input) {
     errors.push('dev 대상 PR에는 이슈 참조가 필요합니다.');
   }
 
-  if (head === 'dev' && base === 'main') {
+  if (isBatchPullRequest) {
     if (references.closes.length === 0) {
       errors.push('dev에서 main으로 가는 배치 PR에는 닫을 이슈 참조가 필요합니다.');
     }

@@ -9,12 +9,13 @@ description: Use when INO Admin의 dev 변경을 main 배치 PR로 전달하거�
 
 ## 순서 계약
 
-1. `dev`에서 working tree가 깨끗한지 확인하고 빠른 CI(`Dev CI`, 해당하면 `Dev Infra CI`)가 모두 통과했는지 확인한다. 실패·진행 중이면 수정 또는 완료 전까지 중단한다.
-2. 같은 Milestone의 완료 이슈만 수집하고, `origin/main..dev`의 포함 커밋과 각 커밋의 `Refs: #번호`를 대조한다. Milestone 불일치, 누락 이슈, 미완료 이슈가 있으면 중단한다.
-3. 하나의 `dev` → `main` PR을 만든다. PR 본문에는 Milestone, 완료 이슈 목록, 포함 커밋 요약, 검증 결과를 적고, 완료 이슈마다 별도 줄의 `Closes #번호`를 넣는다.
-4. `Main Integration CI`의 모든 job이 통과할 때까지 기다린다. 하나라도 실패·취소·진행 중이면 병합하지 말고 `dev`에서 수정·push한 뒤 처음부터 확인한다.
-5. 승인과 모든 통과 조건을 충족한 뒤 **merge commit**으로만 병합한다. squash merge, rebase merge, `main` 또는 `dev`의 force push는 금지한다.
-6. 병합 직후 추가 `dev` 작업 전에 `git fetch origin`, `git switch dev`, `git merge --ff-only origin/main`, `git push origin dev` 순서로 `dev`를 `origin/main`에 fast-forward한다. fast-forward가 실패하면 원인을 해결할 때까지 중단한다.
+1. `dev`에서 working tree가 깨끗한지 확인하고 `git fetch origin main dev`를 실행한다. `git rev-parse dev`와 `git rev-parse origin/dev`가 정확히 같지 않으면 동기화 전까지 중단한다.
+2. 정확한 `origin/dev` SHA의 `Dev CI`와, `infra/**` 변경이 있으면 `Dev Infra CI`가 모두 통과했는지 확인한다. 실패·취소·진행 중이거나 다른 SHA의 결과뿐이면 중단한다.
+3. 같은 Milestone의 완료 이슈만 수집하고, `origin/main..origin/dev`의 포함 커밋과 각 일반 커밋의 `Refs: #번호`를 대조한다. Milestone 불일치, 누락 이슈, 미완료 이슈가 있으면 중단한다.
+4. 하나의 `dev` → `main` PR을 만든다. PR 본문에는 Milestone, 완료 이슈 목록, 포함 커밋 요약, 검증 결과를 적고, 완료 이슈마다 별도 줄의 `Closes #번호`를 넣는다.
+5. `Main Integration CI`의 모든 job이 통과할 때까지 기다린다. 하나라도 실패·취소·진행 중이면 병합하지 말고 `dev`에서 수정·push한 뒤 처음부터 확인한다.
+6. 승인과 모든 통과 조건을 충족한 뒤 **merge commit**으로만 병합한다. squash merge, rebase merge, `main` 또는 `dev`의 force push는 금지한다.
+7. 병합 직후 추가 `dev` 작업 전에 `git fetch origin`, `git switch dev`, `git merge --ff-only origin/main`, `git push origin dev` 순서로 `dev`를 `origin/main`에 fast-forward한다. fast-forward가 실패하면 원인을 해결할 때까지 중단한다.
 
 ## Actions 상태별 처리
 
@@ -26,7 +27,7 @@ description: Use when INO Admin의 dev 변경을 main 배치 PR로 전달하거�
 
 ## 중단 조건
 
-- 같은 Milestone이 아닌 이슈, `Closes` 누락, 깨끗하지 않은 working tree
+- 같은 Milestone이 아닌 이슈, `Closes` 누락, 깨끗하지 않은 working tree, 로컬·원격 `dev` 불일치
 - 빠른 CI 또는 `Main Integration CI`의 하나라도 미통과
 - squash/rebase 병합이나 force push 요청
 

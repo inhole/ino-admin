@@ -130,7 +130,7 @@ Testcontainers 통합 테스트, Playwright, production build는 빠른 CI에서
 
 ## 8. PR 정책
 
-- `main` 대상 PR의 head는 `dev`여야 한다.
+- `main` 대상 PR의 head는 같은 저장소의 `dev`여야 한다.
 - feature 또는 Codex 브랜치의 PR base는 `dev`여야 한다.
 - `dev → main` PR에는 하나 이상의 `Closes #번호`가 있어야 한다.
 - 배치 PR이 참조하는 이슈는 같은 Milestone에 속해야 한다.
@@ -139,6 +139,12 @@ Testcontainers 통합 테스트, Playwright, production build는 빠른 CI에서
 - `main`과 `dev`에 force push하지 않는다.
 
 GitHub 저장소 설정에서 `dev → main` 병합은 merge commit을 사용하고, 필수 check와 최신 base 반영을 요구한다.
+
+### 8.1 최초 정책 부트스트랩
+
+`pull_request_target`은 워크플로 파일이 기본 브랜치에 있어야 실행되므로 새 정책을 추가하는 PR 자체에서는 새 `PR Policy`가 실행되지 않는다. 최초 1회는 유지보수자가 관리하는 같은 저장소 브랜치만 `main`을 대상으로 허용하고, 기본 브랜치의 기존 `PR Policy`와 전체 `CI` 통과 및 사람의 워크플로 보안 리뷰를 병합 조건으로 삼는다. 이 리뷰는 읽기 전용 권한, `github.event.pull_request.base.sha` 체크아웃, PR head 코드 미실행을 확인한다. 새 정책이나 새 `Main Integration CI`가 이 도입 PR에서 통과했다고 주장하지 않는다.
+
+도입 PR을 merge commit으로 병합한 직후 `origin/main`의 정확한 SHA에서 `dev`를 생성한다. 이때부터 부트스트랩 예외는 종료되고 모든 PR에 표준 정책을 적용한다.
 
 ## 9. 저장소 스킬
 

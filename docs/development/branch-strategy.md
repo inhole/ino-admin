@@ -11,6 +11,12 @@
 
 고위험 작업은 **feature branch → dev** PR로 전달한다. `dev` 대상 PR은 빠른 검증과 필요한 리뷰를 마친 뒤 squash 또는 rebase 없이 **merge commit**으로 병합하여 논리적 커밋을 보존한다.
 
+## 최초 1회 부트스트랩
+
+`pull_request_target` 워크플로는 기본 브랜치에 존재한 뒤부터 이벤트를 받는다. 따라서 이 워크플로를 처음 추가하는 PR에서는 새 `PR Policy`는 실행되지 않는다. 이 한 번만 유지보수자가 관리하는 **같은 저장소**의 작업 브랜치에서 `main`으로 PR을 열고, 기본 브랜치에 이미 있는 신뢰된 기존 `PR Policy`와 `CI`의 통과 및 사람의 워크플로 보안 리뷰를 병합 조건으로 사용한다.
+
+리뷰에서는 새 정책이 읽기 권한만 사용하고 `pull_request_target`에서 PR head 코드를 실행하지 않으며 `github.event.pull_request.base.sha`만 체크아웃하는지 확인한다. head 브랜치의 새 워크플로를 수동 실행하거나 새 `PR Policy`·`Main Integration CI`가 도입 PR에서 통과했다고 기록하지 않는다. 병합 후 `origin/main`의 정확한 SHA에서 `dev`를 만들면 예외는 종료되며, 이후에는 이 문서의 `feature branch → dev`와 `dev → main` 규칙만 적용한다.
+
 ## 이슈부터 커밋까지
 
 작업 전에 Issue의 완료 조건, 테스트 시나리오, 위험을 확인하고 Milestone에 배정한다. 테스트는 구현보다 먼저 작성한다. 일반 이슈는 다음 순서로 `dev`에 누적한다.

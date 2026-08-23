@@ -36,6 +36,8 @@ jobs:
             const errors = policy.validatePullRequest({
               head: context.payload.pull_request.head.ref,
               base: context.payload.pull_request.base.ref,
+              headRepo: context.payload.pull_request.head.repo.full_name,
+              baseRepo: context.payload.pull_request.base.repo.full_name,
               title: context.payload.pull_request.title,
               body: context.payload.pull_request.body || '',
               issues,

@@ -87,7 +87,7 @@ Expected: 제목, Milestone, `OPEN` 상태가 일치.
 **Interfaces:**
 - Produces: `extractIssueReferences(body): { refs: number[], closes: number[] }`
 - Produces: `validatePullRequest(input): string[]`
-- Consumes: `input`은 `{ head, base, title, body, issues }`이며 `issues`는 `{ number, milestoneNumber }[]`이다.
+- Consumes: `input`은 `{ head, base, headRepo, baseRepo, title, body, issues }`이며 `issues`는 `{ number, milestoneNumber }[]`이다.
 
 - [ ] **Step 1: 실패하는 정책 테스트를 작성한다**
 
@@ -120,6 +120,8 @@ test('dev에서 main으로 가는 배치 PR은 같은 Milestone의 이슈만 닫
   const errors = validatePullRequest({
     head: 'dev',
     base: 'main',
+    headRepo: 'inhole/ino-admin',
+    baseRepo: 'inhole/ino-admin',
     title: 'feat: 사용자 관리 배치 전달',
     body: 'Closes #123\nCloses #124',
     issues: [
@@ -134,6 +136,8 @@ test('올바른 dev 배치 PR을 허용한다', () => {
   const errors = validatePullRequest({
     head: 'dev',
     base: 'main',
+    headRepo: 'inhole/ino-admin',
+    baseRepo: 'inhole/ino-admin',
     title: 'feat: 사용자 관리 배치 전달',
     body: 'Closes #123\nCloses #124',
     issues: [
@@ -144,6 +148,8 @@ test('올바른 dev 배치 PR을 허용한다', () => {
   assert.deepEqual(errors, []);
 });
 ```
+
+fork 저장소의 `dev`가 `main`을 대상으로 하면 거부되는 사례와 변경사항에 한글이 없는 PR 제목이 거부되는 사례도 독립 테스트로 추가한다.
 
 - [ ] **Step 2: 테스트가 기존 정책 모듈 부재로 실패하는지 확인한다**
 
@@ -158,7 +164,7 @@ Expected: `Cannot find module './pr-policy.cjs'` 또는 export 부재로 FAIL.
 ```javascript
 const BRANCH_PATTERN = /^(feat|fix|docs|test|refactor|perf|style|build|ci|chore|revert)\/\d+-[a-z0-9][a-z0-9-]*$/;
 const CODEX_PATTERN = /^codex\/\d+-[a-z0-9][a-z0-9-]*$/;
-const TITLE_PATTERN = /^(feat|fix|docs|test|refactor|perf|style|build|ci|chore|revert): .+$/;
+const TITLE_PATTERN = /^(feat|fix|docs|test|refactor|perf|style|build|ci|chore|revert): (?=.*[가-힣]).+$/;
 
 function extractIssueReferences(body = '') {
   const collect = (keyword) => [...body.matchAll(new RegExp(`\\b(?:${keyword})\\s*:?[ \\t]*#(\\d+)`, 'gi'))]
@@ -170,7 +176,7 @@ function extractIssueReferences(body = '') {
 }
 ```
 
-`validatePullRequest`는 제목 형식, base/head 조합, 이슈 참조, batch Milestone을 검사한다. `dev → main`은 `closes`가 하나 이상이고 참조 이슈가 모두 존재하며 `milestoneNumber`가 null이 아니고 하나로 같아야 한다. feature/Codex → `dev`는 `refs` 또는 `closes`가 하나 이상이어야 한다.
+`validatePullRequest`는 제목의 한글 포함 형식, base/head 조합, head/base 저장소 일치, 이슈 참조, batch Milestone을 검사한다. `dev → main`은 같은 저장소의 브랜치여야 하고 `closes`가 하나 이상이며, 참조 이슈가 모두 존재하고 `milestoneNumber`가 null이 아니고 하나로 같아야 한다. feature/Codex → `dev`는 `refs` 또는 `closes`가 하나 이상이어야 한다.
 
 - [ ] **Step 4: 정책 단위 테스트가 통과하는지 확인한다**
 
@@ -197,6 +203,8 @@ const issues = await Promise.all(numbers.map(async (number) => {
 const errors = policy.validatePullRequest({
   head: context.payload.pull_request.head.ref,
   base: context.payload.pull_request.base.ref,
+  headRepo: context.payload.pull_request.head.repo.full_name,
+  baseRepo: context.payload.pull_request.base.repo.full_name,
   title: context.payload.pull_request.title,
   body: context.payload.pull_request.body || '',
   issues,
@@ -598,14 +606,14 @@ git commit -m "feat: dev 배치 전달 스킬 개편" -m "Refs: #$workflowIssue"
 
 ---
 
-### Task 7: 전체 설정을 검증하고 최초 dev 배치를 전달한다
+### Task 7: 전체 설정을 검증하고 최초 정책을 부트스트랩한다
 
 **Files:**
 - Modify: 변경 없음. 검증과 GitHub 원격 설정만 수행한다.
 
 **Interfaces:**
 - Consumes: Task 1~6의 정책, Actions, 문서, 스킬
-- Produces: remote `dev` 브랜치와 최초 `dev → main` 배치 PR
+- Produces: 기본 브랜치의 신뢰된 정책 워크플로와 그 SHA에서 시작한 remote `dev` 브랜치
 
 - [ ] **Step 1: 저장소 단위 설정 테스트를 실행한다**
 
@@ -651,32 +659,23 @@ Run: `git status --short`
 
 Expected: 계획된 파일만 커밋되어 있고 `data/`와 기존 자동 PR 리뷰 설계 문서는 미추적 상태로 남아 있다.
 
-- [ ] **Step 6: 최초 dev 브랜치를 생성해 push한다**
+- [ ] **Step 6: 최초 1회 부트스트랩 PR을 연다**
 
-현재 구현 commit을 기준으로 로컬 `dev`를 만들고 원격에 추적 브랜치로 push한다.
+`pull_request_target` 워크플로는 기본 브랜치에 있어야 이벤트를 받으므로 도입 PR에서는 새 `PR Policy`는 실행되지 않는다. 유지보수자가 관리하는 **같은 저장소**의 구현 브랜치에서 `main`으로 PR을 한 번만 열고, PR 본문에는 이 부트스트랩 예외와 `Refs: #$workflowIssue`를 명시한다. fork 브랜치는 사용하지 않는다.
 
-```powershell
-git switch -c dev
-git push -u origin dev
-```
+- [ ] **Step 7: 신뢰된 기존 검사와 사람 리뷰로 부트스트랩을 검증한다**
 
-원격 `dev`가 이미 있으면 새로 만들지 않고 `git fetch origin dev` 후 fast-forward 가능 여부를 확인한다. fast-forward가 불가능하면 push하지 않고 충돌을 보고한다.
+기본 브랜치 `e9fa6fd`의 기존 `PR Policy`와 `CI`가 모두 통과해야 한다. 새 `PR Policy`나 새 `Main Integration CI`가 통과했다고 기록하지 않는다. 유지보수자는 변경된 워크플로가 읽기 권한만 사용하고 `pull_request_target`에서 PR head 코드를 실행하지 않으며 `github.event.pull_request.base.sha`만 체크아웃하는지 직접 검토한다. head 브랜치의 새 워크플로를 수동 실행하지 않는다.
 
-- [ ] **Step 7: 최초 dev → main 배치 PR을 연다**
+- [ ] **Step 8: 부트스트랩 병합 후 dev를 생성한다**
 
-```powershell
-gh pr create --repo inhole/ino-admin --base main --head dev --title "ci: dev 배치 검증 워크플로 도입" --body "## 전달 유형`n- [x] dev → main 배치 PR`n`n## 연결된 이슈와 Milestone`n- Milestone: 개발 워크플로 전환`n- Closes #$workflowIssue`n`n## 변경 사항`n- dev 빠른 CI와 main 통합 CI 분리`n- 이슈 및 PR 정책 추가`n- 한국어 저장소 스킬 추가`n`n## Actions 검증`n- [x] dev 빠른 CI 통과`n- [ ] main 통합 CI 통과"
-```
+기존 검사와 보안 리뷰를 통과한 PR을 merge commit으로 병합한 뒤, 새 `origin/main`의 정확한 SHA에서 `dev`를 생성해 push한다. 기존 원격 `dev`가 있으면 임의로 덮어쓰지 말고 동기화 가능 여부를 먼저 확인한다. 이 시점부터 부트스트랩 예외는 종료되며 이후 모든 PR은 표준 `feature/Codex → dev`, `dev → main` 정책을 따른다.
 
-PR 본문은 Task 0에서 생성한 실제 Issue 번호를 사용한다.
+- [ ] **Step 9: 새 정책의 실제 적용 시점을 기록한다**
 
-- [ ] **Step 8: Actions 결과를 확인한다**
+부트스트랩 뒤 첫 실제 `dev → main` 배치 PR부터 base SHA의 새 `PR Policy`와 `Main Integration CI` 결과를 필수 판정으로 사용한다. 원격 check를 직접 관찰하지 않았다면 통과로 보고하지 않는다.
 
-Run: `gh pr checks --watch`
-
-Expected: PR Policy와 Main Integration CI의 모든 필수 check PASS. 실패하면 병합하지 않고 `dev`에 수정 커밋을 추가한다.
-
-- [ ] **Step 9: 저장소 병합 설정을 확인한다**
+- [ ] **Step 10: 저장소 병합 설정을 확인한다**
 
 GitHub 저장소 설정에서 merge commit을 허용하고 squash merge와 rebase merge를 비활성화한다. 관리자 권한이나 API 인증이 없으면 변경하지 않고 필요한 설정을 정확히 보고한다.
 
@@ -688,4 +687,4 @@ GitHub 저장소 설정에서 merge commit을 허용하고 squash merge와 rebas
 - 테스트 가능한 정책은 Node 내장 테스트로 RED–GREEN을 수행한다.
 - 두 스킬은 각각 기준선 실패, 최소 작성, 정적 검증, forward-test, 독립 커밋 순서를 지킨다.
 - Backend/Frontend 애플리케이션 코드는 변경하지 않으므로 로컬 전체 테스트는 실행하지 않는다.
-- 최종 동작 판정은 최초 `dev → main` PR의 GitHub Actions 결과로 수행한다.
+- 부트스트랩 PR은 기본 브랜치의 기존 검사와 사람 보안 리뷰로 판정하고, 새 정책은 병합 뒤 첫 실제 `dev → main` PR에서 판정한다.
