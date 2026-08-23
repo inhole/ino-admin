@@ -286,28 +286,7 @@ class AuthFlowIntegrationTest {
 
         assertInvalidRefreshToken(activeRefreshToken);
 
-        var disabledLogin = mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"email":"custom@example.com","password":"Custom-Password-2026!"}
-                                """))
-                .andExpect(status().isOk())
-                .andReturn();
-        String disabledAccessToken = JsonPath.read(disabledLogin.getResponse().getContentAsString(), "$.accessToken");
-        String disabledRefreshToken = JsonPath.read(disabledLogin.getResponse().getContentAsString(), "$.refreshToken");
-        mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + disabledAccessToken))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
-
-        var disabledRefresh = mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"refreshToken\":\"" + disabledRefreshToken + "\"}"))
-                .andExpect(status().isOk())
-                .andReturn();
-        String refreshedAccessToken = JsonPath.read(disabledRefresh.getResponse().getContentAsString(), "$.accessToken");
-        mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + refreshedAccessToken))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+        assertInvalidCredentials("custom@example.com", "Custom-Password-2026!");
     }
 
     @Test
