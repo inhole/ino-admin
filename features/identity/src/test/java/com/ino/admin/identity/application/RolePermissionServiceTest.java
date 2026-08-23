@@ -19,9 +19,20 @@ class RolePermissionServiceTest {
     @Test
     void returnsSortedPermissions() {
         var role = mock(Role.class);
+        when(role.enabled()).thenReturn(true);
         when(role.permissions()).thenReturn(Set.of("user:update", "user:read"));
         when(repository.findById("ADMIN")).thenReturn(Optional.of(role));
         assertThat(service.findPermissions("ADMIN")).containsExactly("user:read", "user:update");
+    }
+
+    @Test
+    void returnsNoPermissionsForDisabledRole() {
+        var role = mock(Role.class);
+        when(role.enabled()).thenReturn(false);
+        when(role.permissions()).thenReturn(Set.of("user:read", "user:update"));
+        when(repository.findById("DISABLED_ADMIN")).thenReturn(Optional.of(role));
+
+        assertThat(service.findPermissions("DISABLED_ADMIN")).isEmpty();
     }
 
     @Test
