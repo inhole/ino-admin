@@ -38,7 +38,7 @@ INO Admin을 단순 CRUD 화면 모음에서 탐색, 조회, 처리 흐름이 �
 - [x] Breadcrumb, Sidebar trigger, 테마, 계정 메뉴 조합
 - [x] 사이드바 하단 로그아웃 버튼을 계정 메뉴로 통합
 - [x] 공통 loading/empty/error 상태 분리
-- [ ] forbidden 상태와 trace ID 표현 통합
+- [x] forbidden 상태와 trace ID 표현 통합
 
 ### 2. 사용자 관리
 

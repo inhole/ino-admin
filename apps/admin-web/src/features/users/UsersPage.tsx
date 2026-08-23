@@ -13,7 +13,8 @@ import { ApiClientError } from "@/api/client";
 import { getPermissionCatalog, permissionKeys } from "@/features/permissions";
 import { userKeys } from "@/features/users/hook/userKeys";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ErrorState } from "@/components/states/PageStates";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -249,22 +250,12 @@ export function UsersPage() {
             </div>
           )}
           {users.isError && (
-            <Alert variant="destructive" role="alert">
-              <AlertTitle>{t("listError")}</AlertTitle>
-              <AlertDescription>
-                {users.error instanceof ApiClientError &&
-                users.error.status === 403
-                  ? t("forbidden")
-                  : users.error.message}
-              </AlertDescription>
-              <Button
-                className="mt-3"
-                onClick={() => users.refetch()}
-                variant="outline"
-              >
-                {common("retry")}
-              </Button>
-            </Alert>
+            <ErrorState
+              error={users.error}
+              forbiddenDescription={t("forbidden")}
+              onRetry={() => users.refetch()}
+              title={t("listError")}
+            />
           )}
           {users.data?.content.length === 0 && (
             <StatusPanel>{t("empty")}</StatusPanel>

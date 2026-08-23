@@ -32,6 +32,7 @@ export class ApiClientError extends Error {
     message: string,
     public readonly status: number,
     public readonly code?: string,
+    public readonly traceId?: string,
   ) {
     super(message);
   }
@@ -64,6 +65,7 @@ async function errorFrom(response: Response) {
     error?.message ?? i18n.t("common.connectionError"),
     response.status,
     error?.code,
+    error?.traceId,
   );
 }
 
@@ -102,6 +104,7 @@ function formErrorFrom(request: XMLHttpRequest) {
     error?.message ?? i18n.t("common.connectionError"),
     request.status,
     error?.code,
+    error?.traceId,
   );
 }
 

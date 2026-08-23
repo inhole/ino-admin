@@ -32,7 +32,7 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: u
     if (path === '/api/v1/menus/me') return json(route, isSuperAdmin ? managementMenus : managementMenus.slice(0, 1))
     if (path === '/api/v1/users') return isSuperAdmin
       ? json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
-      : json(route, { code: 'FORBIDDEN', message: '접근 권한이 없습니다.' }, 403)
+      : json(route, { code: 'FORBIDDEN', message: '접근 권한이 없습니다.', traceId: '01K3E2ETRACE53' }, 403)
     if (path === '/api/v1/permissions') return json(route, [])
     if (path === '/api/v1/files') return json(route, {
       content: files, page: 0, size: 20, totalElements: files.length, totalPages: files.length > 0 ? 1 : 0,
@@ -69,6 +69,7 @@ test('VIEWER는 관리 메뉴가 없고 직접 접근해도 서버의 403을 처
   await expect(page.getByRole('link', { name: '권한' })).toHaveCount(0)
   await page.goto('/users')
   await expect(page.getByRole('alert')).toContainText('사용자 목록을 볼 권한이 없습니다.')
+  await expect(page.getByRole('alert')).toContainText('문의 코드: 01K3E2ETRACE53')
 })
 
 test('모바일에서 메뉴를 열어 파일 관리로 이동한다', async ({ page }) => {
