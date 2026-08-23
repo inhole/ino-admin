@@ -189,7 +189,7 @@ test('배치 전달 스킬은 동기화된 원격 SHA와 원격 커밋 범위를
   ]);
 });
 
-test('운영 문서와 구현 계획은 최초 정책 PR의 일회성 부트스트랩 경계를 설명한다', () => {
+test('부트스트랩 문서는 실제 Actions 체크와 수동 정책 검토를 구분한다', () => {
   const branchStrategy = readRepositoryFile('docs', 'development', 'branch-strategy.md');
   const implementationPlan = readRepositoryFile(
     'docs',
@@ -202,9 +202,16 @@ test('운영 문서와 구현 계획은 최초 정책 PR의 일회성 부트스�
     assertIncludesAll(content, [
       '최초 1회 부트스트랩',
       '새 `PR Policy`는 실행되지 않는다',
-      '기존 `PR Policy`와 `CI`',
+      '자동 `PR Policy` check가 없다',
+      '`Main Integration CI`',
+      '기존 PR 정책을 사람이 직접 대조',
+      'required check',
       '같은 저장소',
     ]);
+    assert.ok(
+      !content.includes('기존 `PR Policy`와 `CI`'),
+      '실행되지 않는 기존 PR Policy를 자동 부트스트랩 검사로 안내하면 안 됩니다',
+    );
   }
 });
 

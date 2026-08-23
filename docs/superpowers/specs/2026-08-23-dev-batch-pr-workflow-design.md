@@ -142,9 +142,9 @@ GitHub 저장소 설정에서 `dev → main` 병합은 merge commit을 사용하
 
 ### 8.1 최초 정책 부트스트랩
 
-`pull_request_target`은 워크플로 파일이 기본 브랜치에 있어야 실행되므로 새 정책을 추가하는 PR 자체에서는 새 `PR Policy`가 실행되지 않는다. 최초 1회는 유지보수자가 관리하는 같은 저장소 브랜치만 `main`을 대상으로 허용하고, 기본 브랜치의 기존 `PR Policy`와 전체 `CI` 통과 및 사람의 워크플로 보안 리뷰를 병합 조건으로 삼는다. 이 리뷰는 읽기 전용 권한, `github.event.pull_request.base.sha` 체크아웃, PR head 코드 미실행을 확인한다. 새 정책이나 새 `Main Integration CI`가 이 도입 PR에서 통과했다고 주장하지 않는다.
+`pull_request_target`은 워크플로 파일이 기본 브랜치에 있어야 실행되므로 새 정책을 추가하는 PR 자체에서는 새 `PR Policy`는 실행되지 않는다. 최초 1회는 `origin/main`의 정확한 SHA에서 `dev`를 만들고, 유지보수자가 관리하는 같은 저장소 구현 브랜치를 merge commit으로 `dev`에 병합한 뒤 `dev → main` 도입 PR을 연다. 이 PR에는 자동 `PR Policy` check가 없다. PR merge ref의 새 정의로 실행되는 `Main Integration CI`의 모든 job 통과와 사람의 검토를 병합 조건으로 삼는다.
 
-도입 PR을 merge commit으로 병합한 직후 `origin/main`의 정확한 SHA에서 `dev`를 생성한다. 이때부터 부트스트랩 예외는 종료되고 모든 PR에 표준 정책을 적용한다.
+유지보수자는 기존 PR 정책을 사람이 직접 대조하여 head 저장소와 브랜치, 한글 제목, Issue·Milestone 연결을 확인하고, 새 워크플로의 읽기 전용 권한, `github.event.pull_request.base.sha` 체크아웃, PR head 코드 미실행을 보안 리뷰한다. 실행되지 않는 `PR Policy / validate`가 required check라면 이 도입 PR에 한정된 관리자 우회 또는 임시 조정을 기록하고 병합 직후 원복한다. 새 `PR Policy`가 통과했다고 주장하지 않는다. 도입 PR을 merge commit으로 병합한 뒤 `dev`를 `origin/main`으로 fast-forward하면 예외는 종료되고 모든 후속 PR에 표준 정책을 적용한다.
 
 ## 9. 저장소 스킬
 

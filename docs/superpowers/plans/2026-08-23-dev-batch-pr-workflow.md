@@ -659,21 +659,21 @@ Run: `git status --short`
 
 Expected: 계획된 파일만 커밋되어 있고 `data/`와 기존 자동 PR 리뷰 설계 문서는 미추적 상태로 남아 있다.
 
-- [ ] **Step 6: 최초 1회 부트스트랩 PR을 연다**
+- [ ] **Step 6: dev를 만들고 최초 1회 부트스트랩 PR을 연다**
 
-`pull_request_target` 워크플로는 기본 브랜치에 있어야 이벤트를 받으므로 도입 PR에서는 새 `PR Policy`는 실행되지 않는다. 유지보수자가 관리하는 **같은 저장소**의 구현 브랜치에서 `main`으로 PR을 한 번만 열고, PR 본문에는 이 부트스트랩 예외와 `Refs: #$workflowIssue`를 명시한다. fork 브랜치는 사용하지 않는다.
+`pull_request_target` 워크플로는 기본 브랜치에 있어야 이벤트를 받으므로 도입 PR에서는 새 `PR Policy`는 실행되지 않는다. `origin/main`의 정확한 SHA에서 `dev`를 만들고, 유지보수자가 관리하는 **같은 저장소**의 구현 브랜치를 merge commit으로 `dev`에 병합한다. 그 `dev`에서 `main`으로 최초 1회 부트스트랩 PR을 열고, PR 본문에는 이 예외와 `Closes #$workflowIssue`를 명시한다. fork 브랜치는 사용하지 않는다.
 
-- [ ] **Step 7: 신뢰된 기존 검사와 사람 리뷰로 부트스트랩을 검증한다**
+- [ ] **Step 7: 실제 자동 검사와 사람 리뷰로 부트스트랩을 검증한다**
 
-기본 브랜치 `e9fa6fd`의 기존 `PR Policy`와 `CI`가 모두 통과해야 한다. 새 `PR Policy`나 새 `Main Integration CI`가 통과했다고 기록하지 않는다. 유지보수자는 변경된 워크플로가 읽기 권한만 사용하고 `pull_request_target`에서 PR head 코드를 실행하지 않으며 `github.event.pull_request.base.sha`만 체크아웃하는지 직접 검토한다. head 브랜치의 새 워크플로를 수동 실행하지 않는다.
+이 PR에는 자동 `PR Policy` check가 없다. PR merge ref의 새 정의에 따라 실행되는 `Main Integration CI`의 모든 job은 통과해야 한다. 유지보수자는 기존 PR 정책을 사람이 직접 대조하여 같은 저장소의 `dev`, 한글 PR 제목, Issue·Milestone 연결을 확인하고, 변경된 워크플로가 읽기 권한만 사용하며 `pull_request_target`에서 PR head 코드를 실행하지 않고 `github.event.pull_request.base.sha`만 체크아웃하는지 보안 리뷰한다. `PR Policy / validate`가 required check로 설정되어 실행 대기 상태라면 이 PR에 한정된 관리자 우회 또는 임시 조정을 기록하고 병합 직후 원복한다. 새 `PR Policy`가 통과했다고 기록하거나 head 브랜치의 새 워크플로를 수동 실행하지 않는다.
 
-- [ ] **Step 8: 부트스트랩 병합 후 dev를 생성한다**
+- [ ] **Step 8: 부트스트랩 병합 후 dev를 동기화한다**
 
-기존 검사와 보안 리뷰를 통과한 PR을 merge commit으로 병합한 뒤, 새 `origin/main`의 정확한 SHA에서 `dev`를 생성해 push한다. 기존 원격 `dev`가 있으면 임의로 덮어쓰지 말고 동기화 가능 여부를 먼저 확인한다. 이 시점부터 부트스트랩 예외는 종료되며 이후 모든 PR은 표준 `feature/Codex → dev`, `dev → main` 정책을 따른다.
+`Main Integration CI`와 사람 검토를 통과한 PR을 merge commit으로 병합한 뒤, `dev`를 새 `origin/main`으로 fast-forward하고 push한다. 이 시점부터 부트스트랩 예외는 종료되며 이후 모든 PR은 표준 `feature/Codex → dev`, `dev → main` 정책을 따른다.
 
 - [ ] **Step 9: 새 정책의 실제 적용 시점을 기록한다**
 
-부트스트랩 뒤 첫 실제 `dev → main` 배치 PR부터 base SHA의 새 `PR Policy`와 `Main Integration CI` 결과를 필수 판정으로 사용한다. 원격 check를 직접 관찰하지 않았다면 통과로 보고하지 않는다.
+부트스트랩 뒤 다음 `dev → main` 배치 PR부터 base SHA의 새 `PR Policy`와 `Main Integration CI` 결과를 필수 판정으로 사용한다. 원격 check를 직접 관찰하지 않았다면 통과로 보고하지 않는다.
 
 - [ ] **Step 10: 저장소 병합 설정을 확인한다**
 
@@ -687,4 +687,4 @@ GitHub 저장소 설정에서 merge commit을 허용하고 squash merge와 rebas
 - 테스트 가능한 정책은 Node 내장 테스트로 RED–GREEN을 수행한다.
 - 두 스킬은 각각 기준선 실패, 최소 작성, 정적 검증, forward-test, 독립 커밋 순서를 지킨다.
 - Backend/Frontend 애플리케이션 코드는 변경하지 않으므로 로컬 전체 테스트는 실행하지 않는다.
-- 부트스트랩 PR은 기본 브랜치의 기존 검사와 사람 보안 리뷰로 판정하고, 새 정책은 병합 뒤 첫 실제 `dev → main` PR에서 판정한다.
+- 부트스트랩 PR은 실제 `Main Integration CI`, 기존 PR 정책의 사람 대조, 워크플로 보안 리뷰로 판정하고, 자동 `PR Policy`는 병합 뒤 다음 `dev → main` PR부터 판정한다.

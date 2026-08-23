@@ -13,9 +13,9 @@
 
 ## 최초 1회 부트스트랩
 
-`pull_request_target` 워크플로는 기본 브랜치에 존재한 뒤부터 이벤트를 받는다. 따라서 이 워크플로를 처음 추가하는 PR에서는 새 `PR Policy`는 실행되지 않는다. 이 한 번만 유지보수자가 관리하는 **같은 저장소**의 작업 브랜치에서 `main`으로 PR을 열고, 기본 브랜치에 이미 있는 신뢰된 기존 `PR Policy`와 `CI`의 통과 및 사람의 워크플로 보안 리뷰를 병합 조건으로 사용한다.
+`pull_request_target` 워크플로는 기본 브랜치에 존재한 뒤부터 이벤트를 받는다. 따라서 도입 PR에서는 새 `PR Policy`는 실행되지 않는다. 먼저 `origin/main`의 정확한 SHA에서 `dev`를 만들고, 유지보수자가 관리하는 **같은 저장소**의 구현 브랜치를 merge commit으로 `dev`에 병합한다. 그런 다음 이 정책을 처음 추가하는 `dev → main` PR을 연다. 이 도입 PR에는 자동 `PR Policy` check가 없다. PR merge ref에 포함된 새 CI 정의에 따라 실제 `Main Integration CI`가 실행되므로 모든 job 통과를 자동 검증 조건으로 사용한다.
 
-리뷰에서는 새 정책이 읽기 권한만 사용하고 `pull_request_target`에서 PR head 코드를 실행하지 않으며 `github.event.pull_request.base.sha`만 체크아웃하는지 확인한다. head 브랜치의 새 워크플로를 수동 실행하거나 새 `PR Policy`·`Main Integration CI`가 도입 PR에서 통과했다고 기록하지 않는다. 병합 후 `origin/main`의 정확한 SHA에서 `dev`를 만들면 예외는 종료되며, 이후에는 이 문서의 `feature branch → dev`와 `dev → main` 규칙만 적용한다.
+유지보수자는 기존 PR 정책을 사람이 직접 대조하여 같은 저장소의 `dev`인지, `type: 한글 변경사항` 제목인지, Issue·Milestone 연결이 맞는지 확인한다. 동시에 새 정책이 읽기 권한만 사용하고 `pull_request_target`에서 PR head 코드를 실행하지 않으며 `github.event.pull_request.base.sha`만 체크아웃하는지 보안 리뷰한다. branch protection이 실행되지 않는 `PR Policy / validate`를 required check로 요구한다면, 이 PR에 한해서만 관리자 우회 또는 required check 임시 조정을 기록하고 병합 직후 원복한다. 새 `PR Policy`가 통과했다고 기록하거나 head 브랜치의 워크플로를 수동 실행하지 않는다. 병합 후 `dev`를 `origin/main`으로 fast-forward하면 예외는 종료되며, 이후에는 이 문서의 표준 `feature branch → dev`와 `dev → main` 규칙만 적용한다.
 
 ## 이슈부터 커밋까지
 
