@@ -1,0 +1,4 @@
+interface:
+  display_name: "INO Admin 이슈 작업"
+  short_description: "이슈를 dev에 안전하게 구현하고 빠른 CI로 검증"
+  default_prompt: "$ino-admin-work-on-issue로 이 GitHub 이슈를 구현하고 dev 빠른 CI까지 확인해 주세요."
