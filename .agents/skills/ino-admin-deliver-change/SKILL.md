@@ -1,63 +1,46 @@
 ---
 name: ino-admin-deliver-change
-description: Complete and deliver changes in the INO Admin repository with its GitHub Flow, Korean commit convention, required verification, and pull-request policy. Use when preparing, committing, pushing, or opening a PR for changes in this repository, or when deciding the correct branch name, commit title, checks, or PR contents.
+description: Use when INO Admin의 dev 변경을 main 배치 PR로 전달하거나 Milestone 완료 이슈와 통합 CI를 확인해야 할 때
 ---
 
-# Deliver an INO Admin change
+# INO Admin 배치 전달
 
-## Inspect before changing
+`main`에는 같은 Milestone의 완료 이슈를 하나의 `dev` → `main` 배치 PR로만 전달한다. 논리 커밋과 `dev`·`main` 동기화는 병합 방식으로 보존한다.
 
-1. Read the root `AGENTS.md` and every more-specific `AGENTS.md` that governs files being changed.
-2. Read `.docs/PROJECT_PLAN.md` before changing architecture, APIs, persistence, security, or build conventions.
-3. Inspect `git status` and preserve unrelated user changes.
-4. Keep the change focused on one verifiable objective.
+## 순서 계약
 
-## Use the repository workflow
+1. `dev`에서 working tree가 깨끗한지 확인하고 `git fetch origin main dev`를 실행한다. `git rev-parse dev`와 `git rev-parse origin/dev`가 정확히 같지 않으면 동기화 전까지 중단한다.
+2. 정확한 `origin/dev` SHA의 `Dev CI`와, `infra/**` 변경이 있으면 `Dev Infra CI`가 모두 통과했는지 확인한다. 실패·취소·진행 중이거나 다른 SHA의 결과뿐이면 중단한다.
+3. 같은 Milestone의 완료 이슈만 수집하고, `origin/main..origin/dev`의 포함 커밋과 각 일반 커밋의 `Refs: #번호`를 대조한다. Milestone 불일치, 누락 이슈, 미완료 이슈가 있으면 중단한다.
+4. 하나의 `dev` → `main` PR을 만든다. PR 본문에는 Milestone, 완료 이슈 목록, 포함 커밋 요약, 검증 결과를 적고, 완료 이슈마다 별도 줄의 `Closes #번호`를 넣는다.
+5. `Main Integration CI`의 모든 job이 통과할 때까지 기다린다. 하나라도 실패·취소·진행 중이면 병합하지 말고 `dev`에서 수정·push한 뒤 처음부터 확인한다.
+6. 승인과 모든 통과 조건을 충족한 뒤 **merge commit**으로만 병합한다. squash merge, rebase merge, `main` 또는 `dev`의 force push는 금지한다.
+7. 병합 직후 추가 `dev` 작업 전에 `git fetch origin`, `git switch dev`, `git merge --ff-only origin/main`, `git push origin dev` 순서로 `dev`를 `origin/main`에 fast-forward한다. fast-forward가 실패하면 원인을 해결할 때까지 중단한다.
 
-- Base work on `main` and use short-lived branches.
-- Use `<type>/<lowercase-hyphen-slug>` for human branches and `codex/<lowercase-hyphen-slug>` for Codex branches. Keep the full name within 80 characters.
-- Use one of `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `style`, `build`, `ci`, `chore`, or `revert` as the type.
-- Use stacked PRs only when a genuinely dependent change must proceed before its prerequisite merges. Set the dependent PR base to the prerequisite branch and document the merge order.
-- Never bypass branch protection or force-push `main`.
+## 최초 부트스트랩 커밋 예외
 
-## Verify the change
+정책 도입 전에 작성되어 커밋 본문에 `Refs`를 넣을 수 없었던 아래 커밋만 Issue #40에 연결된 것으로 감사한다.
 
-Select checks from the governing `AGENTS.md` and changed surface. At minimum:
+- `84f5623`: dev 배치 PR 워크플로 설계
+- `0323e9d`: dev 배치 PR 구현 계획
+- `c11dfad`: Codex worktree 경로 제외
+- `1f30a85`: PR 자동 리뷰 이슈 발행 설계
+- `4167f81`: PR 자동 리뷰 이슈 발행 설계 통합 전 커밋
 
-- Backend: run affected module tests and architecture tests.
-- Frontend: from `apps/admin-web`, run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
-- Infrastructure: run `docker compose -f infra/compose.yaml config` and relevant health checks.
-- Behavior changes: add or update tests.
-- Database changes: add a new Flyway migration; never modify an applied migration.
+최초 `dev → main` PR 본문에 이 SHA와 Issue #40 매핑을 모두 기록한다. 이 예외는 위 SHA에만 적용하며 이후 커밋에는 적용하지 않는다. 다른 `Refs` 누락 커밋이 하나라도 있으면 기존 중단 조건을 그대로 적용한다.
 
-Record every command and outcome for the final response. Treat missing dependencies or unavailable services as warnings only when they are genuine environment limitations.
+## Actions 상태별 처리
 
-## Commit
+| 상태 | 처리 |
+| --- | --- |
+| 모든 `Main Integration CI` job 통과 | merge commit 후 `dev` fast-forward |
+| job 실패·취소·진행 중 | 병합 금지, `dev` 수정 또는 완료 대기 |
+| Actions 권한·서비스 오류 | 통과로 간주하지 말고 접근 복구·재실행을 요청하며 병합 금지 |
 
-1. Review `git diff`, staged files, and `git status` before committing.
-2. Use `type: 한글 변경사항` for the subject.
-3. Write the Korean summary as a concise noun phrase without a period. Avoid vague subjects such as `수정` or `여러 가지 작업`.
-4. Keep one logical change per commit.
-5. Add a Korean body when rationale or operational impact needs explanation.
-6. Add `BREAKING CHANGE:` for incompatible API, configuration, or database changes.
-7. Add `Refs: #123` or `Closes: #123` when applicable.
+## 중단 조건
 
-Example:
+- 같은 Milestone이 아닌 이슈, `Closes` 누락, 깨끗하지 않은 working tree, 로컬·원격 `dev` 불일치
+- 빠른 CI 또는 `Main Integration CI`의 하나라도 미통과
+- squash/rebase 병합이나 force push 요청
 
-```text
-feat: refresh token 재사용 탐지 추가
-
-탈취된 refresh token이 다시 사용되면 같은 token family의 세션을 모두 폐기한다.
-
-Refs: #42
-```
-
-## Open the pull request
-
-1. Push the short-lived branch and open a PR against `main` unless it is a documented stacked PR.
-2. Use the same `type: 한글 변경사항` format for the PR title.
-3. Summarize the focused behavior change, list verification results, and call out migrations, API contracts, configuration changes, security impact, and limitations.
-4. Resolve review conversations and required CI checks before squash merge.
-5. Delete the remote work branch after merge.
-
-If no files changed, do not create a commit or PR. If files changed and were committed, always complete the requested PR step.
+PR을 여러 개로 쪼개거나 CI 실패 예외를 만들지 않는다. 이슈가 없거나 포함할 완료 커밋이 없으면 PR·병합을 만들지 말고 사유를 보고한다.

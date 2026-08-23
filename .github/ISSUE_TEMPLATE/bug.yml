@@ -1,0 +1,49 @@
+name: 버그 신고
+description: 재현 가능한 오류와 영향을 신고합니다.
+title: "[버그] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 재현 절차
+      description: 오류를 재현할 수 있는 단계와 조건을 작성해 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 결과
+      description: 정상 동작 시 기대한 결과를 작성해 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 결과
+      description: 실제로 발생한 결과와 오류 메시지를 작성해 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: 영향
+      description: 영향받는 사용자, 업무, 환경과 심각도를 작성해 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: 완료 조건
+      description: 수정 완료를 판단할 수 있는 검증 가능한 조건을 작성해 주세요.
+      placeholder: |-
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: test-plan
+    attributes:
+      label: 테스트 계획
+      description: 재현과 수정 확인에 사용할 검증 방법을 작성해 주세요.
+    validations:
+      required: true

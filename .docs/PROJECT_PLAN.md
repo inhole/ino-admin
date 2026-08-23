@@ -722,14 +722,7 @@ MVP는 Phase 0~7의 실제 관리자 기능과 Phase 8의 핵심 모듈 추출�
 
 ### 10.4 Phase 공통 완료 확인
 
-각 Phase 완료 시 최소한 다음을 실행한다.
-
-```text
-backend: clean test + integrationTest + architectureTest
-frontend: lint + typecheck + unit test + build
-system: 핵심 Playwright E2E
-infra: docker compose config 및 health 확인
-```
+각 Phase는 테스트를 구현보다 먼저 작성하고, 변경 범위에 맞는 GitHub Actions 검증을 완료해야 한다. `dev` 변경은 `Dev CI`, `infra/**` 변경은 `Dev Infra CI`, `dev → main` 배치 PR은 `Main Integration CI`가 최종 판정 기준이다. 로컬 명령은 디버깅 또는 단일 테스트 확인이 필요한 경우에만 지정한다. Actions를 사용할 수 없으면 미검증 상태로 보고하고 병합하지 않는다.
 
 ---
 
@@ -768,26 +761,14 @@ redis      MVP 이후 cache/rate limit용, 선택
 
 ### 12.1 Pull Request CI
 
-- 변경 파일 기반 backend/frontend job 분리
-- backend compile, unit, integration, ArchUnit
-- frontend lint, typecheck, unit, build
-- OpenAPI breaking-change 확인
-- Playwright 핵심 시나리오
-- dependency vulnerability, secret, license scan
-- Docker image build 검증
-- 테스트 결과와 coverage report 업로드
+- `Dev CI`: `dev` push와 `dev` 대상 PR에서 backend `test architectureTest`, frontend `lint`, `typecheck`, `test`를 실행한다.
+- `Dev Infra CI`: `dev` push와 `dev` 대상 PR의 `infra/**` 변경에서 `docker compose -f infra/compose.yaml config`를 실행한다.
+- 같은 ref에 새 커밋이 오면 이전 빠른 CI를 취소한다.
+- 빠른 CI 실패는 다음 이슈로 진행하기 전에 같은 이슈에서 수정한다.
 
 ### 12.2 Main/Release Pipeline
 
-1. 전체 테스트
-2. 버전 계산 및 changelog 생성
-3. backend/frontend production artifact 생성
-4. SBOM 및 image vulnerability scan
-5. immutable container image push
-6. staging 배포
-7. migration + smoke/E2E
-8. 승인 기반 production 배포
-9. 배포 메타데이터와 release note 기록
+`Main Integration CI`는 `main` 대상 PR과 수동 실행에서 backend `clean test integrationTest architectureTest`, frontend `lint`, `typecheck`, `test`, `build`, Playwright E2E, Docker Compose 설정 검증을 실행한다. `main` 병합은 이 필수 checks가 모두 통과한 `dev → main` 배치 PR에서만 한다.
 
 ### 12.3 배포 원칙
 
@@ -889,10 +870,11 @@ redis      MVP 이후 cache/rate limit용, 선택
 ### 15.1 브랜치
 
 - 기본 브랜치: `main`, 항상 배포 가능 상태 유지
-- 짧은 feature branch 사용
-- 사람 브랜치 형식: `feat/auth-login`, `fix/file-path-validation`, `refactor/extract-common-file`, `docs/project-plan`
-- Codex 브랜치 형식: `codex/auth-login`
-- 장기 `develop` 브랜치는 두지 않는다.
+- 장기 dev 통합 브랜치: `dev`, 완료된 이슈의 논리적 커밋을 누적한다.
+- 작은 기능, 격리된 버그, 테스트, 문서는 `dev`에 직접 커밋한다.
+- migration, 보안, 공개 API/공용 설정, 장기·병렬·고위험 작업은 feature branch를 사용한다.
+- 사람 브랜치 형식: `<type>/<issue-number>-<slug>`, Codex 브랜치 형식: `codex/<issue-number>-<slug>`
+- 최초 정책 부트스트랩 예외는 브랜치 전략 문서의 신뢰 경계를 따르며, 그 이후 feature branch는 `dev`로 merge commit 병합하고 `main`은 `dev → main` 배치 PR만 받는다.
 
 ### 15.2 커밋 규칙
 
@@ -902,11 +884,15 @@ redis      MVP 이후 cache/rate limit용, 선택
 - 생성 파일과 수동 변경은 가능하면 분리한다.
 - schema 변경은 migration과 관련 테스트를 같은 PR에 포함한다.
 - 깨진 빌드, 미완성 placeholder, 실제 secret을 커밋하지 않는다.
+- 일반 커밋은 `Refs: #123`, 배치 PR은 포함 이슈마다 `Closes #123`으로 연결한다.
 
 ### 15.3 PR 체크리스트
 
 - [ ] 요구사항과 제외 범위가 명확하다.
-- [ ] 테스트가 추가/갱신되고 로컬에서 통과했다.
+- [ ] 테스트를 구현보다 먼저 작성했다(test-first).
+- [ ] `dev` 변경은 `Dev CI`를 통과했고, `infra/**` 변경은 `Dev Infra CI`도 통과했다.
+- [ ] `dev → main` 배치 PR은 `Main Integration CI`를 통과해 CI 검증 완료 상태다.
+- [ ] Actions를 사용할 수 없으면 미검증 상태로 보고하고 병합하지 않는다.
 - [ ] API/DB/설정 변경 문서가 갱신되었다.
 - [ ] 보안·권한·개인정보 영향을 검토했다.
 - [ ] migration의 forward/compatibility를 확인했다.
@@ -930,7 +916,7 @@ Codex에는 한 번에 하나의 검증 가능한 목표를 준다. 한 요청�
 6. integration/E2E
 7. 문서와 최종 검증
 
-각 작업은 수정 허용 범위, 비범위, 완료 기준, 실행할 테스트를 포함해야 한다.
+각 작업은 수정 허용 범위, 비범위, 완료 기준, test-first 작성 여부와 필요한 GitHub Actions check를 포함해야 한다. 작은 작업은 `dev`에 직접 누적하고, 고위험·장기·병렬 작업만 feature branch에서 `dev`로 전달한다.
 
 ### 16.2 Codex 공통 프롬프트 템플릿
 
@@ -956,10 +942,11 @@ Codex에는 한 번에 하나의 검증 가능한 목표를 준다. 한 요청�
 - 동작/테스트/문서 기준
 
 검증:
-- 실행해야 할 backend/frontend/E2E 명령
+- test-first 작성 여부와 필요한 GitHub Actions check
+- 로컬 명령은 디버깅 또는 단일 테스트 확인이 필요한 경우에만 지정
 
 먼저 관련 파일과 AGENTS.md를 읽고 짧은 변경 계획을 세운 뒤 구현하라.
-완료 후 변경 파일, 핵심 결정, 테스트 결과, 남은 위험을 보고하라.
+완료 후 변경 파일, 핵심 결정, `CI 검증 완료` 여부, 로컬 검증 결과, 남은 위험을 보고하라. Actions를 사용할 수 없으면 미검증으로 보고하고 병합하지 마라.
 ```
 
 ### 16.3 Phase별 예시 프롬프트
@@ -1072,7 +1059,8 @@ FileStorage port와 adapter/configuration만 이동해. admin-server 역의존�
 ### 테스트
 
 - [ ] unit/integration/UI 테스트가 변경 위험에 맞게 추가되었다.
-- [ ] 핵심 회귀와 관련 E2E가 통과한다.
+- [ ] 구현 전에 테스트를 작성했고, 필요한 GitHub Actions checks가 통과했다.
+- [ ] 핵심 회귀와 관련 E2E가 필요한 `Main Integration CI`에서 통과한다.
 - [ ] flaky test가 없다.
 
 ### 보안과 운영

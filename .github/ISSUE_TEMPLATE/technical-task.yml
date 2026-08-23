@@ -1,0 +1,35 @@
+name: 기술 작업
+description: 운영, 품질, 개발 환경을 개선하는 기술 작업을 제안합니다.
+title: "[기술] "
+labels: ["technical-task"]
+body:
+  - type: textarea
+    id: deliverable
+    attributes:
+      label: 산출물
+      description: 작업 완료 후 제공할 코드, 문서, 설정 또는 운영 결과를 작성해 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 작업 범위
+      description: 포함할 내용과 제외할 내용을 구분해 작성해 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: 완료 조건
+      description: 완료로 판단할 수 있는 검증 가능한 조건을 작성해 주세요.
+      placeholder: |-
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: test-plan
+    attributes:
+      label: 테스트 계획
+      description: 실행할 자동 또는 수동 검증 방법을 작성해 주세요.
+    validations:
+      required: true

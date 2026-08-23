@@ -39,5 +39,11 @@ replay_pid*
 .idea/
 *.iml
 
+# Codex worktrees
+.codex-worktrees/
+
 # Local environment
 .env
+
+# Local file storage
+data/
