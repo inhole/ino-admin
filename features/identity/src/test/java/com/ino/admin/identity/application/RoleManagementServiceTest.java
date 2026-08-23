@@ -54,7 +54,7 @@ class RoleManagementServiceTest {
         assertThat(created.enabled()).isTrue();
 
         var systemRole = mock(Role.class); when(systemRole.systemRole()).thenReturn(true);
-        when(roles.findById("ADMIN")).thenReturn(Optional.of(systemRole));
+        when(roles.findByIdForUpdate("ADMIN")).thenReturn(Optional.of(systemRole));
         assertThatThrownBy(() -> service.changeEnabled("ADMIN", false))
                 .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("SYSTEM_ROLE_PROTECTED");
     }

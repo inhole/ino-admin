@@ -7,6 +7,7 @@ import com.ino.admin.identity.domain.RefreshToken;
 import com.ino.admin.identity.domain.User;
 import com.ino.admin.identity.domain.UserStatus;
 import com.ino.admin.identity.infrastructure.persistence.RefreshTokenRepository;
+import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -29,15 +30,18 @@ public class RefreshTokenService implements RefreshTokenUseCase {
     private final Clock clock;
     private final Duration ttl;
     private final RolePermissionService rolePermissionService;
+    private final UserRepository userRepository;
 
     public RefreshTokenService(RefreshTokenRepository repository, AccessTokenIssuer accessTokenIssuer, Clock clock,
-            @Value("${app.jwt.refresh-token-ttl:30d}") Duration ttl, RolePermissionService rolePermissionService) {
+            @Value("${app.jwt.refresh-token-ttl:30d}") Duration ttl, RolePermissionService rolePermissionService,
+            UserRepository userRepository) {
         if (ttl.isZero() || ttl.isNegative()) throw new IllegalStateException("Refresh token TTL은 0보다 커야 합니다.");
         this.repository = repository;
         this.accessTokenIssuer = accessTokenIssuer;
         this.clock = clock;
         this.ttl = ttl;
         this.rolePermissionService = rolePermissionService;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -49,27 +53,34 @@ public class RefreshTokenService implements RefreshTokenUseCase {
     @Override
     public RefreshResult rotate(String rawToken) {
         var now = Instant.now(clock);
-        var current = repository.findByTokenHash(hash(rawToken)).orElseThrow(InvalidRefreshTokenException::new);
+        var tokenHash = hash(rawToken);
+        var userId = repository.findUserIdByTokenHash(tokenHash).orElseThrow(InvalidRefreshTokenException::new);
+        var familyId = repository.findFamilyIdByTokenHash(tokenHash).orElseThrow(InvalidRefreshTokenException::new);
+        var user = userRepository.findByIdForUpdate(userId).orElseThrow(InvalidRefreshTokenException::new);
+        var role = rolePermissionService.findTokenPermissionsForUpdate(user.role());
+        var current = repository.findAllByFamilyId(familyId).stream()
+                .filter(token -> token.tokenHash().equals(tokenHash))
+                .findFirst().orElseThrow(InvalidRefreshTokenException::new);
         if (current.isRevoked()) {
             revokeFamily(current.familyId(), now);
             throw new InvalidRefreshTokenException();
         }
-        if (current.isExpiredAt(now) || current.user().status() != UserStatus.ACTIVE) {
+        if (current.isExpiredAt(now) || user.status() != UserStatus.ACTIVE || !role.enabled()) {
             current.revoke(now);
             throw new InvalidRefreshTokenException();
         }
-        var replacement = newToken(current.user(), current.familyId(), now);
+        var replacement = newToken(user, current.familyId(), now);
         repository.save(replacement.entity());
         current.replaceWith(replacement.entity().id(), now);
-        var access = accessTokenIssuer.issue(current.user().id(), current.user().role(),
-                rolePermissionService.findPermissions(current.user().role()));
+        var access = accessTokenIssuer.issue(user.id(), user.role(), role.permissions());
         return new RefreshResult(access.value(), access.expiresInSeconds(), replacement.rawToken());
     }
 
     @Transactional
     @Override
     public void logout(String rawToken) {
-        repository.findByTokenHash(hash(rawToken)).ifPresent(token -> revokeFamily(token.familyId(), Instant.now(clock)));
+        repository.findFamilyIdByTokenHash(hash(rawToken))
+                .ifPresent(familyId -> revokeFamily(familyId, Instant.now(clock)));
     }
 
     @Transactional
