@@ -47,3 +47,4 @@ replay_pid*
 
 # Local file storage
 data/
+.superpowers/
