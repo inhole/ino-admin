@@ -11,6 +11,7 @@ import {
 } from "@/features/users/api/usersApi";
 import { ApiClientError } from "@/api/client";
 import { getPermissionCatalog, permissionKeys } from "@/features/permissions";
+import { DEFAULT_USER_LIST_QUERY } from "@/features/users/hook/userListQuery";
 import { userKeys } from "@/features/users/hook/userKeys";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { ErrorState } from "@/components/states/PageStates";
@@ -62,7 +63,10 @@ import { formatDate } from "@/i18n/format";
 export function UsersPage() {
   const { t } = useTranslation("users");
   const { t: common } = useTranslation("common");
-  const users = useQuery({ queryKey: userKeys.all, queryFn: getUsers });
+  const users = useQuery({
+    queryKey: userKeys.list(DEFAULT_USER_LIST_QUERY),
+    queryFn: () => getUsers(DEFAULT_USER_LIST_QUERY),
+  });
   const roles = useQuery({
     queryKey: permissionKeys.all,
     queryFn: getPermissionCatalog,
