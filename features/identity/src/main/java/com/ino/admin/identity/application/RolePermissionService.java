@@ -14,8 +14,22 @@ public class RolePermissionService {
 
     @Transactional(readOnly = true)
     public List<String> findPermissions(String role) {
-        return repository.findById(role)
-                .orElseThrow(() -> new BusinessException("ROLE_NOT_FOUND", "역할을 찾을 수 없습니다."))
-                .permissions().stream().sorted().toList();
+        var found = repository.findById(role)
+                .orElseThrow(() -> new BusinessException("ROLE_NOT_FOUND", "역할을 찾을 수 없습니다."));
+        return permissions(found);
     }
+
+    @Transactional
+    public TokenPermissions findTokenPermissionsForUpdate(String role) {
+        var found = repository.findByIdForUpdate(role)
+                .orElseThrow(() -> new BusinessException("ROLE_NOT_FOUND", "역할을 찾을 수 없습니다."));
+        return new TokenPermissions(found.enabled(), permissions(found));
+    }
+
+    private List<String> permissions(com.ino.admin.identity.domain.Role role) {
+        if (!role.enabled()) return List.of();
+        return role.permissions().stream().sorted().toList();
+    }
+
+    public record TokenPermissions(boolean enabled, List<String> permissions) {}
 }

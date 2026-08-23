@@ -39,8 +39,12 @@ public class UserManagementService implements UserManagementUseCase {
         if (actorId.equals(userId) && requested == UserStatus.DISABLED) {
             throw new BusinessException("SELF_DISABLE_NOT_ALLOWED", "자기 계정은 비활성화할 수 없습니다.");
         }
+        var activeSuperAdmins = requested == UserStatus.DISABLED
+                ? userRepository.findAllActiveSuperAdminsForUpdate()
+                : java.util.List.<User>of();
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "사용자를 찾을 수 없습니다."));
+        if (requested == UserStatus.DISABLED) protectLastActiveSuperAdmin(user, activeSuperAdmins);
         user.changeStatus(requested, Instant.now(clock));
         if (requested == UserStatus.DISABLED) refreshTokenService.revokeAllForUser(user.id());
         return new UpdatedUser(user.id(), user.status().name());
@@ -52,9 +56,11 @@ public class UserManagementService implements UserManagementUseCase {
         if (actorId.equals(userId)) {
             throw new BusinessException("SELF_ROLE_CHANGE_NOT_ALLOWED", "자기 계정의 역할은 변경할 수 없습니다.");
         }
-        var user = userRepository.findById(userId)
+        var activeSuperAdmins = userRepository.findAllActiveSuperAdminsForUpdate();
+        var user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "사용자를 찾을 수 없습니다."));
-        var role = parseAssignableRole(command.role());
+        var role = parseAssignableRoleForUpdate(command.role());
+        if (!role.equals(user.role())) protectLastActiveSuperAdmin(user, activeSuperAdmins);
         user.updateProfile(command.displayName(), role, Instant.now(clock));
         refreshTokenService.revokeAllForUser(user.id());
         return new UpdatedProfile(user.id(), user.displayName(), user.role());
@@ -81,7 +87,7 @@ public class UserManagementService implements UserManagementUseCase {
         if (!violations.isEmpty()) {
             throw new BusinessException("PASSWORD_POLICY_VIOLATION", String.join(" ", violations));
         }
-        var role = parseAssignableRole(command.role());
+        var role = parseAssignableRoleForUpdate(command.role());
         var user = User.create(email, passwordEncoder.encode(command.password()), command.displayName(), role,
                 Instant.now(clock));
         userRepository.save(user);
@@ -93,5 +99,21 @@ public class UserManagementService implements UserManagementUseCase {
         if (normalized.equals(UserRole.SUPER_ADMIN.name()) || roleRepository.findById(normalized).filter(found -> found.enabled()).isEmpty())
             throw new BusinessException("INVALID_USER_ROLE", "할당 가능한 역할을 선택해야 합니다.");
         return normalized;
+    }
+
+    private String parseAssignableRoleForUpdate(String role) {
+        var normalized = role == null ? "" : role.strip();
+        if (normalized.equals(UserRole.SUPER_ADMIN.name())
+                || roleRepository.findByIdForUpdate(normalized).filter(found -> found.enabled()).isEmpty()) {
+            throw new BusinessException("INVALID_USER_ROLE", "할당 가능한 역할을 선택해야 합니다.");
+        }
+        return normalized;
+    }
+
+    private void protectLastActiveSuperAdmin(User user, java.util.List<User> activeSuperAdmins) {
+        if (!UserRole.SUPER_ADMIN.name().equals(user.role()) || user.status() != UserStatus.ACTIVE) return;
+        if (activeSuperAdmins.size() <= 1) {
+            throw new BusinessException("LAST_SUPER_ADMIN_PROTECTED", "마지막 활성 최고 관리자는 변경할 수 없습니다.");
+        }
     }
 }

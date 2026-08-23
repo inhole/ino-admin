@@ -18,8 +18,28 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     java.util.List<User> findAllByRole(String role);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select user from User user where user.role = :role order by user.id")
+    java.util.List<User> findAllByRoleForUpdate(@Param("role") String role);
+
+    @Query("select user.id from User user where user.role = :role order by user.id")
+    java.util.List<UUID> findIdsByRoleOrderById(@Param("role") String role);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select user from User user where user.email = :email")
     Optional<User> findByEmailForUpdate(@Param("email") String email);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select user from User user where user.id = :userId")
+    Optional<User> findByIdForUpdate(@Param("userId") UUID userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select user from User user
+            where user.role = 'SUPER_ADMIN'
+              and user.status = com.ino.admin.identity.domain.UserStatus.ACTIVE
+            order by user.id
+            """)
+    java.util.List<User> findAllActiveSuperAdminsForUpdate();
 
     @Query("""
             select user from User user

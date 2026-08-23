@@ -52,9 +52,11 @@ public class LoginService implements LoginUseCase {
             }
             throw new AuthenticationFailedException();
         }
+        var role = rolePermissionService.findTokenPermissionsForUpdate(user.role());
+        if (!role.enabled()) throw new AuthenticationFailedException();
         user.recordSuccessfulLogin(Instant.now(clock));
         var token = accessTokenIssuer.issue(user.id(), user.role(),
-                rolePermissionService.findPermissions(user.role()));
+                role.permissions());
         var refreshToken = refreshTokenService.issue(user);
         return new LoginResult(token.value(), token.expiresInSeconds(), refreshToken.rawToken());
     }

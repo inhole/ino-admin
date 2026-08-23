@@ -15,6 +15,7 @@ import com.ino.admin.identity.domain.Role;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ class UserManagementServiceTest {
     void createsViewerWithNormalizedEmailAndEncodedPassword() {
         when(encoder.encode("Viewer-Password-2026!")).thenReturn("encoded");
         var role = mock(Role.class); when(role.enabled()).thenReturn(true);
-        when(roleRepository.findById("VIEWER")).thenReturn(Optional.of(role));
+        when(roleRepository.findByIdForUpdate("VIEWER")).thenReturn(Optional.of(role));
 
         var result = service.create(new CreateUser(" Viewer@Example.com ", "Viewer-Password-2026!", " 뷰어 ", "VIEWER"));
 
@@ -74,12 +75,38 @@ class UserManagementServiceTest {
     }
 
     @Test
+    void rejectsDisablingLastActiveSuperAdmin() {
+        var superAdmin = User.createInitialAdmin("last-admin@example.com", "hash", "마지막 최고 관리자",
+                Instant.parse("2026-08-13T00:00:00Z"));
+        when(repository.findById(superAdmin.id())).thenReturn(Optional.of(superAdmin));
+        when(repository.findAllActiveSuperAdminsForUpdate()).thenReturn(List.of(superAdmin));
+
+        assertThatThrownBy(() -> service.changeStatus(UUID.randomUUID(), superAdmin.id(), "DISABLED"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("code").isEqualTo("LAST_SUPER_ADMIN_PROTECTED");
+    }
+
+    @Test
+    void allowsDisablingSuperAdminWhenAnotherActiveSuperAdminRemains() {
+        var target = User.createInitialAdmin("target-admin@example.com", "hash", "대상 최고 관리자",
+                Instant.parse("2026-08-13T00:00:00Z"));
+        var remaining = User.createInitialAdmin("remaining-admin@example.com", "hash", "남은 최고 관리자",
+                Instant.parse("2026-08-13T00:00:00Z"));
+        when(repository.findById(target.id())).thenReturn(Optional.of(target));
+        when(repository.findAllActiveSuperAdminsForUpdate()).thenReturn(List.of(target, remaining));
+
+        var result = service.changeStatus(UUID.randomUUID(), target.id(), "DISABLED");
+
+        assertThat(result.status()).isEqualTo("DISABLED");
+    }
+
+    @Test
     void updatesAnotherUsersProfileAndRevokesRefreshTokens() {
         var user = User.create("viewer@example.com", "hash", "뷰어", "VIEWER",
                 Instant.parse("2026-08-13T00:00:00Z"));
-        when(repository.findById(user.id())).thenReturn(Optional.of(user));
+        when(repository.findByIdForUpdate(user.id())).thenReturn(Optional.of(user));
         var role = mock(Role.class); when(role.enabled()).thenReturn(true);
-        when(roleRepository.findById("ADMIN")).thenReturn(Optional.of(role));
+        when(roleRepository.findByIdForUpdate("ADMIN")).thenReturn(Optional.of(role));
 
         var result = service.updateProfile(UUID.randomUUID(), user.id(),
                 new com.ino.admin.identity.api.UserManagementUseCase.UpdateProfile(" 운영자 ", "ADMIN"));
@@ -95,5 +122,39 @@ class UserManagementServiceTest {
         assertThatThrownBy(() -> service.updateProfile(actorId, actorId,
                 new com.ino.admin.identity.api.UserManagementUseCase.UpdateProfile("관리자", "ADMIN")))
                 .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("SELF_ROLE_CHANGE_NOT_ALLOWED");
+    }
+
+    @Test
+    void rejectsChangingLastActiveSuperAdminRole() {
+        var superAdmin = User.createInitialAdmin("last-admin@example.com", "hash", "마지막 최고 관리자",
+                Instant.parse("2026-08-13T00:00:00Z"));
+        when(repository.findByIdForUpdate(superAdmin.id())).thenReturn(Optional.of(superAdmin));
+        when(repository.findAllActiveSuperAdminsForUpdate()).thenReturn(List.of(superAdmin));
+        var role = mock(Role.class);
+        when(role.enabled()).thenReturn(true);
+        when(roleRepository.findByIdForUpdate("ADMIN")).thenReturn(Optional.of(role));
+
+        assertThatThrownBy(() -> service.updateProfile(UUID.randomUUID(), superAdmin.id(),
+                new com.ino.admin.identity.api.UserManagementUseCase.UpdateProfile("관리자", "ADMIN")))
+                .isInstanceOf(BusinessException.class)
+                .extracting("code").isEqualTo("LAST_SUPER_ADMIN_PROTECTED");
+    }
+
+    @Test
+    void allowsChangingSuperAdminRoleWhenAnotherActiveSuperAdminRemains() {
+        var target = User.createInitialAdmin("target-admin@example.com", "hash", "대상 최고 관리자",
+                Instant.parse("2026-08-13T00:00:00Z"));
+        var remaining = User.createInitialAdmin("remaining-admin@example.com", "hash", "남은 최고 관리자",
+                Instant.parse("2026-08-13T00:00:00Z"));
+        when(repository.findAllActiveSuperAdminsForUpdate()).thenReturn(List.of(target, remaining));
+        when(repository.findByIdForUpdate(target.id())).thenReturn(Optional.of(target));
+        var role = mock(Role.class);
+        when(role.enabled()).thenReturn(true);
+        when(roleRepository.findByIdForUpdate("ADMIN")).thenReturn(Optional.of(role));
+
+        var result = service.updateProfile(UUID.randomUUID(), target.id(),
+                new com.ino.admin.identity.api.UserManagementUseCase.UpdateProfile("관리자", "ADMIN"));
+
+        assertThat(result.role()).isEqualTo("ADMIN");
     }
 }

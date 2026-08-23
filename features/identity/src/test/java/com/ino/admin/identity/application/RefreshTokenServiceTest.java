@@ -5,6 +5,7 @@ import com.ino.admin.identity.application.port.AccessTokenIssuer;
 import com.ino.admin.identity.domain.RefreshToken;
 import com.ino.admin.identity.domain.User;
 import com.ino.admin.identity.infrastructure.persistence.RefreshTokenRepository;
+import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,8 +32,10 @@ class RefreshTokenServiceTest {
     private final RefreshTokenRepository repository = mock(RefreshTokenRepository.class);
     private final AccessTokenIssuer accessTokenIssuer = mock(AccessTokenIssuer.class);
     private final RolePermissionService rolePermissionService = mock(RolePermissionService.class);
+    private final UserRepository userRepository = mock(UserRepository.class);
     private final RefreshTokenService service = new RefreshTokenService(
-            repository, accessTokenIssuer, Clock.fixed(NOW, ZoneOffset.UTC), Duration.ofDays(30), rolePermissionService);
+            repository, accessTokenIssuer, Clock.fixed(NOW, ZoneOffset.UTC), Duration.ofDays(30), rolePermissionService,
+            userRepository);
 
     @Test
     void storesOnlyHashWhenIssuingRefreshToken() throws Exception {
@@ -51,15 +54,28 @@ class RefreshTokenServiceTest {
     void revokesWholeFamilyWhenRotatedTokenIsReused() {
         var user = User.createInitialAdmin("admin@example.com", "hash", "관리자", NOW);
         var familyId = UUID.randomUUID();
-        var reused = RefreshToken.issue(user, "reused-hash", familyId, NOW, NOW.plusSeconds(60));
+        var reused = RefreshToken.issue(user, hash("reused-token"), familyId, NOW, NOW.plusSeconds(60));
         var sibling = RefreshToken.issue(user, "sibling-hash", familyId, NOW, NOW.plusSeconds(60));
         reused.revoke(NOW.minusSeconds(1));
-        when(repository.findByTokenHash(any())).thenReturn(Optional.of(reused));
+        when(repository.findUserIdByTokenHash(any())).thenReturn(Optional.of(user.id()));
+        when(repository.findFamilyIdByTokenHash(any())).thenReturn(Optional.of(familyId));
+        when(userRepository.findByIdForUpdate(user.id())).thenReturn(Optional.of(user));
+        when(rolePermissionService.findTokenPermissionsForUpdate(user.role()))
+                .thenReturn(new RolePermissionService.TokenPermissions(true, List.of()));
         when(repository.findAllByFamilyId(familyId)).thenReturn(List.of(reused, sibling));
 
         assertThatThrownBy(() -> service.rotate("reused-token"))
                 .isInstanceOf(InvalidRefreshTokenException.class);
 
         assertThat(sibling.isRevoked()).isTrue();
+    }
+
+    private static String hash(String rawToken) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                    .digest(rawToken.getBytes(StandardCharsets.UTF_8)));
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 }

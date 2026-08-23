@@ -175,6 +175,29 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void anotherActorCannotDisableOrDemoteLastActiveSuperAdmin() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        var lastSuperAdmin = userRepository.findByEmail(EMAIL).orElseThrow();
+        var otherActorToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "SUPER_ADMIN");
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/users/{userId}/status", lastSuperAdmin.id())
+                        .header("Authorization", "Bearer " + otherActorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"DISABLED\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("LAST_SUPER_ADMIN_PROTECTED"));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/users/{userId}", lastSuperAdmin.id())
+                        .header("Authorization", "Bearer " + otherActorToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"관리자\",\"role\":\"ADMIN\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("LAST_SUPER_ADMIN_PROTECTED"));
+    }
+
+    @Test
     void superAdminReadsAndUpdatesAnotherUserButCannotChangeSelfRole() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         String token = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
@@ -219,6 +242,51 @@ class AuthFlowIntegrationTest {
 
         assertInvalidRefreshToken(first);
         assertInvalidRefreshToken(second);
+    }
+
+    @Test
+    void disabledRoleCannotRegainPermissionsByLoginOrRefresh() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        String superAdminToken = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
+
+        mockMvc.perform(post("/api/v1/permissions/roles")
+                        .header("Authorization", "Bearer " + superAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"role":"CUSTOM_ADMIN","displayName":"커스텀 관리자","permissions":["user:read"]}
+                                """))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/users")
+                        .header("Authorization", "Bearer " + superAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"custom@example.com","password":"Custom-Password-2026!","displayName":"커스텀 사용자","role":"CUSTOM_ADMIN"}
+                                """))
+                .andExpect(status().isCreated());
+
+        var activeLogin = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"custom@example.com","password":"Custom-Password-2026!"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String activeAccessToken = JsonPath.read(activeLogin.getResponse().getContentAsString(), "$.accessToken");
+        String activeRefreshToken = JsonPath.read(activeLogin.getResponse().getContentAsString(), "$.refreshToken");
+        mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + activeAccessToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/permissions/roles/CUSTOM_ADMIN/status")
+                        .header("Authorization", "Bearer " + superAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(false));
+
+        assertInvalidRefreshToken(activeRefreshToken);
+
+        assertInvalidCredentials("custom@example.com", "Custom-Password-2026!");
     }
 
     @Test

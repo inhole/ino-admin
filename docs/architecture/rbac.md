@@ -14,5 +14,6 @@
 - 역할 CRUD와 다중 역할·권한 catalog는 후속 vertical slice에서 별도 테이블로 확장한다.
 - 현재 권한 원본은 `roles`, `role_permissions` 테이블이며 `GET /api/v1/permissions`에서 역할별 매핑을 조회할 수 있다. 로그인과 refresh token 회전 시 최신 DB 권한이 access token에 반영된다.
 - SUPER_ADMIN 매핑은 변경할 수 없으며 ADMIN/VIEWER 권한 변경 시 해당 역할 사용자의 refresh token을 폐기한다. 기존 access token은 최대 잔여 수명 동안 유효하다.
+- 역할 비활성화와 login/refresh token 발급은 `사용자(UUID 오름차순) → 역할 → refresh token` 순서로 행 잠금을 획득한다. 비활성화는 역할 사용자를 먼저 잠가 진행 중인 발급을 선형화한 뒤 역할을 비활성화하고 모든 refresh token을 폐기한다. login과 refresh rotation은 잠긴 역할이 비활성 상태면 새 token을 발급하지 않는다. 이 순서를 역전하는 잠금 경로를 추가하면 교착 위험이 있으므로 동일 순서를 유지해야 한다.
 - 사용자 테이블은 역할 enum이 아닌 `roles.role_key`와 호환되는 문자열 키를 저장한다. 기본 역할 정책은 유지하면서 후속 custom role 생성·할당을 지원한다.
 - 역할 변경 시 기존 token 무효화 또는 짧은 TTL 내 반영 정책을 역할 관리 slice에서 확정한다.

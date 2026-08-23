@@ -63,9 +63,25 @@ public class RoleManagementService implements RoleManagementUseCase {
 
     @Override @Transactional
     public RoleView changeEnabled(String roleKey, boolean enabled) {
-        var role = editableCustomRole(roleKey); role.changeEnabled(enabled, Instant.now(clock));
-        if (!enabled) userRepository.findAllByRole(roleKey).forEach(user -> refreshTokenService.revokeAllForUser(user.id()));
+        var users = enabled ? List.<com.ino.admin.identity.domain.User>of()
+                : userRepository.findAllByRoleForUpdate(roleKey);
+        var role = editableCustomRoleForUpdate(roleKey); role.changeEnabled(enabled, Instant.now(clock));
+        if (!enabled) {
+            var currentUserIds = userRepository.findIdsByRoleOrderById(roleKey);
+            java.util.stream.Stream.concat(users.stream().map(com.ino.admin.identity.domain.User::id),
+                            currentUserIds.stream())
+                    .distinct()
+                    .sorted()
+                    .forEach(refreshTokenService::revokeAllForUser);
+        }
         return view(role);
+    }
+
+    private Role editableCustomRoleForUpdate(String key) {
+        var role = roleRepository.findByIdForUpdate(key)
+                .orElseThrow(() -> new BusinessException("ROLE_NOT_FOUND", "역할을 찾을 수 없습니다."));
+        if (role.systemRole()) throw new BusinessException("SYSTEM_ROLE_PROTECTED", "시스템 역할은 변경할 수 없습니다.");
+        return role;
     }
 
     private Role editableCustomRole(String key) {
