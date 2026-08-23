@@ -44,3 +44,6 @@ replay_pid*
 
 # Local environment
 .env
+
+# Local file storage
+data/
