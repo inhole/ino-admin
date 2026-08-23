@@ -14,6 +14,7 @@ All errors include `code`, `message`, `fieldErrors`, `traceId`, and an ISO-8601 
 | `INVALID_USER_STATUS` | 400 | 활성 또는 비활성 외의 사용자 상태 변경을 요청했다. |
 | `SELF_DISABLE_NOT_ALLOWED` | 400 | 관리자가 자기 계정 비활성화를 요청했다. |
 | `SELF_ROLE_CHANGE_NOT_ALLOWED` | 400 | 관리자가 자기 계정의 역할 변경을 요청했다. |
+| `LAST_SUPER_ADMIN_PROTECTED` | 400 | 마지막 활성 최고 관리자의 비활성화 또는 역할 변경을 요청했다. |
 | `USER_NOT_FOUND` | 400 | 상태를 변경할 사용자를 찾을 수 없다. |
 | `MENU_ID_ALREADY_EXISTS` | 400 | 이미 존재하는 메뉴 ID를 생성하려 했다. |
 | `MENU_NOT_FOUND` | 400 | 변경할 메뉴가 존재하지 않는다. |
