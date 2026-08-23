@@ -14,8 +14,9 @@ public class RolePermissionService {
 
     @Transactional(readOnly = true)
     public List<String> findPermissions(String role) {
-        return repository.findById(role)
-                .orElseThrow(() -> new BusinessException("ROLE_NOT_FOUND", "역할을 찾을 수 없습니다."))
-                .permissions().stream().sorted().toList();
+        var found = repository.findById(role)
+                .orElseThrow(() -> new BusinessException("ROLE_NOT_FOUND", "역할을 찾을 수 없습니다."));
+        if (!found.enabled()) return List.of();
+        return found.permissions().stream().sorted().toList();
     }
 }

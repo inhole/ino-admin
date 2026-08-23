@@ -222,6 +222,72 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void disabledRoleCannotRegainPermissionsByLoginOrRefresh() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        String superAdminToken = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
+
+        mockMvc.perform(post("/api/v1/permissions/roles")
+                        .header("Authorization", "Bearer " + superAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"role":"CUSTOM_ADMIN","displayName":"커스텀 관리자","permissions":["user:read"]}
+                                """))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/users")
+                        .header("Authorization", "Bearer " + superAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"custom@example.com","password":"Custom-Password-2026!","displayName":"커스텀 사용자","role":"CUSTOM_ADMIN"}
+                                """))
+                .andExpect(status().isCreated());
+
+        var activeLogin = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"custom@example.com","password":"Custom-Password-2026!"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String activeAccessToken = JsonPath.read(activeLogin.getResponse().getContentAsString(), "$.accessToken");
+        String activeRefreshToken = JsonPath.read(activeLogin.getResponse().getContentAsString(), "$.refreshToken");
+        mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + activeAccessToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch("/api/v1/permissions/roles/CUSTOM_ADMIN/status")
+                        .header("Authorization", "Bearer " + superAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(false));
+
+        assertInvalidRefreshToken(activeRefreshToken);
+
+        var disabledLogin = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"custom@example.com","password":"Custom-Password-2026!"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String disabledAccessToken = JsonPath.read(disabledLogin.getResponse().getContentAsString(), "$.accessToken");
+        String disabledRefreshToken = JsonPath.read(disabledLogin.getResponse().getContentAsString(), "$.refreshToken");
+        mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + disabledAccessToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        var disabledRefresh = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + disabledRefreshToken + "\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        String refreshedAccessToken = JsonPath.read(disabledRefresh.getResponse().getContentAsString(), "$.accessToken");
+        mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + refreshedAccessToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
     void logoutRevokesRefreshTokenAndIsIdempotentForUnknownToken() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         String refreshToken = loginAndGetRefreshToken();
