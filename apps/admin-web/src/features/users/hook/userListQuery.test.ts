@@ -70,6 +70,26 @@ test("serializes query parameters in the required stable order", () => {
   );
 });
 
+test("strips serializer whitespace and omits blank query and role", () => {
+  expect(
+    toUserListSearchParams({
+      ...DEFAULT_USER_LIST_QUERY,
+      query: "  kim  ",
+      role: "  ADMIN  ",
+      status: "ACTIVE",
+    }).toString(),
+  ).toBe("query=kim&role=ADMIN&status=ACTIVE");
+
+  expect(
+    toUserListSearchParams({
+      ...DEFAULT_USER_LIST_QUERY,
+      query: "   ",
+      role: "\t",
+      status: "ACTIVE",
+    }).toString(),
+  ).toBe("status=ACTIVE");
+});
+
 test("builds a query key scoped by the normalized list query", () => {
   expect(
     userKeys.list({

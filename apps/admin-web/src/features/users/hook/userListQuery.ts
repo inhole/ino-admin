@@ -98,12 +98,14 @@ export function parseUserListQuery(searchParams: URLSearchParams): UserListQuery
 
 export function toUserListSearchParams(query: UserListQuery) {
   const searchParams = new URLSearchParams();
+  const normalizedQuery = normalizeText(query.query);
+  const normalizedRole = normalizeText(query.role);
 
-  if (query.query !== "") {
-    searchParams.set("query", query.query);
+  if (normalizedQuery !== "") {
+    searchParams.set("query", normalizedQuery);
   }
-  if (query.role !== "") {
-    searchParams.set("role", query.role);
+  if (normalizedRole !== "") {
+    searchParams.set("role", normalizedRole);
   }
   if (query.status !== "") {
     searchParams.set("status", query.status);
