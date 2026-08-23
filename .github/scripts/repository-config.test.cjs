@@ -112,6 +112,8 @@ test('infra 전용 빠른 CI는 dev의 infra 변경만 Compose 설정을 검증�
     'branches: [dev]',
     'paths:',
     '- infra/**',
+    'dev-infra-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}',
+    'cancel-in-progress: true',
     'docker compose -f infra/compose.yaml config',
   ]);
 });
