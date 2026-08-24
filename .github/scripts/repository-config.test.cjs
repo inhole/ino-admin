@@ -172,6 +172,21 @@ test('루트 지침은 일반 이슈 작업과 dev 배치 전달 스킬의 책�
   ]);
 });
 
+test('작은 후속 작업은 대표 이슈에 묶고 독립 추적 가치가 있을 때만 새 이슈를 만든다', () => {
+  const agents = readRepositoryFile('AGENTS.md');
+
+  assertIncludesAll(agents, [
+    'independently trackable features, bugs, or technical and operational work',
+    'phase or vertical-slice Issue',
+    'Keep in-scope documentation, tests, refactors, and follow-up fixes on the governing Issue',
+    'independent prioritization',
+  ]);
+  assert.ok(
+    !agents.includes('Track each change with a GitHub Issue'),
+    '작은 변경마다 새 이슈를 만들도록 강제하면 안 됩니다',
+  );
+});
+
 test('배치 전달 스킬은 동기화된 원격 SHA와 원격 커밋 범위를 감사한다', () => {
   const skill = readRepositoryFile(
     '.agents',
