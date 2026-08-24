@@ -185,7 +185,9 @@ export function UsersPage() {
         eyebrow={t("eyebrow")}
         title={t("title")}
       />
-      {currentUser?.permissions.includes("user:create") && (
+      {currentUser?.permissions.includes("user:create") &&
+        roles.isSuccess &&
+        roleOptions.length > 0 && (
         <CreateUserDialog roles={roleOptions} />
       )}
       <Card>

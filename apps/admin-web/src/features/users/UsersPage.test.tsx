@@ -69,6 +69,10 @@ type Page = {
 };
 
 type UsersResponse = Page | Response;
+type RoleCatalogResponse =
+  | typeof roles
+  | Response
+  | Promise<typeof roles | Response>;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -145,10 +149,14 @@ function mockApi(
   usersResponse:
     | UsersResponse
     | ((url: URL) => UsersResponse | Promise<UsersResponse>) = page(),
+  rolesResponse: RoleCatalogResponse = roles,
 ) {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
     const url = new URL(String(input), "http://localhost");
-    if (url.pathname === "/api/v1/users/roles") return json(roles);
+    if (url.pathname === "/api/v1/users/roles") {
+      const response = await rolesResponse;
+      return response instanceof Response ? response : json(response);
+    }
     if (url.pathname === "/api/v1/permissions") {
       return json({ code: "FORBIDDEN", message: "Forbidden" }, 403);
     }
@@ -199,6 +207,75 @@ describe("사용자 생성 진입점", () => {
     expect(
       screen.queryByRole("button", { name: "사용자 추가" }),
     ).not.toBeInTheDocument();
+  });
+
+  test("역할 catalog를 불러오는 동안에는 사용자 추가 모달 트리거를 표시하지 않는다", async () => {
+    const pendingRoles = new Promise<typeof roles>(() => undefined);
+    const fetchMock = mockApi(page(), pendingRoles);
+    renderPage("/users", undefined, userCreator);
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).endsWith("/api/v1/users/roles"),
+        ),
+      ).toBe(true),
+    );
+    expect(
+      screen.queryByRole("button", { name: "사용자 추가" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("역할 catalog가 비어 있으면 사용자 추가 모달 트리거를 표시하지 않는다", async () => {
+    let resolveRoles!: (value: typeof roles) => void;
+    const pendingRoles = new Promise<typeof roles>((resolve) => {
+      resolveRoles = resolve;
+    });
+    const fetchMock = mockApi(page(), pendingRoles);
+    renderPage("/users", undefined, userCreator);
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).endsWith("/api/v1/users/roles"),
+        ),
+      ).toBe(true),
+    );
+    await act(async () => {
+      resolveRoles([]);
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "사용자 추가" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  test("역할 catalog를 불러오지 못하면 사용자 추가 모달 트리거를 표시하지 않는다", async () => {
+    let resolveRoles!: (value: Response) => void;
+    const pendingRoles = new Promise<Response>((resolve) => {
+      resolveRoles = resolve;
+    });
+    const fetchMock = mockApi(page(), pendingRoles);
+    renderPage("/users", undefined, userCreator);
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).endsWith("/api/v1/users/roles"),
+        ),
+      ).toBe(true),
+    );
+    await act(async () => {
+      resolveRoles(json({ code: "INTERNAL_ERROR", message: "server detail" }, 500));
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "사용자 추가" }),
+      ).not.toBeInTheDocument(),
+    );
   });
 });
 
