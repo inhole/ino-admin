@@ -123,8 +123,9 @@ test('super admin creates a viewer from the user directory', async () => {
   fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'Admin-Password-2026!' } })
   fireEvent.click(screen.getByRole('button', { name: '로그인' }))
   fireEvent.click(await screen.findByRole('link', { name: '사용자' }))
+  fireEvent.click(await screen.findByRole('button', { name: '사용자 추가' }))
   fireEvent.change(await screen.findByLabelText('이름'), { target: { value: '뷰어' } })
-  fireEvent.change(screen.getByLabelText('이메일', { selector: '#new-user-email' }), { target: { value: 'viewer@example.com' } })
+  fireEvent.change(screen.getByLabelText('이메일', { selector: '#create-user-email' }), { target: { value: 'viewer@example.com' } })
   fireEvent.change(screen.getByLabelText('초기 비밀번호'), { target: { value: 'Viewer-Password-2026!' } })
   fireEvent.click(screen.getByRole('button', { name: '사용자 생성' }))
 

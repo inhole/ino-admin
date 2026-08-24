@@ -9,12 +9,10 @@ import {
   useEffect,
   useRef,
   useState,
-  type FormEvent,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
-  createUser,
   getRoleCatalog,
   getUser,
   getUsers,
@@ -53,8 +51,8 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/features/auth/hook/useAuth";
+import { CreateUserDialog } from "@/features/users/component/CreateUserDialog";
 import { UserList } from "@/features/users/component/UserList";
 import { UserListPagination } from "@/features/users/component/UserListPagination";
 import { UserListToolbar } from "@/features/users/component/UserListToolbar";
@@ -75,7 +73,6 @@ export function UsersPage() {
   });
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
-  const [createError, setCreateError] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [editing, setEditing] = useState<UserSummary | null>(null);
   const correctedPageRef = useRef<string | null>(null);
@@ -87,13 +84,6 @@ export function UsersPage() {
   const roleOptions = activeRoleOptions.filter(
     (role) => role.value !== "SUPER_ADMIN",
   );
-  const create = useMutation({
-    mutationFn: createUser,
-    onSuccess: async (created) => {
-      toast.add({ title: t("created", { name: created.displayName }) });
-      await queryClient.invalidateQueries({ queryKey: userKeys.all });
-    },
-  });
   const changeStatus = useMutation({
     mutationFn: ({
       id,
@@ -138,25 +128,6 @@ export function UsersPage() {
     } catch (error) {
       setStatusError(
         error instanceof ApiClientError ? error.message : t("loadOneError"),
-      );
-    }
-  };
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setCreateError(null);
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    try {
-      await create.mutateAsync({
-        email: String(data.get("email")),
-        password: String(data.get("password")),
-        displayName: String(data.get("displayName")),
-        role: String(data.get("role")),
-      });
-      form.reset();
-    } catch (error) {
-      setCreateError(
-        error instanceof ApiClientError ? error.message : t("createError"),
       );
     }
   };
@@ -215,64 +186,7 @@ export function UsersPage() {
         title={t("title")}
       />
       {currentUser?.permissions.includes("user:create") && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>{t("createTitle")}</CardTitle>
-            <CardDescription>{t("createDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={submit}>
-              <FieldGroup className="grid gap-4 md:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor="displayName">{t("name")}</FieldLabel>
-                <Input id="displayName" name="displayName" required />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="new-user-email">{t("email")}</FieldLabel>
-                <Input id="new-user-email" name="email" required type="email" />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="new-user-password">
-                  {t("initialPassword")}
-                </FieldLabel>
-                <Input
-                  id="new-user-password"
-                  minLength={12}
-                  name="password"
-                  required
-                  type="password"
-                />
-              </Field>
-              <Field>
-                <FieldLabel>{t("role")}</FieldLabel>
-                <Select defaultValue="VIEWER" items={roleOptions} name="role">
-                  <SelectTrigger aria-label={t("role")} className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent><SelectGroup>{roleOptions.map((role) => <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>)}</SelectGroup></SelectContent>
-                </Select>
-              </Field>
-              {createError && (
-                <Alert
-                  className="md:col-span-2"
-                  variant="destructive"
-                  role="alert"
-                >
-                  <AlertDescription>{createError}</AlertDescription>
-                </Alert>
-              )}
-              <Button
-                className="min-h-11 md:col-span-2 md:w-fit"
-                disabled={create.isPending}
-                type="submit"
-              >
-                {create.isPending && <Spinner data-icon="inline-start" />}
-                {create.isPending ? t("creating") : t("create")}
-              </Button>
-              </FieldGroup>
-            </form>
-          </CardContent>
-        </Card>
+        <CreateUserDialog roles={roleOptions} />
       )}
       <Card>
         <CardHeader>

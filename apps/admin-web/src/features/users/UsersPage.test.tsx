@@ -55,6 +55,11 @@ const adminUser = {
   permissions: ["user:read"],
 };
 
+const userCreator = {
+  ...currentUser,
+  permissions: ["user:read", "user:create"],
+};
+
 type Page = {
   content: typeof user[];
   page: number;
@@ -166,6 +171,35 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.restoreAllMocks();
+});
+
+describe("사용자 생성 진입점", () => {
+  test("user:create 권한이 있으면 사용자 추가 모달 트리거를 표시한다", async () => {
+    mockApi();
+    renderPage("/users", undefined, userCreator);
+
+    expect(
+      await screen.findByRole("button", { name: "사용자 추가" }),
+    ).toBeInTheDocument();
+  });
+
+  test("user:create 권한이 있으면 기존 인라인 생성 폼을 표시하지 않는다", async () => {
+    mockApi();
+    renderPage("/users", undefined, userCreator);
+
+    await screen.findByText("사용자 목록");
+    expect(screen.queryByLabelText("초기 비밀번호")).not.toBeInTheDocument();
+  });
+
+  test("user:create 권한이 없으면 사용자 추가 모달 트리거를 표시하지 않는다", async () => {
+    mockApi();
+    renderPage("/users", undefined, adminUser);
+
+    await screen.findByText("사용자 목록");
+    expect(
+      screen.queryByRole("button", { name: "사용자 추가" }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe("사용자 조회 URL", () => {
