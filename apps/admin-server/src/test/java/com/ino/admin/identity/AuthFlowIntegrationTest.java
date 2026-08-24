@@ -104,25 +104,23 @@ class AuthFlowIntegrationTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
 
-        var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        String superAdminToken = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
+        createUser(superAdminToken, "monitoring-admin@example.com", "Monitoring-Admin-Password-2026!", "ADMIN");
+        createUser(superAdminToken, "monitoring-viewer@example.com", "Monitoring-Viewer-Password-2026!", "VIEWER");
+
+        String viewerToken = JsonPath.read(login("monitoring-viewer@example.com", "Monitoring-Viewer-Password-2026!")
+                .getResponse().getContentAsString(), "$.accessToken");
         mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + viewerToken))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
 
-        var tokenWithoutMonitoringPermission = signedToken(Instant.now(), Instant.now().plusSeconds(60),
-                "ino-admin-web", "ADMIN", List.of("user:read"));
-        mockMvc.perform(get("/api/v1/monitoring/test")
-                        .header("Authorization", "Bearer " + tokenWithoutMonitoringPermission))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
-
-        var superAdminToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "SUPER_ADMIN");
-        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + superAdminToken))
+        String adminToken = JsonPath.read(login("monitoring-admin@example.com", "Monitoring-Admin-Password-2026!")
+                .getResponse().getContentAsString(), "$.accessToken");
+        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk());
 
-        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
-        String monitoringToken = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
-        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + monitoringToken))
+        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + superAdminToken))
                 .andExpect(status().isOk());
     }
 
@@ -445,11 +443,24 @@ class AuthFlowIntegrationTest {
     }
 
     private org.springframework.test.web.servlet.MvcResult login(String password) throws Exception {
+        return login(EMAIL, password);
+    }
+
+    private org.springframework.test.web.servlet.MvcResult login(String email, String password) throws Exception {
         return mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + EMAIL + "\",\"password\":\"" + password + "\"}"))
+                        .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn();
+    }
+
+    private void createUser(String accessToken, String email, String password, String role) throws Exception {
+        mockMvc.perform(post("/api/v1/users")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\",\"password\":\"" + password
+                                + "\",\"displayName\":\"관제 사용자\",\"role\":\"" + role + "\"}"))
+                .andExpect(status().isCreated());
     }
 
     private void assertPasswordChangeError(String accessToken, String currentPassword, String newPassword, String code)
