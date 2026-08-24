@@ -54,7 +54,7 @@ export function appendMonitoringPoint(
   if (limit === null) return [];
 
   const previous = history.at(-1);
-  if (previous?.timestamp === snapshot.timestamp) return history;
+  if (previous?.timestamp === snapshot.timestamp) return history.slice(-limit);
 
   const elapsed = previous
     ? elapsedSeconds(snapshot.timestamp, previous.timestamp)

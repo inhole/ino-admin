@@ -228,4 +228,27 @@ describe("appendMonitoringPoint", () => {
     expect(result).toEqual(history);
     expect(result).toHaveLength(1);
   });
+
+  test("applies a smaller valid history limit to a duplicate latest timestamp", () => {
+    const history = [
+      snapshot({ timestamp: "2026-08-24T00:00:00Z", httpRequestCount: 1 }),
+      snapshot({ timestamp: "2026-08-24T00:00:05Z", httpRequestCount: 2 }),
+      snapshot({ timestamp: "2026-08-24T00:00:10Z", httpRequestCount: 3 }),
+    ].reduce(
+      (points, next) => appendMonitoringPoint(points, next, 3),
+      [] as ReturnType<typeof appendMonitoringPoint>,
+    );
+
+    const result = appendMonitoringPoint(
+      history,
+      snapshot({ timestamp: "2026-08-24T00:00:10Z", httpRequestCount: 4 }),
+      2,
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result.map((point) => point.timestamp)).toEqual([
+      "2026-08-24T00:00:05Z",
+      "2026-08-24T00:00:10Z",
+    ]);
+  });
 });
