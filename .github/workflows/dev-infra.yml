@@ -20,3 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose -f infra/compose.yaml config
+      - name: 실행 결과 요약
+        if: always()
+        run: |
+          case "${{ job.status }}" in success) result="성공";; failure) result="실패";; cancelled) result="취소";; *) result="${{ job.status }}";; esac
+          {
+            echo "## 실행 결과 요약"
+            echo "- 작업: 인프라 Compose 설정 검증"
+            echo "- 결과: **${result}**"
+            echo "- 커밋: \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

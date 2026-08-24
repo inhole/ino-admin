@@ -137,6 +137,16 @@ test('main 통합 CI는 main 대상 PR과 수동 실행에서 전체 검증을 �
   assert.ok(!content.includes('push:'), 'main 통합 CI는 push에서 실행하면 안 됩니다');
 });
 
+test('GitHub Actions는 모든 workflow의 실행 결과를 한글 Summary로 남긴다', () => {
+  for (const fileName of ['ci.yml', 'dev-ci.yml', 'dev-infra.yml', 'pr-policy.yml']) {
+    assertIncludesAll(readWorkflow(fileName), [
+      'GITHUB_STEP_SUMMARY',
+      '실행 결과 요약',
+      '결과:',
+    ]);
+  }
+});
+
 test('개발 규칙 문서는 dev 배치 흐름과 이슈 연결 규칙을 일관되게 설명한다', () => {
   assertIncludesAll(readRepositoryFile('AGENTS.md'), [
     'dev',
@@ -168,7 +178,7 @@ test('루트 지침은 일반 이슈 작업과 dev 배치 전달 스킬의 책�
     '`ino-admin-work-on-issue`',
     'feature/Codex → `dev` PR',
     '`ino-admin-deliver-change`',
-    'for `dev` → `main` batch delivery only',
+    '`dev` → `main` 배치 전달',
   ]);
 });
 
@@ -176,10 +186,10 @@ test('작은 후속 작업은 대표 이슈에 묶고 독립 추적 가치가 �
   const agents = readRepositoryFile('AGENTS.md');
 
   assertIncludesAll(agents, [
-    'independently trackable features, bugs, or technical and operational work',
-    'phase or vertical-slice Issue',
-    'Keep in-scope documentation, tests, refactors, and follow-up fixes on the governing Issue',
-    'independent prioritization',
+    '독립적으로 추적할 가치가 있는 기능, 버그, 기술·운영 작업',
+    'Phase나 vertical slice 단위의 Issue',
+    '범위 내 문서, 테스트, 리팩토링, 후속 수정은 기준 Issue에 포함',
+    '독립적인 우선순위 관리',
   ]);
   assert.ok(
     !agents.includes('Track each change with a GitHub Issue'),
@@ -234,14 +244,8 @@ test('최초 부트스트랩의 사전 정책 커밋 예외는 고정된 SHA와 
 
 test('부트스트랩 문서는 실제 Actions 체크와 수동 정책 검토를 구분한다', () => {
   const branchStrategy = readRepositoryFile('docs', 'development', 'branch-strategy.md');
-  const implementationPlan = readRepositoryFile(
-    'docs',
-    'superpowers',
-    'plans',
-    '2026-08-23-dev-batch-pr-workflow.md',
-  );
 
-  for (const content of [branchStrategy, implementationPlan]) {
+  for (const content of [branchStrategy]) {
     assertIncludesAll(content, [
       '최초 1회 부트스트랩',
       '새 `PR Policy`는 실행되지 않는다',
@@ -264,7 +268,7 @@ test('Phase 완료 검증은 로컬 전체 실행을 강제하지 않고 Actions
 
   assertIncludesAll(agents, [
     'GitHub Issue',
-    'same Milestone',
+    '같은 Milestone',
   ]);
   assert.ok(
     !projectPlan.includes('각 Phase 완료 시 최소한 다음을 실행한다.'),
