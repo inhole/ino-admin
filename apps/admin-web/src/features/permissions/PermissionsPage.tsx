@@ -127,8 +127,8 @@ export function PermissionsPage() {
                   <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {item.permissions.map((permission) => (
-                      <Badge className="font-mono" key={permission} variant="outline">
-                        {permission}
+                      <Badge key={permission} title={permission} variant="outline">
+                        {t(`labels.${permission.replace(":", "_")}`, { defaultValue: permission })}
                       </Badge>
                     ))}
                   </div>

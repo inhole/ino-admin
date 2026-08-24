@@ -1,6 +1,7 @@
 package com.ino.admin.excel;
 
 import com.ino.admin.core.BusinessException;
+import com.ino.admin.core.ErrorCode;
 import com.ino.admin.identity.api.UserManagementUseCase;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -99,7 +100,7 @@ class UserExcelImporter {
     }
 
     private String value(Cell cell, DataFormatter formatter) { return cell == null ? "" : formatter.formatCellValue(cell); }
-    private BusinessException invalid(String message) { return new BusinessException("EXCEL_IMPORT_INVALID", message); }
+    private BusinessException invalid(String message) { return new BusinessException(ErrorCode.EXCEL_IMPORT_INVALID, message); }
     private record RowCommand(int rowNumber, UserManagementUseCase.CreateUser command) {}
     record ImportResult(int createdCount) {}
 }
