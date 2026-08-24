@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { App } from '@/app/App'
@@ -93,7 +93,8 @@ test('navigates to the authenticated user directory', async () => {
   fireEvent.click(await screen.findByRole('link', { name: '사용자' }))
 
   expect(await screen.findByRole('heading', { name: '사용자 관리' })).toBeInTheDocument()
-  expect(await screen.findByText('admin@example.com')).toBeInTheDocument()
+  const desktopUsers = await screen.findByRole('region', { name: '데스크톱 사용자 목록' })
+  expect(within(desktopUsers).getByText('admin@example.com')).toBeInTheDocument()
 })
 
 test('super admin creates a viewer from the user directory', async () => {
@@ -128,15 +129,16 @@ test('super admin creates a viewer from the user directory', async () => {
   fireEvent.click(screen.getByRole('button', { name: '사용자 생성' }))
 
   expect(await screen.findByText('뷰어 사용자를 생성했습니다.')).toBeInTheDocument()
-  expect(await screen.findByText('viewer@example.com')).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: '수정' }))
+  const desktopUsers = await screen.findByRole('region', { name: '데스크톱 사용자 목록' })
+  expect(await within(desktopUsers).findByText('viewer@example.com')).toBeInTheDocument()
+  fireEvent.click(within(desktopUsers).getByRole('button', { name: '수정' }))
   fireEvent.change(await screen.findByLabelText('수정할 이름'), { target: { value: '운영자' } })
   fireEvent.change(screen.getByLabelText('수정할 역할'), { target: { value: 'ADMIN' } })
   fireEvent.click(screen.getByRole('button', { name: '저장' }))
-  expect(await screen.findByText('운영자')).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: '비활성화' }))
-  fireEvent.click(await screen.findByRole('button', { name: '비활성화', hidden: false }))
-  expect(await screen.findByRole('button', { name: '활성화' })).toBeInTheDocument()
+  expect(await within(desktopUsers).findByText('운영자')).toBeInTheDocument()
+  fireEvent.click(within(desktopUsers).getByRole('button', { name: '비활성화' }))
+  fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: '비활성화' }))
+  expect(await within(desktopUsers).findByRole('button', { name: '활성화' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('link', { name: '권한' }))
   expect(await screen.findByRole('heading', { name: '권한 카탈로그' })).toBeInTheDocument()
   expect((await screen.findAllByText('permission:read')).length).toBeGreaterThan(0)
