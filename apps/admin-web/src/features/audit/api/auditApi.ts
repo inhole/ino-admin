@@ -1,6 +1,6 @@
 import { request, type PageResponse } from "@/api/client";
 
-export type AuditAction = "POST" | "PUT" | "PATCH" | "DELETE";
+export type AuditAction = string;
 export type AuditResult = "SUCCESS" | "FAILURE";
 
 export interface AuditLogEntry {

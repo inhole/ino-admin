@@ -11,7 +11,6 @@ export function AuditLogFilters({ value, onApply }: { value: AuditFilters; onApp
   const { t } = useTranslation("audit");
   const { t: common } = useTranslation("common");
   const [draft, setDraft] = useState(value);
-  const actions = ["all", "POST", "PUT", "PATCH", "DELETE"].map((value) => ({ value, label: value === "all" ? t("all") : value }));
   const results = ["all", "SUCCESS", "FAILURE"].map((value) => ({ value, label: value === "all" ? t("all") : t(value.toLowerCase()) }));
   const submit = (event: FormEvent) => { event.preventDefault(); onApply(draft); };
   const reset = () => { setDraft(emptyAuditFilters); onApply(emptyAuditFilters); };
@@ -19,12 +18,7 @@ export function AuditLogFilters({ value, onApply }: { value: AuditFilters; onApp
   return <form className="flex flex-col gap-4" onSubmit={submit}>
     <FieldGroup className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
       <Field><FieldLabel htmlFor="audit-actor">{t("actorId")}</FieldLabel><Input id="audit-actor" value={draft.actorId} onChange={(event) => setDraft({ ...draft, actorId: event.target.value })} /></Field>
-      <Field><FieldLabel htmlFor="audit-action">{t("action")}</FieldLabel>
-        <Select items={actions} value={draft.action} onValueChange={(action) => setDraft({ ...draft, action: (action ?? "all") as AuditFilters["action"] })}>
-          <SelectTrigger className="w-full" id="audit-action"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectGroup>{actions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectGroup></SelectContent>
-        </Select>
-      </Field>
+      <Field><FieldLabel htmlFor="audit-action">{t("action")}</FieldLabel><Input id="audit-action" maxLength={100} placeholder={t("actionPlaceholder")} value={draft.action === "all" ? "" : draft.action} onChange={(event) => setDraft({ ...draft, action: event.target.value.toUpperCase() || "all" })} /></Field>
       <Field><FieldLabel htmlFor="audit-result">{t("result")}</FieldLabel>
         <Select items={results} value={draft.result} onValueChange={(result) => setDraft({ ...draft, result: (result ?? "all") as AuditFilters["result"] })}>
           <SelectTrigger className="w-full" id="audit-result"><SelectValue /></SelectTrigger>
