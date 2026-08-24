@@ -65,6 +65,11 @@ const userExporter = {
   permissions: ["user:read", "excel:export"],
 };
 
+const userImporter = {
+  ...currentUser,
+  permissions: ["user:read", "excel:import"],
+};
+
 type Page = {
   content: typeof user[];
   page: number;
@@ -337,6 +342,21 @@ describe("사용자 Excel 내보내기", () => {
 
     await screen.findByText("사용자 목록");
     expect(screen.queryByRole("button", { name: "Excel 내보내기" })).not.toBeInTheDocument();
+  });
+});
+
+describe("사용자 Excel 가져오기", () => {
+  test("excel:import 권한이 있으면 가져오기 진입점을 표시한다", async () => {
+    mockApi();
+    renderPage("/users", undefined, userImporter);
+    expect(await screen.findByRole("button", { name: "Excel 가져오기" })).toBeInTheDocument();
+  });
+
+  test("excel:import 권한이 없으면 가져오기 진입점을 표시하지 않는다", async () => {
+    mockApi();
+    renderPage();
+    await screen.findByText("사용자 목록");
+    expect(screen.queryByRole("button", { name: "Excel 가져오기" })).not.toBeInTheDocument();
   });
 });
 

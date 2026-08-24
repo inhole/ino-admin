@@ -55,6 +55,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/features/auth/hook/useAuth";
 import { CreateUserDialog } from "@/features/users/component/CreateUserDialog";
+import { ImportUsersDialog } from "@/features/users/component/ImportUsersDialog";
 import { UserList } from "@/features/users/component/UserList";
 import { UserListPagination } from "@/features/users/component/UserListPagination";
 import { UserListToolbar } from "@/features/users/component/UserListToolbar";
@@ -183,6 +184,7 @@ export function UsersPage() {
   const isRefreshing = users.isFetching && !users.isPending;
   const canCreateUsers = currentUser?.permissions.includes("user:create") ?? false;
   const canExportUsers = currentUser?.permissions.includes("excel:export") ?? false;
+  const canImportUsers = currentUser?.permissions.includes("excel:import") ?? false;
   const exportExcel = async () => {
     setIsExporting(true);
     try {
@@ -205,11 +207,14 @@ export function UsersPage() {
   return (
     <>
       <PageHeader
-        actions={canExportUsers ? (
-          <Button disabled={isExporting} onClick={exportExcel} type="button" variant="outline">
-            <RiFileExcel2Line aria-hidden="true" data-icon="inline-start" />
-            {isExporting ? t("exportingExcel") : t("exportExcel")}
-          </Button>
+        actions={(canExportUsers || canImportUsers) ? (
+          <div className="flex flex-wrap gap-2">
+            {canImportUsers && <ImportUsersDialog />}
+            {canExportUsers && <Button disabled={isExporting} onClick={exportExcel} type="button" variant="outline">
+              <RiFileExcel2Line aria-hidden="true" data-icon="inline-start" />
+              {isExporting ? t("exportingExcel") : t("exportExcel")}
+            </Button>}
+          </div>
         ) : undefined}
         description={t("description")}
         eyebrow={t("eyebrow")}
