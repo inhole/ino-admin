@@ -33,21 +33,56 @@ function formatMegabytes(value: number | null) {
   return value === null ? null : `${(value / 1024 / 1024).toFixed(0)} MB`;
 }
 
-function formatUptime(value: number | null) {
+function formatUptime(
+  value: number | null,
+  localize: (hours: number, minutes: number) => string,
+) {
   if (value === null) return null;
   const hours = Math.floor(value / 3_600);
   const minutes = Math.floor((value % 3_600) / 60);
-  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  return localize(hours, minutes);
 }
 
-function MetricSkeleton() {
+function MetricSkeleton({ label }: { label: string }) {
   return (
-    <div aria-label="관제 정보를 불러오는 중…" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" role="status">
+    <div aria-label={label} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" role="status">
       {Array.from({ length: 4 }, (_, index) => (
         <Skeleton className="h-28" key={index} />
       ))}
     </div>
   );
+}
+
+type HttpCounterKey =
+  | "httpRequestCount"
+  | "httpRequestDurationSeconds"
+  | "httpServerErrorCount";
+
+function hasUnavailableRequiredCounter(
+  latest: MonitoringPoint,
+  previous: MonitoringPoint | undefined,
+  requiredCounters: HttpCounterKey[],
+) {
+  const isUnavailable = (point: MonitoringPoint) =>
+    requiredCounters.some((counter) => point[counter] === null);
+
+  return isUnavailable(latest) || (previous && isUnavailable(previous));
+}
+
+function derivedMetricDisplay(
+  latest: MonitoringPoint,
+  previous: MonitoringPoint | undefined,
+  requiredCounters: HttpCounterKey[],
+  value: number | null,
+  format: (value: number) => string,
+  unavailable: string,
+  collecting: string,
+) {
+  if (hasUnavailableRequiredCounter(latest, previous, requiredCounters)) {
+    return unavailable;
+  }
+
+  return value === null ? collecting : format(value);
 }
 
 export function DashboardPage() {
@@ -67,8 +102,28 @@ export function DashboardPage() {
   }, [monitoring.data]);
 
   const latest = history.at(-1);
+  const previous = history.at(-2);
   const display = (value: string | null) => value ?? t("unavailable");
   const collecting = t("collecting");
+  const unavailable = t("unavailable");
+  const tpsUnavailable = latest
+    ? hasUnavailableRequiredCounter(latest, previous, ["httpRequestCount"])
+    : false;
+  const latencyUnavailable = latest
+    ? hasUnavailableRequiredCounter(latest, previous, ["httpRequestCount", "httpRequestDurationSeconds"])
+    : false;
+  const errorRateUnavailable = latest
+    ? hasUnavailableRequiredCounter(latest, previous, ["httpRequestCount", "httpServerErrorCount"])
+    : false;
+  const liveStatus = monitoring.isError
+    ? history.length > 0
+      ? t("staleStatus")
+      : t("monitoringErrorStatus")
+    : monitoring.isFetching
+      ? t("refreshing")
+      : latest
+        ? t("updated")
+        : collecting;
 
   return (
     <>
@@ -92,11 +147,11 @@ export function DashboardPage() {
             <p className="text-sm text-muted-foreground">{t("summaryDescription")}</p>
           </div>
           <span aria-live="polite" className="text-xs text-muted-foreground">
-            {monitoring.isFetching ? t("refreshing") : t("updated")}
+            {liveStatus}
           </span>
         </div>
 
-        {monitoring.isPending && <MetricSkeleton />}
+        {monitoring.isPending && <MetricSkeleton label={t("monitoringLoading")} />}
         {monitoring.isError && history.length === 0 && (
           <ErrorState
             error={monitoring.error}
@@ -120,11 +175,11 @@ export function DashboardPage() {
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard description={t("systemCpu")} icon={RiCpuLine} label={t("cpu")} value={display(formatPercent(latest.systemCpuUsage))} />
             <MetricCard description={t("heapMax", { value: display(formatMegabytes(latest.heapMaxBytes)) })} icon={RiServerLine} label={t("heap")} value={display(formatMegabytes(latest.heapUsedBytes))} />
-            <MetricCard description={t("uptimeDescription")} icon={RiTimeLine} label={t("uptime")} value={display(formatUptime(latest.processUptimeSeconds))} />
+            <MetricCard description={t("uptimeDescription")} icon={RiTimeLine} label={t("uptime")} value={display(formatUptime(latest.processUptimeSeconds, (hours, minutes) => t("uptimeValue", { hours, minutes })))} />
             <MetricCard description={t("peakThreads", { value: display(latest.peakThreads?.toLocaleString() ?? null) })} icon={RiServerLine} label={t("threads")} value={display(latest.liveThreads?.toLocaleString() ?? null)} />
-            <MetricCard description={history.length < 2 ? collecting : t("tpsDescription")} icon={RiFlashlightLine} label={t("tps")} value={latest.tps === null ? collecting : `${latest.tps.toFixed(2)} TPS`} />
-            <MetricCard description={history.length < 2 ? collecting : t("latencyDescription")} icon={RiTimeLine} label={t("latency")} value={latest.averageResponseMs === null ? collecting : `${latest.averageResponseMs.toFixed(1)} ms`} />
-            <MetricCard description={history.length < 2 ? collecting : t("errorDescription")} icon={RiErrorWarningLine} label={t("errorRate")} value={latest.serverErrorRate === null ? collecting : `${latest.serverErrorRate.toFixed(1)}%`} />
+            <MetricCard description={tpsUnavailable ? unavailable : history.length < 2 ? collecting : t("tpsDescription")} icon={RiFlashlightLine} label={t("tps")} value={derivedMetricDisplay(latest, previous, ["httpRequestCount"], latest.tps, (value) => `${value.toFixed(2)} TPS`, unavailable, collecting)} />
+            <MetricCard description={latencyUnavailable ? unavailable : history.length < 2 ? collecting : t("latencyDescription")} icon={RiTimeLine} label={t("latency")} value={derivedMetricDisplay(latest, previous, ["httpRequestCount", "httpRequestDurationSeconds"], latest.averageResponseMs, (value) => `${value.toFixed(1)} ms`, unavailable, collecting)} />
+            <MetricCard description={errorRateUnavailable ? unavailable : history.length < 2 ? collecting : t("errorDescription")} icon={RiErrorWarningLine} label={t("errorRate")} value={derivedMetricDisplay(latest, previous, ["httpRequestCount", "httpServerErrorCount"], latest.serverErrorRate, (value) => `${value.toFixed(1)}%`, unavailable, collecting)} />
           </div>
         )}
       </section>

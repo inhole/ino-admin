@@ -54,48 +54,56 @@ function timeLabel(timestamp: string) {
 }
 
 function ChartPanel({
+  id,
   title,
   description,
   latest,
   children,
 }: {
+  id: string;
   title: string;
   description: string;
   latest: string;
   children: ReactNode;
 }) {
   return (
-    <Card className="rounded-2xl shadow-none">
-      <CardHeader className="gap-1">
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {children}
-        <p className="text-xs text-muted-foreground">{latest}</p>
-      </CardContent>
-    </Card>
+    <section aria-labelledby={id}>
+      <Card>
+        <CardHeader className="gap-1">
+          <CardTitle id={id}>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {children}
+          <p className="text-xs text-muted-foreground">{latest}</p>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
-
-const cpuChartConfig = {
-  systemCpuUsage: { label: "System CPU", color: "var(--chart-2)" },
-  processCpuUsage: { label: "Process CPU", color: "var(--chart-4)" },
-} satisfies ChartConfig;
-
-const heapChartConfig = {
-  heapUsedBytes: { label: "Used heap", color: "var(--chart-2)" },
-  heapMaxBytes: { label: "Max heap", color: "var(--chart-4)" },
-} satisfies ChartConfig;
-
-const singleLineConfig = {
-  value: { label: "Value", color: "var(--chart-3)" },
-} satisfies ChartConfig;
 
 export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
   const { t } = useTranslation("dashboard");
   const latest = history.at(-1);
   if (!latest) return null;
+
+  const cpuChartConfig = {
+    systemCpuUsage: { label: t("systemCpu"), color: "var(--chart-2)" },
+    processCpuUsage: { label: t("processCpu"), color: "var(--chart-4)" },
+  } satisfies ChartConfig;
+  const heapChartConfig = {
+    heapUsedBytes: { label: t("heapUsed"), color: "var(--chart-2)" },
+    heapMaxBytes: { label: t("heapMaxLabel"), color: "var(--chart-4)" },
+  } satisfies ChartConfig;
+  const tpsChartConfig = {
+    value: { label: t("tps"), color: "var(--chart-3)" },
+  } satisfies ChartConfig;
+  const latencyChartConfig = {
+    value: { label: t("latency"), color: "var(--chart-3)" },
+  } satisfies ChartConfig;
+  const errorChartConfig = {
+    value: { label: t("errorRate"), color: "var(--chart-3)" },
+  } satisfies ChartConfig;
 
   return (
     <section aria-labelledby="monitoring-charts-title" className="flex flex-col gap-4">
@@ -108,6 +116,7 @@ export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
       <div className="grid gap-4 xl:grid-cols-2">
         <ChartPanel
           description={t("chartCpuDescription")}
+          id="monitoring-chart-cpu"
           latest={t("latestCpu", {
             system: formatPercent(latest.systemCpuUsage) ?? t("unavailable"),
             process: formatPercent(latest.processCpuUsage) ?? t("unavailable"),
@@ -129,6 +138,7 @@ export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
         </ChartPanel>
         <ChartPanel
           description={t("chartHeapDescription")}
+          id="monitoring-chart-heap"
           latest={t("latestHeap", {
             used: formatMegabytes(latest.heapUsedBytes) ?? t("unavailable"),
             max: formatMegabytes(latest.heapMaxBytes) ?? t("unavailable"),
@@ -144,12 +154,12 @@ export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
               />
               <Legend content={<ChartLegendContent />} />
               <Area dataKey="heapUsedBytes" fill="var(--color-heapUsedBytes)" fillOpacity={0.18} name={t("heapUsed")} stroke="var(--color-heapUsedBytes)" type="monotone" />
-              <Area dataKey="heapMaxBytes" fill="var(--color-heapMaxBytes)" fillOpacity={0.08} name={t("heapMax")} stroke="var(--color-heapMaxBytes)" type="monotone" />
+              <Area dataKey="heapMaxBytes" fill="var(--color-heapMaxBytes)" fillOpacity={0.08} name={t("heapMaxLabel")} stroke="var(--color-heapMaxBytes)" type="monotone" />
             </AreaChart>
           </ChartContainer>
         </ChartPanel>
-        <ChartPanel description={t("chartTpsDescription")} latest={t("latestValue", { value: formatTps(latest.tps) ?? t("collecting") })} title={t("chartTps")}>
-          <ChartContainer className="h-56 w-full" config={singleLineConfig}>
+        <ChartPanel description={t("chartTpsDescription")} id="monitoring-chart-tps" latest={t("latestValue", { value: formatTps(latest.tps) ?? t("collecting") })} title={t("chartTps")}>
+          <ChartContainer className="h-56 w-full" config={tpsChartConfig}>
             <LineChart accessibilityLayer data={history}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="timestamp" tickFormatter={timeLabel} tickLine={false} axisLine={false} />
@@ -158,8 +168,8 @@ export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
             </LineChart>
           </ChartContainer>
         </ChartPanel>
-        <ChartPanel description={t("chartLatencyDescription")} latest={t("latestValue", { value: formatMilliseconds(latest.averageResponseMs) ?? t("collecting") })} title={t("chartLatency")}>
-          <ChartContainer className="h-56 w-full" config={singleLineConfig}>
+        <ChartPanel description={t("chartLatencyDescription")} id="monitoring-chart-latency" latest={t("latestValue", { value: formatMilliseconds(latest.averageResponseMs) ?? t("collecting") })} title={t("chartLatency")}>
+          <ChartContainer className="h-56 w-full" config={latencyChartConfig}>
             <LineChart accessibilityLayer data={history}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="timestamp" tickFormatter={timeLabel} tickLine={false} axisLine={false} />
@@ -168,8 +178,8 @@ export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
             </LineChart>
           </ChartContainer>
         </ChartPanel>
-        <ChartPanel description={t("chartErrorDescription")} latest={t("latestValue", { value: formatErrorRate(latest.serverErrorRate) ?? t("collecting") })} title={t("chartError")}>
-          <ChartContainer className="h-56 w-full" config={singleLineConfig}>
+        <ChartPanel description={t("chartErrorDescription")} id="monitoring-chart-error" latest={t("latestValue", { value: formatErrorRate(latest.serverErrorRate) ?? t("collecting") })} title={t("chartError")}>
+          <ChartContainer className="h-56 w-full" config={errorChartConfig}>
             <LineChart accessibilityLayer data={history}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="timestamp" tickFormatter={timeLabel} tickLine={false} axisLine={false} />

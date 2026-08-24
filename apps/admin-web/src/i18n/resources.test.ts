@@ -13,3 +13,11 @@ function leafKeys(value: Record<string, unknown>, prefix = ""): string[] {
 test("Korean and English resources contain the same translation keys", () => {
   expect(leafKeys(en).sort()).toEqual(leafKeys(ko).sort());
 });
+
+test("monitoring resources include the localized live-status and uptime labels", () => {
+  expect(ko.dashboard).toHaveProperty("monitoringLoading");
+  expect(ko.dashboard).toHaveProperty("staleStatus");
+  expect(ko.dashboard).toHaveProperty("monitoringErrorStatus");
+  expect(ko.dashboard).toHaveProperty("uptimeValue");
+  expect(leafKeys(en.dashboard).sort()).toEqual(leafKeys(ko.dashboard).sort());
+});

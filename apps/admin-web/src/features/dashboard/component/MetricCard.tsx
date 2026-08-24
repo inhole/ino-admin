@@ -13,13 +13,13 @@ export function MetricCard({
   icon: RemixiconComponentType;
 }) {
   return (
-    <Card className="rounded-2xl shadow-none">
+    <Card>
       <CardHeader className="gap-2">
         <CardDescription className="flex items-center gap-2">
           <Icon aria-hidden />
           {label}
         </CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums">
+        <CardTitle>
           {value}
         </CardTitle>
       </CardHeader>
