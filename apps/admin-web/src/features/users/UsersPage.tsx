@@ -178,6 +178,7 @@ export function UsersPage() {
   const hasFilters =
     query.query !== "" || query.role !== "" || query.status !== "";
   const isRefreshing = users.isFetching && !users.isPending;
+  const canCreateUsers = currentUser?.permissions.includes("user:create") ?? false;
   return (
     <>
       <PageHeader
@@ -185,10 +186,35 @@ export function UsersPage() {
         eyebrow={t("eyebrow")}
         title={t("title")}
       />
-      {currentUser?.permissions.includes("user:create") &&
-        roles.isSuccess &&
-        roleOptions.length > 0 && (
-        <CreateUserDialog roles={roleOptions} />
+      {canCreateUsers && (
+        <>
+          {roles.isPending && (
+            <div
+              aria-label={t("creationRolesLoading")}
+              className="mb-4 flex items-center gap-2 text-sm text-muted-foreground"
+              role="status"
+            >
+              <Spinner />
+              {t("creationRolesLoading")}
+            </div>
+          )}
+          {roles.isError && (
+            <Alert className="mb-4" variant="destructive">
+              <AlertDescription className="flex items-center justify-between gap-3">
+                <span>{t("creationRolesError")}</span>
+                <Button onClick={() => roles.refetch()} type="button" variant="outline">
+                  {t("retry")}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+          {roles.isSuccess && roleOptions.length === 0 && (
+            <StatusPanel className="mb-4">{t("creationRolesEmpty")}</StatusPanel>
+          )}
+          {roles.isSuccess && roleOptions.length > 0 && (
+            <CreateUserDialog roles={roleOptions} />
+          )}
+        </>
       )}
       <Card>
         <CardHeader>

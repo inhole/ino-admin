@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -33,6 +33,10 @@ import { userKeys } from "@/features/users/hook/userKeys";
 interface CreateUserDialogProps {
   roles: Array<{ value: string; label: string }>;
 }
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailErrorId = "create-user-email-error";
+const passwordErrorId = "create-user-password-error";
 
 export function CreateUserDialog({ roles }: CreateUserDialogProps) {
   const { t } = useTranslation("users");
@@ -86,11 +90,16 @@ export function CreateUserDialog({ roles }: CreateUserDialogProps) {
     const data = new FormData(event.currentTarget);
     const email = String(data.get("email"));
     const password = String(data.get("password"));
-    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const emailValid = emailPattern.test(email);
     const passwordValid = password.length >= 12;
     setInvalidFields({ email: !emailValid, password: !passwordValid });
 
-    if (!emailValid || !passwordValid) return;
+    if (!emailValid || !passwordValid) {
+      document
+        .getElementById(emailValid ? "create-user-password" : "create-user-email")
+        ?.focus();
+      return;
+    }
 
     submissionInFlightRef.current = true;
     try {
@@ -138,20 +147,25 @@ export function CreateUserDialog({ roles }: CreateUserDialogProps) {
             <Field data-invalid={invalidFields.email || undefined}>
               <FieldLabel htmlFor="create-user-email">{t("email")}</FieldLabel>
               <Input
+                aria-describedby={invalidFields.email ? emailErrorId : undefined}
                 aria-invalid={invalidFields.email || undefined}
                 id="create-user-email"
                 name="email"
-                onChange={(event) => setInvalid("email", event.currentTarget.validity.valid)}
-                onInvalid={(event) => setInvalid("email", event.currentTarget.validity.valid)}
+                onChange={(event) => setInvalid("email", emailPattern.test(event.currentTarget.value))}
+                onInvalid={() => setInvalid("email", false)}
                 required
                 type="email"
               />
+              {invalidFields.email && (
+                <FieldError id={emailErrorId}>{t("invalidEmail")}</FieldError>
+              )}
             </Field>
             <Field data-invalid={invalidFields.password || undefined}>
               <FieldLabel htmlFor="create-user-password">
                 {t("initialPassword")}
               </FieldLabel>
               <Input
+                aria-describedby={invalidFields.password ? passwordErrorId : undefined}
                 aria-invalid={invalidFields.password || undefined}
                 id="create-user-password"
                 minLength={12}
@@ -159,12 +173,13 @@ export function CreateUserDialog({ roles }: CreateUserDialogProps) {
                 onChange={(event) =>
                   setInvalid("password", event.currentTarget.value.length >= 12)
                 }
-                onInvalid={(event) =>
-                  setInvalid("password", event.currentTarget.validity.valid)
-                }
+                onInvalid={() => setInvalid("password", false)}
                 required
                 type="password"
               />
+              {invalidFields.password && (
+                <FieldError id={passwordErrorId}>{t("passwordPolicy")}</FieldError>
+              )}
             </Field>
             <Field>
               <FieldLabel htmlFor="create-user-role">{t("role")}</FieldLabel>

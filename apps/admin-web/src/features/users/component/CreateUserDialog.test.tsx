@@ -93,12 +93,36 @@ describe("CreateUserDialog", () => {
     expect(trigger).toHaveFocus();
   });
 
-  test("유효하지 않은 이메일과 짧은 초기 비밀번호를 제출하지 않는다", () => {
+  test("custom regex를 통과하지 못한 a@b 이메일은 연결된 오류를 보이고 해당 입력에 초점을 둔다", () => {
     renderDialog();
     openDialog();
 
     fireEvent.change(screen.getByLabelText("이메일"), {
-      target: { value: "not-an-email" },
+      target: { value: "a@b" },
+    });
+    fireEvent.change(screen.getByLabelText("초기 비밀번호"), {
+      target: { value: "safe-password-1" },
+    });
+
+    fireEvent.submit(screen.getByRole("form"));
+
+    const email = screen.getByLabelText("이메일");
+    expect(email).toHaveAttribute("aria-invalid", "true");
+    expect(email).toHaveAttribute("aria-describedby", "create-user-email-error");
+    expect(screen.getByText("유효한 이메일 주소를 입력하세요.")).toHaveAttribute(
+      "id",
+      "create-user-email-error",
+    );
+    expect(email).toHaveFocus();
+    expect(mockedCreateUser).not.toHaveBeenCalled();
+  });
+
+  test("짧은 초기 비밀번호는 연결된 정책 오류를 보이고 해당 입력에 초점을 둔다", () => {
+    renderDialog();
+    openDialog();
+
+    fireEvent.change(screen.getByLabelText("이메일"), {
+      target: { value: "kim@example.com" },
     });
     fireEvent.change(screen.getByLabelText("초기 비밀번호"), {
       target: { value: "short" },
@@ -106,8 +130,14 @@ describe("CreateUserDialog", () => {
 
     fireEvent.submit(screen.getByRole("form"));
 
-    expect(screen.getByLabelText("이메일")).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByLabelText("초기 비밀번호")).toHaveAttribute("aria-invalid", "true");
+    const password = screen.getByLabelText("초기 비밀번호");
+    expect(password).toHaveAttribute("aria-invalid", "true");
+    expect(password).toHaveAttribute("aria-describedby", "create-user-password-error");
+    expect(screen.getByText("초기 비밀번호는 12자 이상이어야 합니다.")).toHaveAttribute(
+      "id",
+      "create-user-password-error",
+    );
+    expect(password).toHaveFocus();
     expect(mockedCreateUser).not.toHaveBeenCalled();
   });
 
