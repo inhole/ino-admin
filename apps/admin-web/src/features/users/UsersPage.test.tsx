@@ -55,6 +55,11 @@ const adminUser = {
   permissions: ["user:read"],
 };
 
+const userCreator = {
+  ...currentUser,
+  permissions: ["user:read", "user:create"],
+};
+
 type Page = {
   content: typeof user[];
   page: number;
@@ -64,6 +69,10 @@ type Page = {
 };
 
 type UsersResponse = Page | Response;
+type RoleCatalogResponse =
+  | typeof roles
+  | Response
+  | Promise<typeof roles | Response>;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -140,10 +149,14 @@ function mockApi(
   usersResponse:
     | UsersResponse
     | ((url: URL) => UsersResponse | Promise<UsersResponse>) = page(),
+  rolesResponse: RoleCatalogResponse = roles,
 ) {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
     const url = new URL(String(input), "http://localhost");
-    if (url.pathname === "/api/v1/users/roles") return json(roles);
+    if (url.pathname === "/api/v1/users/roles") {
+      const response = await rolesResponse;
+      return response instanceof Response ? response : json(response);
+    }
     if (url.pathname === "/api/v1/permissions") {
       return json({ code: "FORBIDDEN", message: "Forbidden" }, 403);
     }
@@ -166,6 +179,130 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.restoreAllMocks();
+});
+
+describe("사용자 생성 진입점", () => {
+  test("user:create 권한이 있으면 사용자 추가 모달 트리거를 표시한다", async () => {
+    mockApi();
+    renderPage("/users", undefined, userCreator);
+
+    expect(
+      await screen.findByRole("button", { name: "사용자 추가" }),
+    ).toBeInTheDocument();
+  });
+
+  test("user:create 권한이 있으면 기존 인라인 생성 폼을 표시하지 않는다", async () => {
+    mockApi();
+    renderPage("/users", undefined, userCreator);
+
+    await screen.findByText("사용자 목록");
+    expect(screen.queryByLabelText("초기 비밀번호")).not.toBeInTheDocument();
+  });
+
+  test("user:create 권한이 없으면 사용자 추가 모달 트리거를 표시하지 않는다", async () => {
+    mockApi();
+    renderPage("/users", undefined, adminUser);
+
+    await screen.findByText("사용자 목록");
+    expect(
+      screen.queryByRole("button", { name: "사용자 추가" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("역할 catalog를 불러오는 동안 생성 가능한 역할의 진행 상태를 표시한다", async () => {
+    const pendingRoles = new Promise<typeof roles>(() => undefined);
+    const fetchMock = mockApi(page(), pendingRoles);
+    renderPage("/users", undefined, userCreator);
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).endsWith("/api/v1/users/roles"),
+        ),
+      ).toBe(true),
+    );
+    expect(
+      screen.getByRole("status", { name: "생성 가능한 역할을 불러오는 중…" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "사용자 추가" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("생성 가능한 역할이 없으면 이유를 설명한다", async () => {
+    let resolveRoles!: (value: typeof roles) => void;
+    const pendingRoles = new Promise<typeof roles>((resolve) => {
+      resolveRoles = resolve;
+    });
+    const fetchMock = mockApi(page(), pendingRoles);
+    renderPage("/users", undefined, userCreator);
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).endsWith("/api/v1/users/roles"),
+        ),
+      ).toBe(true),
+    );
+    await act(async () => {
+      resolveRoles([]);
+    });
+
+    expect(
+      await screen.findByText("생성 가능한 역할이 없습니다."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "사용자 추가" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("역할 catalog 오류는 설명과 재시도 control을 제공한다", async () => {
+    let resolveRoles!: (value: Response) => void;
+    const pendingRoles = new Promise<Response>((resolve) => {
+      resolveRoles = resolve;
+    });
+    const fetchMock = mockApi(page(), pendingRoles);
+    renderPage("/users", undefined, userCreator);
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).endsWith("/api/v1/users/roles"),
+        ),
+      ).toBe(true),
+    );
+    await act(async () => {
+      resolveRoles(json({ code: "INTERNAL_ERROR", message: "server detail" }, 500));
+    });
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("생성 가능한 역할을 불러올 수 없습니다.");
+    fireEvent.click(within(alert).getByRole("button", { name: "다시 시도" }));
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.filter(([input]) =>
+          String(input).endsWith("/api/v1/users/roles"),
+        ),
+      ).toHaveLength(2),
+    );
+  });
+
+  test("user:create 권한이 없으면 생성 역할 상태나 재시도 control을 노출하지 않는다", async () => {
+    const pendingRoles = new Promise<typeof roles>(() => undefined);
+    mockApi(page(), pendingRoles);
+    renderPage("/users", undefined, adminUser);
+
+    await screen.findByText("사용자 목록");
+    expect(
+      screen.queryByRole("status", { name: "생성 가능한 역할을 불러오는 중…" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("생성 가능한 역할이 없습니다."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "다시 시도" }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe("사용자 조회 URL", () => {

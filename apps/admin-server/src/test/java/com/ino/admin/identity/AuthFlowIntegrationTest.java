@@ -93,6 +93,32 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void protectsMonitoringGetRequestsWithMonitoringReadPermission() throws Exception {
+        mockMvc.perform(get("/api/v1/monitoring/summary"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        String superAdminToken = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
+        createUser(superAdminToken, "monitoring-admin@example.com", "Monitoring-Admin-Password-2026!", "ADMIN");
+        createUser(superAdminToken, "monitoring-viewer@example.com", "Monitoring-Viewer-Password-2026!", "VIEWER");
+
+        String viewerToken = JsonPath.read(login("monitoring-viewer@example.com", "Monitoring-Viewer-Password-2026!")
+                .getResponse().getContentAsString(), "$.accessToken");
+        mockMvc.perform(get("/api/v1/monitoring/summary").header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        String adminToken = JsonPath.read(login("monitoring-admin@example.com", "Monitoring-Admin-Password-2026!")
+                .getResponse().getContentAsString(), "$.accessToken");
+        mockMvc.perform(get("/api/v1/monitoring/summary").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/monitoring/summary").header("Authorization", "Bearer " + superAdminToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void superAdminReadsPermissionCatalogButViewerCannot() throws Exception {
         bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
         String token = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
@@ -411,11 +437,24 @@ class AuthFlowIntegrationTest {
     }
 
     private org.springframework.test.web.servlet.MvcResult login(String password) throws Exception {
+        return login(EMAIL, password);
+    }
+
+    private org.springframework.test.web.servlet.MvcResult login(String email, String password) throws Exception {
         return mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + EMAIL + "\",\"password\":\"" + password + "\"}"))
+                        .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn();
+    }
+
+    private void createUser(String accessToken, String email, String password, String role) throws Exception {
+        mockMvc.perform(post("/api/v1/users")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\",\"password\":\"" + password
+                                + "\",\"displayName\":\"관제 사용자\",\"role\":\"" + role + "\"}"))
+                .andExpect(status().isCreated());
     }
 
     private void assertPasswordChangeError(String accessToken, String currentPassword, String newPassword, String code)
@@ -441,6 +480,13 @@ class AuthFlowIntegrationTest {
     }
 
     private String signedToken(Instant issuedAt, Instant expiresAt, String audience, String role) {
+        return signedToken(issuedAt, expiresAt, audience, role, role.equals("SUPER_ADMIN")
+                ? java.util.Arrays.stream(com.ino.admin.identity.domain.Permission.values())
+                        .map(permission -> permission.key()).toList()
+                : role.equals("ADMIN") ? List.of("user:read") : List.of());
+    }
+
+    private String signedToken(Instant issuedAt, Instant expiresAt, String audience, String role, List<String> permissions) {
         var claims = JwtClaimsSet.builder()
                 .issuer("ino-admin")
                 .audience(List.of(audience))
@@ -448,12 +494,10 @@ class AuthFlowIntegrationTest {
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .claim("role", role)
-                .claim("permissions", role.equals("SUPER_ADMIN")
-                        ? java.util.Arrays.stream(com.ino.admin.identity.domain.Permission.values())
-                                .map(permission -> permission.key()).toList()
-                        : role.equals("ADMIN") ? List.of("user:read") : List.of())
+                .claim("permissions", permissions)
                 .build();
         return jwtEncoder.encode(JwtEncoderParameters.from(
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
     }
+
 }

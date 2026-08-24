@@ -52,7 +52,7 @@ $env:APP_BOOTSTRAP_ADMIN_DISPLAY_NAME='시스템 관리자'
 
 비밀번호는 12~128자이며 대문자·소문자·숫자·특수문자를 포함해야 합니다. 서버는 BCrypt hash만 저장하고 비밀번호를 로그에 출력하지 않습니다. 생성 후 `APP_BOOTSTRAP_ADMIN_ENABLED`를 `false`로 되돌리고 비밀번호 환경 변수를 제거하십시오. 같은 이메일로 다시 실행하면 계정을 중복 생성하지 않습니다.
 
-운영 환경에서의 secret 주입과 실패 복구 절차는 [초기 관리자 Bootstrap 운영 문서](docs/operations/admin-bootstrap.md)를 참고하십시오.
+선택적 `.env` 파일로 초기 관리자 값을 설정한다면 파일은 BOM 유무와 관계없이 UTF-8로 저장해야 하며, 콘솔 코드 페이지에 의존해 작성하거나 변환하지 마십시오. 이미 깨진 표시 이름은 자동 변환하지 않고 사용자 관리 또는 운영자 검토를 거친 파라미터 바인딩 SQL로 수정합니다. 운영 환경에서의 secret 주입과 실패 복구 절차는 [초기 관리자 Bootstrap 운영 문서](docs/operations/admin-bootstrap.md)를 참고하십시오.
 
 ## 로그인과 API 인증
 
@@ -72,6 +72,12 @@ access token의 기본 만료 시간은 15분, refresh token은 30일입니다. 
 비밀번호를 연속 5회 잘못 입력하면 계정은 `LOCKED` 상태가 되며 이후 올바른 비밀번호로도 로그인할 수 없습니다. 임계값은 `APP_LOGIN_MAX_FAILED_ATTEMPTS`로 설정할 수 있고 1 이상이어야 합니다. 성공적으로 로그인하면 누적 실패 횟수가 초기화됩니다. 잠긴 계정의 해제는 사용자 관리 기능에서 별도 권한으로 제공할 예정입니다.
 
 `PUT /api/v1/auth/password`로 현재 비밀번호와 새 비밀번호를 전달해 본인 비밀번호를 변경할 수 있습니다. 새 비밀번호는 초기 관리자와 동일한 강도 정책을 따르고 현재 비밀번호를 재사용할 수 없습니다. 변경에 성공하면 탈취 세션을 차단하기 위해 해당 사용자의 모든 refresh token이 폐기되므로 다시 로그인해야 합니다. 기존 access token은 최대 15분의 잔여 수명 동안 유효할 수 있습니다.
+
+## 실시간 관제 대시보드
+
+로그인한 `SUPER_ADMIN`과 `ADMIN`은 대시보드에서 현재 애플리케이션의 CPU, JVM heap, uptime, thread, HTTP TPS, 평균 응답시간, 5xx 오류율을 확인할 수 있습니다. 서버는 `/api/v1/monitoring/summary`에 화면에 필요한 snapshot만 제공하며, 원본 Actuator metrics endpoint를 공개하지 않습니다. `VIEWER`와 권한 없는 요청은 `403 FORBIDDEN`으로 거부됩니다.
+
+웹은 5초마다 snapshot을 조회하고 현재 브라우저 탭 메모리에 최대 360개(약 30분)를 유지합니다. 이 이력은 서버, 데이터베이스 또는 장기 시계열 저장소에 보존되지 않으며, 브라우저를 닫거나 새로 열고 애플리케이션을 재시작하면 새 기준점부터 수집합니다. 여러 인스턴스의 통합 이력, 알림, Prometheus/Grafana 연동은 이 범위에 포함되지 않습니다.
 
 ## 검증
 
