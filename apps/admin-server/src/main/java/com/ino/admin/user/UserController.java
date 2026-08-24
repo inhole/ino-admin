@@ -1,27 +1,33 @@
 package com.ino.admin.user;
 
+import com.ino.admin.identity.api.RoleCatalogUseCase;
 import com.ino.admin.identity.api.UserDirectoryUseCase;
+import com.ino.admin.identity.api.UserDirectoryUseCase.SortDirection;
+import com.ino.admin.identity.api.UserDirectoryUseCase.UserQuery;
+import com.ino.admin.identity.api.UserDirectoryUseCase.UserSort;
 import com.ino.admin.identity.api.UserManagementUseCase;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import java.util.UUID;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 @Validated
 @RestController
@@ -29,19 +35,41 @@ import java.util.UUID;
 public class UserController {
     private final UserDirectoryUseCase userDirectory;
     private final UserManagementUseCase userManagement;
+    private final RoleCatalogUseCase roleCatalog;
 
-    public UserController(UserDirectoryUseCase userDirectory, UserManagementUseCase userManagement) {
+    public UserController(UserDirectoryUseCase userDirectory, UserManagementUseCase userManagement,
+            RoleCatalogUseCase roleCatalog) {
         this.userDirectory = userDirectory;
         this.userManagement = userManagement;
+        this.roleCatalog = roleCatalog;
     }
 
     @GetMapping
     UserDirectoryUseCase.UserPage findAll(
             @RequestParam(defaultValue = "") @Size(max = 320) String query,
+            @RequestParam(defaultValue = "") @Size(max = 50) String role,
+            @RequestParam(defaultValue = "")
+            @Pattern(regexp = "^$|ACTIVE|LOCKED|DISABLED") String status,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "createdAt")
+            @Pattern(regexp = "createdAt|displayName|email|role|status") String sort,
+            @RequestParam(defaultValue = "desc")
+            @Pattern(regexp = "asc|desc") String direction
     ) {
-        return userDirectory.findUsers(query, page, size);
+        return userDirectory.findUsers(new UserQuery(
+                query,
+                role,
+                status,
+                page,
+                size,
+                UserSort.from(sort),
+                SortDirection.from(direction)));
+    }
+
+    @GetMapping("/roles")
+    List<RoleCatalogUseCase.RoleOption> findActiveRoles() {
+        return roleCatalog.findActiveRoles();
     }
 
     @GetMapping("/{userId}")

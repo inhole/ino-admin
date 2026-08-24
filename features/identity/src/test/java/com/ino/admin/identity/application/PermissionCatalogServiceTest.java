@@ -12,6 +12,25 @@ import org.junit.jupiter.api.Test;
 
 class PermissionCatalogServiceTest {
     @Test
+    void exposesOnlyEnabledRoleOptionsWithoutPermissionDetails() {
+        var repository = mock(RoleRepository.class);
+        var admin = mock(Role.class);
+        var disabled = mock(Role.class);
+        when(admin.key()).thenReturn("ADMIN");
+        when(admin.displayName()).thenReturn("관리자");
+        when(admin.enabled()).thenReturn(true);
+        when(disabled.key()).thenReturn("DISABLED_ROLE");
+        when(disabled.displayName()).thenReturn("중지 역할");
+        when(disabled.enabled()).thenReturn(false);
+        when(repository.findAllByOrderByKeyAsc()).thenReturn(List.of(admin, disabled));
+
+        var roles = new PermissionCatalogService(repository).findActiveRoles();
+
+        assertThat(roles).containsExactly(
+                new com.ino.admin.identity.api.RoleCatalogUseCase.RoleOption("ADMIN", "관리자"));
+    }
+
+    @Test
     void exposesStableRolePermissionMappings() {
         var repository = mock(RoleRepository.class);
         var superAdmin = mock(Role.class); var admin = mock(Role.class);

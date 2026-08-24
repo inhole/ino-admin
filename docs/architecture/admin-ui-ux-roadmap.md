@@ -42,12 +42,12 @@ INO Admin을 단순 CRUD 화면 모음에서 탐색, 조회, 처리 흐름이 �
 
 ### 2. 사용자 관리
 
-- [ ] 검색, 역할·상태 필터, 정렬, 초기화 Toolbar
-- [ ] URL query parameter 기반 조회 상태 유지
-- [ ] 서버 페이지네이션과 `Pagination` 적용
+- [x] 검색, 역할·상태 필터, 정렬, 초기화 Toolbar
+- [x] URL query parameter 기반 조회 상태 유지
+- [x] 서버 페이지네이션과 `Pagination` 적용
 - [ ] 사용자 생성·수정 `Sheet` 전환
 - [ ] 행별 `DropdownMenu`와 상태 변경 `AlertDialog`
-- [ ] 데스크톱 Data Table과 모바일 사용자 요약 표현
+- [x] 데스크톱 Data Table과 모바일 사용자 요약 표현
 - [ ] 선택 기반 일괄 작업은 서버 API가 준비된 뒤 적용
 
 ### 3. 역할과 권한
