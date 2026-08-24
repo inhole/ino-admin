@@ -27,6 +27,16 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
       - name: 백엔드 테스트 및 아키텍처 검증
         run: ./gradlew test architectureTest
+      - name: 실행 결과 요약
+        if: always()
+        run: |
+          case "${{ job.status }}" in success) result="성공";; failure) result="실패";; cancelled) result="취소";; *) result="${{ job.status }}";; esac
+          {
+            echo "## 실행 결과 요약"
+            echo "- 작업: 백엔드 단위·아키텍처 검증"
+            echo "- 결과: **${result}**"
+            echo "- 커밋: \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   frontend-unit:
     name: 프론트엔드 단위 검증
@@ -51,3 +61,13 @@ jobs:
         run: npm run typecheck
       - name: 프론트엔드 테스트
         run: npm test
+      - name: 실행 결과 요약
+        if: always()
+        run: |
+          case "${{ job.status }}" in success) result="성공";; failure) result="실패";; cancelled) result="취소";; *) result="${{ job.status }}";; esac
+          {
+            echo "## 실행 결과 요약"
+            echo "- 작업: 프론트엔드 린트·타입·단위 검증"
+            echo "- 결과: **${result}**"
+            echo "- 커밋: \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

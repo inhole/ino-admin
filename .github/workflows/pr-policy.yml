@@ -43,3 +43,13 @@ jobs:
               issues,
             });
             if (errors.length) core.setFailed(errors.join('\n'));
+      - name: 실행 결과 요약
+        if: always()
+        run: |
+          case "${{ job.status }}" in success) result="성공";; failure) result="실패";; cancelled) result="취소";; *) result="${{ job.status }}";; esac
+          {
+            echo "## 실행 결과 요약"
+            echo "- 작업: PR 브랜치·Issue·Milestone 정책 검증"
+            echo "- 결과: **${result}**"
+            echo "- PR: #${{ github.event.pull_request.number }}"
+          } >> "$GITHUB_STEP_SUMMARY"
