@@ -10,7 +10,8 @@ public enum Permission {
     PERMISSION_UPDATE("permission:update"),
     FILE_READ("file:read"),
     FILE_WRITE("file:write"),
-    MONITORING_READ("monitoring:read");
+    MONITORING_READ("monitoring:read"),
+    AUDIT_READ("audit:read");
 
     private final String key;
 
