@@ -21,7 +21,6 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePropertySource;
 
 class AdminBootstrapPropertiesBindingTest {
     private static final String DISPLAY_NAME_KEY = "APP_BOOTSTRAP_ADMIN_DISPLAY_NAME";
@@ -35,6 +34,20 @@ class AdminBootstrapPropertiesBindingTest {
             var dotenvPropertySource = dotenvPropertySource(context.getEnvironment());
 
             assertThat(dotenvPropertySource.getName()).contains(dotenvPath.toString());
+            assertThat(dotenvPropertySource.getProperty(DISPLAY_NAME_KEY)).isEqualTo("시스템 관리자");
+            assertThat(context.getBean(AdminBootstrapProperties.class).getDisplayName())
+                    .isEqualTo("시스템 관리자");
+        });
+    }
+
+    @Test
+    void bindsKoreanDisplayNameFromUtf8DotenvWithBom(@TempDir Path temporaryDirectory) throws IOException {
+        var dotenvPath = temporaryDirectory.resolve(".env");
+        Files.writeString(dotenvPath, "\uFEFF" + DISPLAY_NAME_KEY + "=시스템 관리자\n", StandardCharsets.UTF_8);
+
+        contextRunner(dotenvPath).run(context -> {
+            var dotenvPropertySource = dotenvPropertySource(context.getEnvironment());
+
             assertThat(dotenvPropertySource.getProperty(DISPLAY_NAME_KEY)).isEqualTo("시스템 관리자");
             assertThat(context.getBean(AdminBootstrapProperties.class).getDisplayName())
                     .isEqualTo("시스템 관리자");
@@ -93,7 +106,7 @@ class AdminBootstrapPropertiesBindingTest {
 
     private PropertySource<?> dotenvPropertySource(ConfigurableEnvironment environment) {
         return StreamSupport.stream(environment.getPropertySources().spliterator(), false)
-                .filter(ResourcePropertySource.class::isInstance)
+                .filter(propertySource -> propertySource.getName().contains(".env"))
                 .filter(propertySource -> propertySource.containsProperty(DISPLAY_NAME_KEY))
                 .findFirst()
                 .orElseThrow();

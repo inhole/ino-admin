@@ -1,7 +1,22 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 plugins {
     java
     id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
+}
+
+tasks.register("verifyBootRunWorkingDirectory") {
+    description = "Verifies that bootRun resolves file:.env from the repository root."
+    group = "verification"
+
+    doLast {
+        val bootRun = tasks.named<BootRun>("bootRun").get()
+        check(bootRun.workingDir.toPath().toAbsolutePath().normalize() ==
+            rootProject.projectDir.toPath().toAbsolutePath().normalize()) {
+            "bootRun must use the repository root as its working directory so file:.env resolves README's root .env"
+        }
+    }
 }
 
 java {
@@ -9,6 +24,10 @@ java {
 }
 
 tasks.withType<JavaCompile>().configureEach { options.release = 25 }
+
+tasks.named<BootRun>("bootRun") {
+    workingDir = rootProject.projectDir
+}
 
 dependencies {
     implementation(project(":features:identity"))
@@ -41,6 +60,7 @@ tasks.withType<Test>().configureEach {
 
 tasks.named<Test>("test") {
     useJUnitPlatform { excludeTags("integration", "architecture") }
+    dependsOn("verifyBootRunWorkingDirectory")
 }
 
 tasks.register<Test>("integrationTest") {
