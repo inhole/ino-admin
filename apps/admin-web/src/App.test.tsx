@@ -150,5 +150,5 @@ test('super admin creates a viewer from the user directory', async () => {
   expect(await within(desktopUsers).findByRole('button', { name: '활성화' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('link', { name: '권한' }))
   expect(await screen.findByRole('heading', { name: '권한 카탈로그' })).toBeInTheDocument()
-  expect((await screen.findAllByText('permission:read')).length).toBeGreaterThan(0)
+  expect((await screen.findAllByText('권한 조회')).length).toBeGreaterThan(0)
 })

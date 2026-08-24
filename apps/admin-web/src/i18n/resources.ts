@@ -234,6 +234,12 @@ export const ko = {
     permissionLegend: "{{name}} 권한",
     updateError: "권한을 변경할 수 없습니다.",
     empty: "부여된 권한 없음",
+    labels: {
+      user_read: "사용자 조회", user_create: "사용자 생성", user_update: "사용자 수정",
+      permission_read: "권한 조회", permission_update: "권한 수정", menu_read: "메뉴 조회", menu_update: "메뉴 수정",
+      file_read: "파일 조회", file_write: "파일 수정", monitoring_read: "모니터링 조회", audit_read: "감사 로그 조회",
+      excel_export: "Excel 내보내기", excel_import: "Excel 가져오기",
+    },
   },
   menus: {
     eyebrow: "NAVIGATION",
@@ -589,6 +595,12 @@ export const en = {
     permissionLegend: "Permissions for {{name}}",
     updateError: "Unable to update permissions.",
     empty: "No permissions assigned",
+    labels: {
+      user_read: "View users", user_create: "Create users", user_update: "Update users",
+      permission_read: "View permissions", permission_update: "Update permissions", menu_read: "View menus", menu_update: "Update menus",
+      file_read: "View files", file_write: "Manage files", monitoring_read: "View monitoring", audit_read: "View audit logs",
+      excel_export: "Export Excel", excel_import: "Import Excel",
+    },
   },
   menus: {
     eyebrow: "NAVIGATION",

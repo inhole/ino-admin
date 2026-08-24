@@ -1,6 +1,7 @@
 package com.ino.admin.excel;
 
 import com.ino.admin.core.BusinessException;
+import com.ino.admin.core.ErrorCode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import org.apache.poi.ss.usermodel.IndexedColors;
@@ -24,7 +25,7 @@ class UserExcelTemplate {
             }
             sheet.createFreezePane(0, 1); workbook.write(output); return output.toByteArray();
         } catch (IOException exception) {
-            throw new BusinessException("EXCEL_TEMPLATE_FAILED", "Excel 양식을 생성하지 못했습니다.");
+            throw new BusinessException(ErrorCode.EXCEL_TEMPLATE_FAILED);
         }
     }
 }

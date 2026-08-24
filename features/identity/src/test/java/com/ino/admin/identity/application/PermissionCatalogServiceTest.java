@@ -46,4 +46,11 @@ class PermissionCatalogServiceTest {
         assertThat(catalog).filteredOn(item -> item.role().equals("ADMIN")).singleElement()
                 .extracting(item -> item.permissions()).asList().containsExactly("user:read");
     }
+
+    @Test
+    void exposesPermissionCodesFromEnum() {
+        var catalog = new PermissionCatalogService(mock(RoleRepository.class)).findAvailablePermissions();
+
+        assertThat(catalog).contains("user:read", "permission:update");
+    }
 }

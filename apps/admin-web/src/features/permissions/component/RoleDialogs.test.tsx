@@ -25,7 +25,7 @@ describe("RoleDialogs", () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(<EditRolePermissionsDialog available={["user:read", "menu:read"]} onSave={onSave} pending={false} role={{ role: "EDITOR", displayName: "편집자", systemRole: false, enabled: true, permissions: ["user:read"] }} />);
     fireEvent.click(screen.getByRole("button", { name: "수정" }));
-    const checkbox = screen.getByRole("checkbox", { name: "menu:read" });
+    const checkbox = screen.getByRole("checkbox", { name: /메뉴 조회/ });
     fireEvent.click(checkbox);
     fireEvent.click(screen.getByRole("button", { name: "저장" }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(["user:read", "menu:read"]));

@@ -1,5 +1,6 @@
 package com.ino.admin.auth;
 
+import com.ino.admin.core.ErrorCode;
 import com.ino.admin.web.ApiError;
 import com.ino.admin.web.TraceIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,8 +32,9 @@ class RestAccessDeniedHandler implements AccessDeniedHandler {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(java.nio.charset.StandardCharsets.UTF_8.name());
+        var errorCode = ErrorCode.FORBIDDEN;
         objectMapper.writeValue(response.getOutputStream(), new ApiError(
-                "FORBIDDEN", "요청을 수행할 권한이 없습니다.", List.of(),
+                errorCode.code(), errorCode.message(), List.of(),
                 MDC.get(TraceIdFilter.MDC_KEY), Instant.now(clock)));
     }
 }

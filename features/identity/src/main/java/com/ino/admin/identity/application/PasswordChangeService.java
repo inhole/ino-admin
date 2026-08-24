@@ -1,6 +1,7 @@
 package com.ino.admin.identity.application;
 
 import com.ino.admin.core.BusinessException;
+import com.ino.admin.core.ErrorCode;
 import com.ino.admin.identity.api.AuthenticationFailedException;
 import com.ino.admin.identity.api.PasswordChangeUseCase;
 import com.ino.admin.identity.domain.PasswordPolicy;
@@ -35,14 +36,14 @@ public class PasswordChangeService implements PasswordChangeUseCase {
                 .filter(found -> found.status() == UserStatus.ACTIVE)
                 .orElseThrow(AuthenticationFailedException::new);
         if (!passwordEncoder.matches(currentPassword, user.passwordHash())) {
-            throw new BusinessException("INVALID_CURRENT_PASSWORD", "현재 비밀번호가 올바르지 않습니다.");
+            throw new BusinessException(ErrorCode.INVALID_CURRENT_PASSWORD);
         }
         if (passwordEncoder.matches(newPassword, user.passwordHash())) {
-            throw new BusinessException("PASSWORD_REUSE_NOT_ALLOWED", "현재 비밀번호와 다른 비밀번호를 사용해야 합니다.");
+            throw new BusinessException(ErrorCode.PASSWORD_REUSE_NOT_ALLOWED);
         }
         var violations = PasswordPolicy.violations(newPassword);
         if (!violations.isEmpty()) {
-            throw new BusinessException("PASSWORD_POLICY_VIOLATION", String.join(" ", violations));
+            throw new BusinessException(ErrorCode.PASSWORD_POLICY_VIOLATION, String.join(" ", violations));
         }
 
         user.changePassword(passwordEncoder.encode(newPassword), Instant.now(clock));
