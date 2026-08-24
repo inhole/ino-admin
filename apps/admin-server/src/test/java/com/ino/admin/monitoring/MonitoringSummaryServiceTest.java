@@ -4,11 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 class MonitoringSummaryServiceTest {
@@ -23,7 +25,7 @@ class MonitoringSummaryServiceTest {
         registerGauge(registry, "jvm.memory.used", 512d, "area", "heap", "id", "G1 Old Gen");
         registerGauge(registry, "jvm.memory.max", 2048d, "area", "heap", "id", "G1 Eden Space");
         registerGauge(registry, "jvm.memory.max", 2048d, "area", "heap", "id", "G1 Old Gen");
-        registerGauge(registry, "process.uptime", 3600d);
+        TimeGauge.builder("process.uptime", () -> 3_600_000L, TimeUnit.MILLISECONDS).register(registry);
         registerGauge(registry, "jvm.threads.live", 12d);
         registerGauge(registry, "jvm.threads.peak", 18d);
         recordRequest(registry, "200", Duration.ofMillis(250));
