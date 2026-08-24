@@ -18,6 +18,26 @@ export interface MonitoringPoint extends MonitoringSnapshot {
   serverErrorRate: number | null;
 }
 
+export type HttpCounterKey =
+  | "httpRequestCount"
+  | "httpRequestDurationSeconds"
+  | "httpServerErrorCount";
+
+export type DerivedMetricStatus = "available" | "collecting" | "unavailable";
+
+export function classifyDerivedMetric(
+  latest: MonitoringPoint,
+  previous: MonitoringPoint | undefined,
+  requiredCounters: HttpCounterKey[],
+  value: number | null,
+): DerivedMetricStatus {
+  const isUnavailable = (point: MonitoringPoint | undefined) =>
+    point !== undefined && requiredCounters.some((counter) => point[counter] === null);
+
+  if (isUnavailable(latest) || isUnavailable(previous)) return "unavailable";
+  return value === null ? "collecting" : "available";
+}
+
 function counterDelta(current: number | null, previous: number | null) {
   if (
     current === null ||

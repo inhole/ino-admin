@@ -23,7 +23,11 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import type { MonitoringPoint } from "@/features/dashboard/model/monitoringHistory";
+import {
+  classifyDerivedMetric,
+  type DerivedMetricStatus,
+  type MonitoringPoint,
+} from "@/features/dashboard/model/monitoringHistory";
 
 function formatPercent(value: number | null) {
   return value === null ? null : `${(value * 100).toFixed(1)}%`;
@@ -43,6 +47,17 @@ function formatMilliseconds(value: number | null) {
 
 function formatErrorRate(value: number | null) {
   return value === null ? null : `${value.toFixed(1)}%`;
+}
+
+function formatDerivedLatest(
+  status: DerivedMetricStatus,
+  value: number | null,
+  format: (value: number | null) => string | null,
+  unavailable: string,
+  collecting: string,
+) {
+  if (status === "unavailable") return unavailable;
+  return status === "collecting" || value === null ? collecting : format(value) ?? collecting;
 }
 
 function timeLabel(timestamp: string) {
@@ -86,6 +101,20 @@ export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
   const { t } = useTranslation("dashboard");
   const latest = history.at(-1);
   if (!latest) return null;
+  const previous = history.at(-2);
+  const tpsStatus = classifyDerivedMetric(latest, previous, ["httpRequestCount"], latest.tps);
+  const latencyStatus = classifyDerivedMetric(
+    latest,
+    previous,
+    ["httpRequestCount", "httpRequestDurationSeconds"],
+    latest.averageResponseMs,
+  );
+  const errorRateStatus = classifyDerivedMetric(
+    latest,
+    previous,
+    ["httpRequestCount", "httpServerErrorCount"],
+    latest.serverErrorRate,
+  );
 
   const cpuChartConfig = {
     systemCpuUsage: { label: t("systemCpu"), color: "var(--chart-2)" },
@@ -158,7 +187,7 @@ export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
             </AreaChart>
           </ChartContainer>
         </ChartPanel>
-        <ChartPanel description={t("chartTpsDescription")} id="monitoring-chart-tps" latest={t("latestValue", { value: formatTps(latest.tps) ?? t("collecting") })} title={t("chartTps")}>
+        <ChartPanel description={t("chartTpsDescription")} id="monitoring-chart-tps" latest={t("latestValue", { value: formatDerivedLatest(tpsStatus, latest.tps, formatTps, t("unavailable"), t("collecting")) })} title={t("chartTps")}>
           <ChartContainer className="h-56 w-full" config={tpsChartConfig}>
             <LineChart accessibilityLayer data={history}>
               <CartesianGrid vertical={false} />
@@ -168,7 +197,7 @@ export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
             </LineChart>
           </ChartContainer>
         </ChartPanel>
-        <ChartPanel description={t("chartLatencyDescription")} id="monitoring-chart-latency" latest={t("latestValue", { value: formatMilliseconds(latest.averageResponseMs) ?? t("collecting") })} title={t("chartLatency")}>
+        <ChartPanel description={t("chartLatencyDescription")} id="monitoring-chart-latency" latest={t("latestValue", { value: formatDerivedLatest(latencyStatus, latest.averageResponseMs, formatMilliseconds, t("unavailable"), t("collecting")) })} title={t("chartLatency")}>
           <ChartContainer className="h-56 w-full" config={latencyChartConfig}>
             <LineChart accessibilityLayer data={history}>
               <CartesianGrid vertical={false} />
@@ -178,7 +207,7 @@ export function MonitoringCharts({ history }: { history: MonitoringPoint[] }) {
             </LineChart>
           </ChartContainer>
         </ChartPanel>
-        <ChartPanel description={t("chartErrorDescription")} id="monitoring-chart-error" latest={t("latestValue", { value: formatErrorRate(latest.serverErrorRate) ?? t("collecting") })} title={t("chartError")}>
+        <ChartPanel description={t("chartErrorDescription")} id="monitoring-chart-error" latest={t("latestValue", { value: formatDerivedLatest(errorRateStatus, latest.serverErrorRate, formatErrorRate, t("unavailable"), t("collecting")) })} title={t("chartError")}>
           <ChartContainer className="h-56 w-full" config={errorChartConfig}>
             <LineChart accessibilityLayer data={history}>
               <CartesianGrid vertical={false} />

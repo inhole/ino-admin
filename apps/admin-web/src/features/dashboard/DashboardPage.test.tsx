@@ -61,8 +61,9 @@ beforeEach(() => {
   });
 });
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  await i18n.changeLanguage("ko");
   Object.defineProperty(document, "visibilityState", {
     configurable: true,
     value: "visible",
@@ -143,6 +144,15 @@ test("labels derived HTTP metrics unavailable when the source counters are absen
   expect(metricCard("TPS").getAllByText("사용 불가")).toHaveLength(2);
   expect(metricCard("평균 지연 시간").getAllByText("사용 불가")).toHaveLength(2);
   expect(metricCard("5xx 비율").getAllByText("사용 불가")).toHaveLength(2);
+  expect(
+    within(screen.getByRole("region", { name: "처리량" })).getByText("최신 · 사용 불가"),
+  ).toBeInTheDocument();
+  expect(
+    within(screen.getByRole("region", { name: "응답 지연 시간" })).getByText("최신 · 사용 불가"),
+  ).toBeInTheDocument();
+  expect(
+    within(screen.getByRole("region", { name: "5xx 비율" })).getByText("최신 · 사용 불가"),
+  ).toBeInTheDocument();
 });
 
 test("keeps derived metrics collecting when valid counters reset between snapshots", async () => {
