@@ -23,13 +23,15 @@ function counterDelta(current: number | null, previous: number | null) {
     current === null ||
     previous === null ||
     !Number.isFinite(current) ||
-    !Number.isFinite(previous)
+    !Number.isFinite(previous) ||
+    current < 0 ||
+    previous < 0
   ) {
     return null;
   }
 
   const delta = current - previous;
-  return delta >= 0 ? delta : null;
+  return Number.isFinite(delta) && delta >= 0 ? delta : null;
 }
 
 function elapsedSeconds(current: string, previous: string) {
@@ -37,12 +39,23 @@ function elapsedSeconds(current: string, previous: string) {
   return Number.isFinite(elapsed) && elapsed > 0 ? elapsed : null;
 }
 
+function normalizedMaxPoints(maxPoints: number) {
+  if (!Number.isFinite(maxPoints) || maxPoints <= 0) return null;
+  const normalized = Math.floor(maxPoints);
+  return normalized > 0 ? normalized : null;
+}
+
 export function appendMonitoringPoint(
   history: MonitoringPoint[],
   snapshot: MonitoringSnapshot,
   maxPoints = 360,
 ): MonitoringPoint[] {
+  const limit = normalizedMaxPoints(maxPoints);
+  if (limit === null) return [];
+
   const previous = history.at(-1);
+  if (previous?.timestamp === snapshot.timestamp) return history;
+
   const elapsed = previous
     ? elapsedSeconds(snapshot.timestamp, previous.timestamp)
     : null;
@@ -71,10 +84,10 @@ export function appendMonitoringPoint(
         ? (durationDelta * 1000) / requestDelta
         : null,
     serverErrorRate:
-      hasRequests && errorDelta !== null
+      hasRequests && errorDelta !== null && errorDelta <= requestDelta
         ? (errorDelta * 100) / requestDelta
         : null,
   };
 
-  return [...history, next].slice(-maxPoints);
+  return [...history, next].slice(-limit);
 }
