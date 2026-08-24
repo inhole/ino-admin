@@ -1,0 +1,21 @@
+import { RiAddLine, RiEditLine } from "@remixicon/react";
+import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import type { RolePermissions } from "@/features/permissions/api/permissionsApi";
+
+export function CreateRoleDialog({ onSave, pending }: { onSave: (input: { role: string; displayName: string; permissions: string[] }) => Promise<unknown>; pending: boolean }) {
+  const { t } = useTranslation("permissions"); const { t: common } = useTranslation("common"); const [open, setOpen] = useState(false);
+  const submit = async (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); await onSave({ role: String(data.get("role")), displayName: String(data.get("displayName")), permissions: [] }); setOpen(false); };
+  return <Dialog onOpenChange={(next) => { if (!pending) setOpen(next); }} open={open}><DialogTrigger render={<button className={buttonVariants()} type="button" />}><RiAddLine data-icon="inline-start" />{t("create")}</DialogTrigger><DialogContent showCloseButton={false}><DialogHeader><DialogTitle>{t("createTitle")}</DialogTitle><DialogDescription>{t("createDescription")}</DialogDescription></DialogHeader><form onSubmit={submit}><FieldGroup><Field><FieldLabel htmlFor="dialog-role-key">{t("roleKey")}</FieldLabel><Input id="dialog-role-key" name="role" placeholder="CONTENT_EDITOR" required /></Field><Field><FieldLabel htmlFor="dialog-role-name">{t("roleName")}</FieldLabel><Input id="dialog-role-name" name="displayName" placeholder={t("roleNamePlaceholder")} required /></Field><DialogFooter><DialogClose disabled={pending} render={<button className={buttonVariants({ variant: "outline" })} type="button" />}>{common("cancel")}</DialogClose><Button disabled={pending} type="submit">{pending && <Spinner data-icon="inline-start" />}{t("create")}</Button></DialogFooter></FieldGroup></form></DialogContent></Dialog>;
+}
+
+export function EditRolePermissionsDialog({ role, available, onSave, pending }: { role: RolePermissions; available: string[]; onSave: (permissions: string[]) => Promise<unknown>; pending: boolean }) {
+  const { t } = useTranslation("permissions"); const { t: common } = useTranslation("common"); const [open, setOpen] = useState(false); const [selected, setSelected] = useState(role.permissions);
+  return <Dialog onOpenChange={(next) => { if (!pending) { setOpen(next); if (next) setSelected(role.permissions); } }} open={open}><DialogTrigger render={<button className={buttonVariants({ size: "sm", variant: "outline" })} type="button" />}><RiEditLine data-icon="inline-start" />{common("edit")}</DialogTrigger><DialogContent showCloseButton={false}><DialogHeader><DialogTitle>{t("editTitle", { name: role.displayName || role.role })}</DialogTitle><DialogDescription>{t("editDescription")}</DialogDescription></DialogHeader><FieldSet><FieldLegend>{t("permissionLegend", { name: role.displayName || role.role })}</FieldLegend><FieldGroup className="max-h-80 overflow-y-auto">{available.map((permission) => <Field key={permission} orientation="horizontal"><Checkbox checked={selected.includes(permission)} id={`dialog-${role.role}-${permission}`} onCheckedChange={() => setSelected((current) => current.includes(permission) ? current.filter((value) => value !== permission) : [...current, permission])} /><FieldLabel className="font-mono text-xs" htmlFor={`dialog-${role.role}-${permission}`}>{permission}</FieldLabel></Field>)}</FieldGroup></FieldSet><DialogFooter><DialogClose disabled={pending} render={<button className={buttonVariants({ variant: "outline" })} type="button" />}>{common("cancel")}</DialogClose><Button disabled={pending} onClick={async () => { await onSave(selected); setOpen(false); }}>{pending && <Spinner data-icon="inline-start" />}{common("save")}</Button></DialogFooter></DialogContent></Dialog>;
+}
