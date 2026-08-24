@@ -63,6 +63,7 @@ class AuditRequestFilterTest {
         assertThat(actionFor("POST", "/api/v1/users")).isEqualTo("USER_CREATE");
         assertThat(actionFor("POST", "/api/v1/files")).isEqualTo("FILE_UPLOAD");
         assertThat(actionFor("DELETE", "/api/v1/files/file-1")).isEqualTo("FILE_DELETE");
+        assertThat(actionFor("GET", "/api/v1/excel/users/export")).isEqualTo("USER_EXCEL_EXPORT");
     }
 
     private String actionFor(String method, String path) throws Exception {

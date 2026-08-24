@@ -53,6 +53,8 @@ class SecurityConfig {
                                 .hasAuthority("monitoring:read")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/audit-logs/**")
                                 .hasAuthority("audit:read")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/excel/users/export")
+                                .hasAuthority("excel:export")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(token -> new JwtAuthenticationToken(token,

@@ -1,4 +1,4 @@
-import { request, type PageResponse } from "@/api/client";
+import { request, requestBlob, type PageResponse } from "@/api/client";
 import {
   toUserListSearchParams,
   type UserListQuery,
@@ -28,6 +28,9 @@ export function getUsers(query: UserListQuery) {
   return request<PageResponse<UserSummary>>(
     `/api/v1/users${search === "" ? "" : `?${search}`}`,
   );
+}
+export function exportUsersExcel() {
+  return requestBlob("/api/v1/excel/users/export");
 }
 export function getUser(userId: string) {
   return request<UserSummary>(`/api/v1/users/${userId}`);

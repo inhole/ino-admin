@@ -11,7 +11,8 @@ public enum Permission {
     FILE_READ("file:read"),
     FILE_WRITE("file:write"),
     MONITORING_READ("monitoring:read"),
-    AUDIT_READ("audit:read");
+    AUDIT_READ("audit:read"),
+    EXCEL_EXPORT("excel:export");
 
     private final String key;
 

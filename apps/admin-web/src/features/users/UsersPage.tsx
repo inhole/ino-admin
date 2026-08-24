@@ -11,11 +11,13 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { RiFileExcel2Line } from "@remixicon/react";
 import { useSearchParams } from "react-router-dom";
 import {
   getRoleCatalog,
   getUser,
   getUsers,
+  exportUsersExcel,
   updateUserProfile,
   updateUserStatus,
   type UserSummary,
@@ -74,6 +76,7 @@ export function UsersPage() {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [editing, setEditing] = useState<UserSummary | null>(null);
   const correctedPageRef = useRef<string | null>(null);
   const activeRoleOptions =
@@ -179,9 +182,35 @@ export function UsersPage() {
     query.query !== "" || query.role !== "" || query.status !== "";
   const isRefreshing = users.isFetching && !users.isPending;
   const canCreateUsers = currentUser?.permissions.includes("user:create") ?? false;
+  const canExportUsers = currentUser?.permissions.includes("excel:export") ?? false;
+  const exportExcel = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await exportUsersExcel();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "users.xlsx";
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setStatusError(null);
+    } catch (error) {
+      setStatusError(
+        error instanceof ApiClientError ? error.message : t("exportError"),
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
   return (
     <>
       <PageHeader
+        actions={canExportUsers ? (
+          <Button disabled={isExporting} onClick={exportExcel} type="button" variant="outline">
+            <RiFileExcel2Line aria-hidden="true" data-icon="inline-start" />
+            {isExporting ? t("exportingExcel") : t("exportExcel")}
+          </Button>
+        ) : undefined}
         description={t("description")}
         eyebrow={t("eyebrow")}
         title={t("title")}
