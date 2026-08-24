@@ -38,6 +38,7 @@ export function CreateUserDialog({ roles }: CreateUserDialogProps) {
   const { t } = useTranslation("users");
   const queryClient = useQueryClient();
   const formRef = useRef<HTMLFormElement>(null);
+  const submissionInFlightRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [invalidFields, setInvalidFields] = useState({
@@ -79,6 +80,8 @@ export function CreateUserDialog({ roles }: CreateUserDialogProps) {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submissionInFlightRef.current || create.isPending) return;
+
     setError(null);
     const data = new FormData(event.currentTarget);
     const email = String(data.get("email"));
@@ -89,6 +92,7 @@ export function CreateUserDialog({ roles }: CreateUserDialogProps) {
 
     if (!emailValid || !passwordValid) return;
 
+    submissionInFlightRef.current = true;
     try {
       await create.mutateAsync({
         displayName: String(data.get("displayName")),
@@ -102,6 +106,8 @@ export function CreateUserDialog({ roles }: CreateUserDialogProps) {
           ? submitError.message
           : t("creationError"),
       );
+    } finally {
+      submissionInFlightRef.current = false;
     }
   };
 

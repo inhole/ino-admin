@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { toast } from "@/components/ui/toast";
 import { createUser } from "@/features/users/api/usersApi";
 import { CreateUserDialog } from "@/features/users/component/CreateUserDialog";
 import { userKeys } from "@/features/users/hook/userKeys";
@@ -9,11 +10,24 @@ vi.mock("@/features/users/api/usersApi", () => ({
   createUser: vi.fn(),
 }));
 
+vi.mock("@/components/ui/toast", () => ({
+  toast: { add: vi.fn() },
+}));
+
 const mockedCreateUser = vi.mocked(createUser);
+const mockedToastAdd = vi.mocked(toast.add);
 const roles = [
   { value: "ADMIN", label: "관리자" },
   { value: "VIEWER", label: "조회자" },
 ];
+const createdUser = {
+  id: "user-2",
+  email: "kim@example.com",
+  displayName: "김관리",
+  status: "ACTIVE",
+  role: "VIEWER",
+  createdAt: "2026-08-24T00:00:00Z",
+};
 
 function renderDialog() {
   const queryClient = new QueryClient({
@@ -48,6 +62,7 @@ function fillValidForm() {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.clearAllMocks();
 });
 
@@ -110,7 +125,7 @@ describe("CreateUserDialog", () => {
   });
 
   test("생성 요청 중에는 제출과 닫기를 막는다", async () => {
-    let resolveCreate: ((value: { id: string; email: string; displayName: string; status: string; role: string; createdAt: string }) => void) | undefined;
+    let resolveCreate: ((value: typeof createdUser) => void) | undefined;
     mockedCreateUser.mockReturnValueOnce(
       new Promise((resolve) => {
         resolveCreate = resolve;
@@ -121,32 +136,26 @@ describe("CreateUserDialog", () => {
     fillValidForm();
 
     fireEvent.submit(screen.getByRole("form"));
+    fireEvent.submit(screen.getByRole("form"));
 
     expect(
       await screen.findByRole("button", { name: /생성 중/ }),
     ).toBeDisabled();
+    expect(mockedCreateUser).toHaveBeenCalledTimes(1);
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.getByRole("dialog")).toBeVisible();
 
-    resolveCreate?.({
-      id: "user-2",
-      email: "kim@example.com",
-      displayName: "김관리",
-      status: "ACTIVE",
-      role: "VIEWER",
-      createdAt: "2026-08-24T00:00:00Z",
-    });
+    resolveCreate?.(createdUser);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "사용자 생성" }),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   test("성공하면 사용자 목록을 무효화하고 다이얼로그를 닫는다", async () => {
-    mockedCreateUser.mockResolvedValueOnce({
-      id: "user-2",
-      email: "kim@example.com",
-      displayName: "김관리",
-      status: "ACTIVE",
-      role: "VIEWER",
-      createdAt: "2026-08-24T00:00:00Z",
-    });
+    mockedCreateUser.mockResolvedValueOnce(createdUser);
+    const reset = vi.spyOn(HTMLFormElement.prototype, "reset");
     const { invalidateQueries } = renderDialog();
     openDialog();
     fillValidForm();
@@ -159,5 +168,9 @@ describe("CreateUserDialog", () => {
     expect(
       screen.queryByRole("dialog", { name: "사용자 생성" }),
     ).not.toBeInTheDocument();
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(mockedToastAdd).toHaveBeenCalledWith({
+      title: "김관리 사용자를 생성했습니다.",
+    });
   });
 });
