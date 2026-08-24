@@ -9,10 +9,6 @@ import java.util.UUID;
 public interface UserDirectoryUseCase {
     UserPage findUsers(UserQuery query);
 
-    default UserPage findUsers(String query, int page, int size) {
-        return findUsers(new UserQuery(query, "", "", page, size, UserSort.CREATED_AT, SortDirection.DESC));
-    }
-
     UserSummary findUser(UUID userId);
 
     record UserQuery(String query, String role, String status, int page, int size,
@@ -56,12 +52,6 @@ public interface UserDirectoryUseCase {
     enum SortDirection {
         ASC,
         DESC;
-
-        public org.springframework.data.domain.Sort.Direction springDirection() {
-            return this == ASC
-                    ? org.springframework.data.domain.Sort.Direction.ASC
-                    : org.springframework.data.domain.Sort.Direction.DESC;
-        }
 
         public static SortDirection from(String value) {
             if (value == null || value.isBlank()) {

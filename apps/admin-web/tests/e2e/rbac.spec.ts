@@ -48,6 +48,9 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: u
       }
       return json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
     }
+    if (path === '/api/v1/users/roles') return json(route, [
+      { role: 'ADMIN', displayName: 'ADMIN' },
+    ])
     if (path === '/api/v1/permissions') return json(route, [
       { role: 'ADMIN', displayName: 'ADMIN', systemRole: true, enabled: true, permissions: ['user:read'] },
     ])

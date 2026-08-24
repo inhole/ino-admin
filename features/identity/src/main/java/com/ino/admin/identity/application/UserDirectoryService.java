@@ -28,7 +28,7 @@ public class UserDirectoryService implements UserDirectoryUseCase {
         var pageable = PageRequest.of(
                 query.page(),
                 query.size(),
-                Sort.by(query.direction().springDirection(), query.sort().property())
+                Sort.by(toSpringDirection(query.direction()), query.sort().property())
                         .and(Sort.by(Sort.Direction.ASC, "id")));
         var users = userRepository.search(normalizedQuery, normalizedRole, status, pageable);
         var content = users.getContent().stream()
@@ -70,5 +70,9 @@ public class UserDirectoryService implements UserDirectoryUseCase {
             case "DISABLED" -> UserStatus.DISABLED;
             default -> throw new BusinessException("INVALID_USER_STATUS", "허용되지 않은 사용자 상태입니다.");
         };
+    }
+
+    private Sort.Direction toSpringDirection(SortDirection direction) {
+        return direction == SortDirection.ASC ? Sort.Direction.ASC : Sort.Direction.DESC;
     }
 }

@@ -17,6 +17,7 @@ import com.ino.admin.identity.api.UserDirectoryUseCase.UserPage;
 import com.ino.admin.identity.api.UserDirectoryUseCase.UserQuery;
 import com.ino.admin.identity.api.UserDirectoryUseCase.UserSort;
 import com.ino.admin.identity.api.UserManagementUseCase;
+import com.ino.admin.identity.api.RoleCatalogUseCase;
 import com.ino.admin.web.GlobalExceptionHandler;
 import com.ino.admin.web.TraceIdFilter;
 import java.util.List;
@@ -44,6 +45,7 @@ class UserControllerTest {
 
     @MockitoBean UserDirectoryUseCase userDirectory;
     @MockitoBean UserManagementUseCase userManagement;
+    @MockitoBean RoleCatalogUseCase roleCatalog;
     @MockitoBean JwtDecoder jwtDecoder;
 
     @Test
@@ -71,6 +73,32 @@ class UserControllerTest {
                 .andExpect(status().isOk());
 
         verify(userDirectory).findUsers(expectedQuery);
+    }
+
+    @Test
+    void userReaderCanReadSafeRoleCatalogWithoutPermissionRead() throws Exception {
+        when(roleCatalog.findActiveRoles()).thenReturn(List.of(
+                new RoleCatalogUseCase.RoleOption("ADMIN", "관리자"),
+                new RoleCatalogUseCase.RoleOption("VIEWER", "조회자")));
+
+        mockMvc.perform(get("/api/v1/users/roles")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("user:read"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].role").value("ADMIN"))
+                .andExpect(jsonPath("$[0].displayName").value("관리자"))
+                .andExpect(jsonPath("$[0].permissions").doesNotExist());
+
+        verify(roleCatalog).findActiveRoles();
+    }
+
+    @Test
+    void permissionReaderWithoutUserReadCannotReadRoleCatalog() throws Exception {
+        mockMvc.perform(get("/api/v1/users/roles")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("permission:read"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        verifyNoInteractions(roleCatalog);
     }
 
     @Test

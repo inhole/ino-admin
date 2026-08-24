@@ -1,5 +1,6 @@
 package com.ino.admin.user;
 
+import com.ino.admin.identity.api.RoleCatalogUseCase;
 import com.ino.admin.identity.api.UserDirectoryUseCase;
 import com.ino.admin.identity.api.UserDirectoryUseCase.SortDirection;
 import com.ino.admin.identity.api.UserDirectoryUseCase.UserQuery;
@@ -12,6 +13,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,10 +35,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     private final UserDirectoryUseCase userDirectory;
     private final UserManagementUseCase userManagement;
+    private final RoleCatalogUseCase roleCatalog;
 
-    public UserController(UserDirectoryUseCase userDirectory, UserManagementUseCase userManagement) {
+    public UserController(UserDirectoryUseCase userDirectory, UserManagementUseCase userManagement,
+            RoleCatalogUseCase roleCatalog) {
         this.userDirectory = userDirectory;
         this.userManagement = userManagement;
+        this.roleCatalog = roleCatalog;
     }
 
     @GetMapping
@@ -60,6 +65,11 @@ public class UserController {
                 size,
                 UserSort.from(sort),
                 SortDirection.from(direction)));
+    }
+
+    @GetMapping("/roles")
+    List<RoleCatalogUseCase.RoleOption> findActiveRoles() {
+        return roleCatalog.findActiveRoles();
     }
 
     @GetMapping("/{userId}")

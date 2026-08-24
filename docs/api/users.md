@@ -16,6 +16,17 @@
 
 정렬은 요청한 필드 뒤에 항상 `id ASC`를 보조 정렬로 추가해 페이지 경계를 안정화한다.
 
+## 역할 필터 catalog
+
+`GET /api/v1/users/roles`는 사용자 목록과 동일하게 JWT 인증과 `user:read` 권한이 필요하다. 활성 역할의 필터 표시 정보만 반환하며 역할별 권한 목록은 노출하지 않는다. 역할·권한 관리용 `/api/v1/permissions/**`의 `permission:read` 인가 계약은 그대로 유지한다.
+
+```json
+[
+  { "role": "ADMIN", "displayName": "관리자" },
+  { "role": "VIEWER", "displayName": "조회자" }
+]
+```
+
 ## 응답 계약
 
 응답은 기존 page response 구조를 유지한다.

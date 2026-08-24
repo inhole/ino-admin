@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
   createUser,
+  getRoleCatalog,
   getUser,
   getUsers,
   updateUserProfile,
@@ -22,7 +23,6 @@ import {
   type UserSummary,
 } from "@/features/users/api/usersApi";
 import { ApiClientError } from "@/api/client";
-import { getPermissionCatalog, permissionKeys } from "@/features/permissions";
 import {
   DEFAULT_USER_LIST_QUERY,
   parseUserListQuery,
@@ -70,8 +70,8 @@ export function UsersPage() {
     placeholderData: keepPreviousData,
   });
   const roles = useQuery({
-    queryKey: permissionKeys.all,
-    queryFn: getPermissionCatalog,
+    queryKey: userKeys.roles,
+    queryFn: getRoleCatalog,
   });
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
@@ -80,9 +80,7 @@ export function UsersPage() {
   const [editing, setEditing] = useState<UserSummary | null>(null);
   const correctedPageRef = useRef<string | null>(null);
   const activeRoleOptions =
-    roles.data
-      ?.filter((role) => role.enabled)
-      .map((role) => ({
+    roles.data?.map((role) => ({
         value: role.role,
         label: role.displayName || role.role,
       })) ?? [];
@@ -176,6 +174,14 @@ export function UsersPage() {
   const resetQuery = useCallback(() => {
     updateQuery(DEFAULT_USER_LIST_QUERY);
   }, [updateQuery]);
+
+  const rawSearch = searchParams.toString();
+  const canonicalSearch = toUserListSearchParams(query).toString();
+  useEffect(() => {
+    if (rawSearch !== canonicalSearch) {
+      setSearchParams(canonicalSearch, { replace: true });
+    }
+  }, [canonicalSearch, rawSearch, setSearchParams]);
 
   useEffect(() => {
     const data = users.data;

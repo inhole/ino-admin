@@ -13,6 +13,15 @@ export interface UserSummary {
   createdAt: string;
 }
 
+export interface RoleOption {
+  role: string;
+  displayName: string;
+}
+
+export function getRoleCatalog() {
+  return request<RoleOption[]>("/api/v1/users/roles");
+}
+
 export function getUsers(query: UserListQuery) {
   const search = toUserListSearchParams(query).toString();
 

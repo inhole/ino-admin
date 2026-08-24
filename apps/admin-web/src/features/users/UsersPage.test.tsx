@@ -33,16 +33,10 @@ const roles = [
   {
     role: "ADMIN",
     displayName: "관리자",
-    systemRole: true,
-    enabled: true,
-    permissions: ["user:read", "user:update"],
   },
   {
     role: "VIEWER",
     displayName: "조회자",
-    systemRole: true,
-    enabled: true,
-    permissions: ["user:read"],
   },
 ];
 
@@ -53,6 +47,12 @@ const currentUser = {
   status: "ACTIVE",
   role: "SUPER_ADMIN",
   permissions: ["user:read", "user:update"],
+};
+
+const adminUser = {
+  ...currentUser,
+  role: "ADMIN",
+  permissions: ["user:read"],
 };
 
 type Page = {
@@ -102,6 +102,7 @@ function HistoryBackButton() {
 function renderPage(
   initialEntry: string | string[] = "/users",
   onLocationChange?: (value: string) => void,
+  authUser = currentUser,
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
@@ -113,7 +114,7 @@ function renderPage(
   render(
     <AuthContext.Provider
       value={{
-        user: currentUser,
+        user: authUser,
         isRestoring: false,
         login: vi.fn(),
         logout: vi.fn(),
@@ -142,7 +143,10 @@ function mockApi(
 ) {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
     const url = new URL(String(input), "http://localhost");
-    if (url.pathname === "/api/v1/permissions") return json(roles);
+    if (url.pathname === "/api/v1/users/roles") return json(roles);
+    if (url.pathname === "/api/v1/permissions") {
+      return json({ code: "FORBIDDEN", message: "Forbidden" }, 403);
+    }
     if (url.pathname === "/api/v1/users") {
       const response =
         typeof usersResponse === "function"
@@ -165,6 +169,50 @@ afterEach(() => {
 });
 
 describe("사용자 조회 URL", () => {
+  test("잘못된 값과 기본값이 포함된 최초 URL을 canonical query로 replace한다", async () => {
+    mockApi();
+    renderPage([
+      "/previous",
+      "/users?status=UNKNOWN&page=0&size=20&sort=createdAt&direction=desc&query=%20kim%20&unexpected=x",
+    ]);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("location").textContent).toBe(
+        "/users?query=kim",
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "테스트 뒤로" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location").textContent).toBe("/previous"),
+    );
+  });
+
+  test("permission:read가 없는 ADMIN도 안전한 역할 catalog로 필터를 사용한다", async () => {
+    const fetchMock = mockApi();
+    renderPage("/users", undefined, adminUser);
+
+    const role = await screen.findByRole("combobox", { name: "역할" });
+    fireEvent.click(role);
+    const option = await screen.findByRole("option", { name: "조회자" });
+    fireEvent.pointerDown(option, { pointerType: "mouse" });
+    fireEvent.click(option);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("location")).toHaveTextContent("role=VIEWER"),
+    );
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        String(input).endsWith("/api/v1/users/roles"),
+      ),
+    ).toBe(true);
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        String(input).endsWith("/api/v1/permissions"),
+      ),
+    ).toBe(false);
+  });
+
   test("URL 조건을 복원하고 같은 query parameter로 조회한다", async () => {
     const fetchMock = mockApi(
       page({ page: 1, content: [user], totalElements: 41, totalPages: 3 }),
@@ -461,7 +509,7 @@ describe("사용자 조회 결과", () => {
     expect(await screen.findByText("3 / 3 페이지")).toBeInTheDocument();
     expect(
       fetchMock.mock.calls.filter(([input]) =>
-        String(input).includes("/api/v1/users"),
+        new URL(String(input), "http://localhost").pathname === "/api/v1/users",
       ),
     ).toHaveLength(2);
     expect(locations.filter((value) => value === "/users?page=2")).toHaveLength(1);
