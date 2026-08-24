@@ -51,6 +51,14 @@ class SecurityConfig {
                                 .hasAuthority("file:write")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/monitoring/**")
                                 .hasAuthority("monitoring:read")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/audit-logs/**")
+                                .hasAuthority("audit:read")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/excel/users/export")
+                                .hasAuthority("excel:export")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/excel/users/import-template")
+                                .hasAuthority("excel:import")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/excel/users/import")
+                                .hasAuthority("excel:import")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(token -> new JwtAuthenticationToken(token,

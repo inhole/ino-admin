@@ -60,6 +60,16 @@ const userCreator = {
   permissions: ["user:read", "user:create"],
 };
 
+const userExporter = {
+  ...currentUser,
+  permissions: ["user:read", "excel:export"],
+};
+
+const userImporter = {
+  ...currentUser,
+  permissions: ["user:read", "excel:import"],
+};
+
 type Page = {
   content: typeof user[];
   page: number;
@@ -159,6 +169,11 @@ function mockApi(
     }
     if (url.pathname === "/api/v1/permissions") {
       return json({ code: "FORBIDDEN", message: "Forbidden" }, 403);
+    }
+    if (url.pathname === "/api/v1/excel/users/export") {
+      return new Response(new Blob(["xlsx"]), {
+        headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+      });
     }
     if (url.pathname === "/api/v1/users") {
       const response =
@@ -302,6 +317,46 @@ describe("사용자 생성 진입점", () => {
     expect(
       screen.queryByRole("button", { name: "다시 시도" }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("사용자 Excel 내보내기", () => {
+  test("excel:export 권한이 있으면 사용자 목록을 다운로드한다", async () => {
+    const fetchMock = mockApi();
+    const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:users");
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    renderPage("/users", undefined, userExporter);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Excel 내보내기" }));
+
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalled());
+    expect(fetchMock.mock.calls.some(([input]) => String(input).includes("/api/v1/excel/users/export"))).toBe(true);
+    expect(click).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:users");
+  });
+
+  test("excel:export 권한이 없으면 내보내기 버튼을 표시하지 않는다", async () => {
+    mockApi();
+    renderPage();
+
+    await screen.findByText("사용자 목록");
+    expect(screen.queryByRole("button", { name: "Excel 내보내기" })).not.toBeInTheDocument();
+  });
+});
+
+describe("사용자 Excel 가져오기", () => {
+  test("excel:import 권한이 있으면 가져오기 진입점을 표시한다", async () => {
+    mockApi();
+    renderPage("/users", undefined, userImporter);
+    expect(await screen.findByRole("button", { name: "Excel 가져오기" })).toBeInTheDocument();
+  });
+
+  test("excel:import 권한이 없으면 가져오기 진입점을 표시하지 않는다", async () => {
+    mockApi();
+    renderPage();
+    await screen.findByText("사용자 목록");
+    expect(screen.queryByRole("button", { name: "Excel 가져오기" })).not.toBeInTheDocument();
   });
 });
 

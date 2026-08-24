@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { File, KeyRound, LayoutDashboard, LogOut, Menu, Users } from "lucide-react";
+import { File, History, KeyRound, LayoutDashboard, LogOut, Menu, Users } from "lucide-react";
 import { RiArrowDownSLine, RiUserLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
@@ -39,6 +39,7 @@ const iconMap = {
   "key-round": KeyRound,
   menu: Menu,
   file: File,
+  history: History,
   "layout-dashboard": LayoutDashboard,
 };
 
@@ -48,6 +49,7 @@ const menuLabelKeys = {
   permissions: "navPermissions",
   "menu-management": "navMenuManagement",
   files: "navFiles",
+  "audit-logs": "navAuditLogs",
 } as const;
 
 function CloseMobileSidebarOnNavigation() {
