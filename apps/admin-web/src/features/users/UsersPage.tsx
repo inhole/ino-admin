@@ -33,7 +33,8 @@ import { userKeys } from "@/features/users/hook/userKeys";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { EmptyState, ErrorState } from "@/components/states/PageStates";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -207,8 +208,9 @@ export function UsersPage() {
   return (
     <>
       <PageHeader
-        actions={(canExportUsers || canImportUsers) ? (
+        actions={(canCreateUsers || canExportUsers || canImportUsers) ? (
           <div className="flex flex-wrap gap-2">
+            {canCreateUsers && roles.isSuccess && roleOptions.length > 0 && <CreateUserDialog roles={roleOptions} />}
             {canImportUsers && <ImportUsersDialog />}
             {canExportUsers && <Button disabled={isExporting} onClick={exportExcel} type="button" variant="outline">
               <RiFileExcel2Line aria-hidden="true" data-icon="inline-start" />
@@ -244,9 +246,6 @@ export function UsersPage() {
           )}
           {roles.isSuccess && roleOptions.length === 0 && (
             <StatusPanel className="mb-4">{t("creationRolesEmpty")}</StatusPanel>
-          )}
-          {roles.isSuccess && roleOptions.length > 0 && (
-            <CreateUserDialog roles={roleOptions} />
           )}
         </>
       )}
@@ -316,9 +315,13 @@ export function UsersPage() {
                 title={t("filteredEmpty")}
               />
             )}
-          {editing && (
-            <form
-              className="mb-5 rounded-xl border bg-muted/20 p-4"
+          <Dialog onOpenChange={(open) => { if (!open && !update.isPending) setEditing(null); }} open={editing !== null}>
+            <DialogContent showCloseButton={false}>
+              <DialogHeader>
+                <DialogTitle>{t("updateTitle")}</DialogTitle>
+                <DialogDescription>{t("updateDescription")}</DialogDescription>
+              </DialogHeader>
+              {editing && <form
               onSubmit={(event) => {
                 event.preventDefault();
                 const data = new FormData(event.currentTarget);
@@ -329,7 +332,7 @@ export function UsersPage() {
                 });
               }}
             >
-              <FieldGroup className="grid gap-3 md:grid-cols-3">
+              <FieldGroup>
               <Field>
               <FieldLabel htmlFor="edit-user-name">{t("editName")}</FieldLabel>
               <Input id="edit-user-name"
@@ -344,22 +347,17 @@ export function UsersPage() {
                 <SelectTrigger aria-label={t("editRole")} className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectGroup>{roleOptions.map((role) => <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>)}</SelectGroup></SelectContent>
               </Select></Field>
-              <div className="flex gap-2">
+              <DialogFooter>
                 <Button disabled={update.isPending} type="submit">
                   {update.isPending && <Spinner data-icon="inline-start" />}
                   {common("save")}
                 </Button>
-                <Button
-                  onClick={() => setEditing(null)}
-                  type="button"
-                  variant="outline"
-                >
-                  {common("cancel")}
-                </Button>
-              </div>
+                <DialogClose disabled={update.isPending} render={<button className={buttonVariants({ variant: "outline" })} type="button" />}>{common("cancel")}</DialogClose>
+              </DialogFooter>
               </FieldGroup>
-            </form>
-          )}
+            </form>}
+            </DialogContent>
+          </Dialog>
           {!users.isError && users.data && users.data.content.length > 0 && (
             <>
               <UserList
