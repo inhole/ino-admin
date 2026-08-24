@@ -1,6 +1,7 @@
 package com.ino.admin.web;
 
 import com.ino.admin.core.BusinessException;
+import com.ino.admin.core.ErrorCode;
 import com.ino.admin.identity.api.AuthenticationFailedException;
 import com.ino.admin.identity.api.InvalidRefreshTokenException;
 import com.ino.admin.file.api.FileNotFoundException;
@@ -33,7 +34,7 @@ public class GlobalExceptionHandler {
         var errors = exception.getBindingResult().getFieldErrors().stream()
                 .map(error -> new ApiError.FieldError(error.getField(), "INVALID_VALUE"))
                 .toList();
-        return response(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "요청 값이 올바르지 않습니다.", errors);
+        return response(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, errors);
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
@@ -42,7 +43,7 @@ public class GlobalExceptionHandler {
                 .flatMap(result -> result.getResolvableErrors().stream()
                         .map(error -> new ApiError.FieldError(result.getMethodParameter().getParameterName(), "INVALID_VALUE")))
                 .toList();
-        return response(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "요청 값이 올바르지 않습니다.", errors);
+        return response(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, errors);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -55,7 +56,7 @@ public class GlobalExceptionHandler {
                     return new ApiError.FieldError(field, "INVALID_VALUE");
                 })
                 .toList();
-        return response(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "요청 값이 올바르지 않습니다.", errors);
+        return response(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR, errors);
     }
 
     @ExceptionHandler(BusinessException.class)
@@ -65,32 +66,41 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(FileNotFoundException.class)
     ResponseEntity<ApiError> handleFileNotFound(FileNotFoundException exception) {
-        return response(HttpStatus.NOT_FOUND, "FILE_NOT_FOUND", exception.getMessage(), List.of());
+        return response(HttpStatus.NOT_FOUND, ErrorCode.FILE_NOT_FOUND, exception.getMessage(), List.of());
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     ResponseEntity<ApiError> handleMaxUploadSize(MaxUploadSizeExceededException exception) {
-        return response(HttpStatus.PAYLOAD_TOO_LARGE, "FILE_TOO_LARGE", "파일 크기 제한을 초과했습니다.", List.of());
+        return response(HttpStatus.PAYLOAD_TOO_LARGE, ErrorCode.FILE_TOO_LARGE, List.of());
     }
 
     @ExceptionHandler(AuthenticationFailedException.class)
     ResponseEntity<ApiError> handleAuthenticationFailed(AuthenticationFailedException exception) {
-        return response(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", exception.getMessage(), List.of());
+        return response(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_CREDENTIALS, exception.getMessage(), List.of());
     }
 
     @ExceptionHandler(InvalidRefreshTokenException.class)
     ResponseEntity<ApiError> handleInvalidRefreshToken(InvalidRefreshTokenException exception) {
-        return response(HttpStatus.UNAUTHORIZED, "INVALID_REFRESH_TOKEN", exception.getMessage(), List.of());
+        return response(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_REFRESH_TOKEN, exception.getMessage(), List.of());
     }
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpected(Exception exception) {
         log.error("Unexpected server error. traceId={}", MDC.get(TraceIdFilter.MDC_KEY), exception);
-        return response(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "서버 오류가 발생했습니다.", List.of());
+        return response(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, List.of());
     }
 
     private ResponseEntity<ApiError> response(HttpStatus status, String code, String message, List<ApiError.FieldError> errors) {
         var body = new ApiError(code, message, errors, MDC.get(TraceIdFilter.MDC_KEY), Instant.now(clock));
         return ResponseEntity.status(status).body(body);
+    }
+
+    private ResponseEntity<ApiError> response(HttpStatus status, ErrorCode errorCode, List<ApiError.FieldError> errors) {
+        return response(status, errorCode.code(), errorCode.message(), errors);
+    }
+
+    private ResponseEntity<ApiError> response(HttpStatus status, ErrorCode errorCode, String message,
+            List<ApiError.FieldError> errors) {
+        return response(status, errorCode.code(), message, errors);
     }
 }

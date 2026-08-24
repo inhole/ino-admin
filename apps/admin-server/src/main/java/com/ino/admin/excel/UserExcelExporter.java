@@ -1,6 +1,7 @@
 package com.ino.admin.excel;
 
 import com.ino.admin.core.BusinessException;
+import com.ino.admin.core.ErrorCode;
 import com.ino.admin.identity.api.UserDirectoryUseCase;
 import com.ino.admin.identity.api.UserDirectoryUseCase.SortDirection;
 import com.ino.admin.identity.api.UserDirectoryUseCase.UserQuery;
@@ -47,7 +48,7 @@ class UserExcelExporter {
                 var result = users.findUsers(new UserQuery("", null, null, page, PAGE_SIZE,
                         UserSort.CREATED_AT, SortDirection.ASC));
                 if (result.totalElements() > MAX_ROWS) {
-                    throw new BusinessException("EXCEL_ROW_LIMIT", "Excel 내보내기 최대 행 수를 초과했습니다.");
+                    throw new BusinessException(ErrorCode.EXCEL_ROW_LIMIT);
                 }
                 for (var user : result.content()) {
                     var row = sheet.createRow(rowIndex++);
@@ -73,7 +74,7 @@ class UserExcelExporter {
             workbook.write(output);
             return output.toByteArray();
         } catch (IOException exception) {
-            throw new BusinessException("EXCEL_EXPORT_FAILED", "Excel 파일을 생성하지 못했습니다.");
+            throw new BusinessException(ErrorCode.EXCEL_EXPORT_FAILED);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.ino.admin.identity.application;
 
 import com.ino.admin.core.BusinessException;
+import com.ino.admin.core.ErrorCode;
 import com.ino.admin.identity.infrastructure.persistence.RoleRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -15,14 +16,14 @@ public class RolePermissionService {
     @Transactional(readOnly = true)
     public List<String> findPermissions(String role) {
         var found = repository.findById(role)
-                .orElseThrow(() -> new BusinessException("ROLE_NOT_FOUND", "역할을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
         return permissions(found);
     }
 
     @Transactional
     public TokenPermissions findTokenPermissionsForUpdate(String role) {
         var found = repository.findByIdForUpdate(role)
-                .orElseThrow(() -> new BusinessException("ROLE_NOT_FOUND", "역할을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
         return new TokenPermissions(found.enabled(), permissions(found));
     }
 

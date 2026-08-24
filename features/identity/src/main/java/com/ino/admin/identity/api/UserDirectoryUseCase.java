@@ -1,6 +1,7 @@
 package com.ino.admin.identity.api;
 
 import com.ino.admin.core.BusinessException;
+import com.ino.admin.core.ErrorCode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
@@ -44,7 +45,7 @@ public interface UserDirectoryUseCase {
                 case "email" -> EMAIL;
                 case "role" -> ROLE;
                 case "status" -> STATUS;
-                default -> throw new BusinessException("INVALID_USER_SORT", "허용되지 않은 사용자 정렬입니다.");
+                default -> throw new BusinessException(ErrorCode.INVALID_USER_SORT);
             };
         }
     }
@@ -60,7 +61,7 @@ public interface UserDirectoryUseCase {
             return switch (value.strip().toLowerCase(Locale.ROOT)) {
                 case "asc" -> ASC;
                 case "desc" -> DESC;
-                default -> throw new BusinessException("INVALID_SORT_DIRECTION", "허용되지 않은 정렬 방향입니다.");
+                default -> throw new BusinessException(ErrorCode.INVALID_SORT_DIRECTION);
             };
         }
     }
