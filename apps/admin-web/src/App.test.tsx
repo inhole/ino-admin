@@ -15,6 +15,13 @@ function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })
 }
 
+const monitoringSnapshot = {
+  timestamp: '2026-08-24T00:00:00Z', systemCpuUsage: 0.25, processCpuUsage: 0.1,
+  heapUsedBytes: 268435456, heapMaxBytes: 1073741824, processUptimeSeconds: 3600,
+  liveThreads: 32, peakThreads: 48, httpRequestCount: 100, httpRequestDurationSeconds: 12,
+  httpServerErrorCount: 2,
+}
+
 function renderApp(path = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(<AppProviders queryClient={client}><MemoryRouter initialEntries={[path]}><App /></MemoryRouter></AppProviders>)
@@ -32,7 +39,7 @@ test('logs in and renders the protected dashboard', async () => {
     if (url.endsWith('/auth/login') && init?.method === 'POST') return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
     if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN', permissions: ['user:read', 'user:create', 'user:update', 'permission:read'] })
     if (url.endsWith('/menus/me')) return json([{ id: 'dashboard', label: '대시보드', route: '/', icon: 'layout-dashboard', order: 10, children: [] }, { id: 'users', label: '사용자', route: '/users', icon: 'users', order: 20, children: [] }, { id: 'permissions', label: '권한', route: '/permissions', icon: 'key-round', order: 30, children: [] }])
-    if (url.endsWith('/samples')) return json({ content: [{ id: 1, name: '서버 연결' }], page: 0, size: 20, totalElements: 1, totalPages: 1 })
+    if (url.endsWith('/monitoring/summary')) return json(monitoringSnapshot)
     throw new Error(`Unexpected request: ${url}`)
   })
 
@@ -41,9 +48,9 @@ test('logs in and renders the protected dashboard', async () => {
   fireEvent.change(screen.getByLabelText('비밀번호'), { target: { value: 'Admin-Password-2026!' } })
   fireEvent.click(screen.getByRole('button', { name: '로그인' }))
 
-  expect(await screen.findByText('서버 연결')).toBeInTheDocument()
+  expect(await screen.findByText('CPU')).toBeInTheDocument()
   expect(screen.getByText('관리자')).toBeInTheDocument()
-  expect(screen.getByText('정상')).toBeInTheDocument()
+  expect(screen.getByText('25.0%')).toBeInTheDocument()
   expect(sessionStorage.getItem('ino-admin.refresh-token')).toBe('refresh-1')
 })
 
@@ -54,13 +61,13 @@ test('restores authentication by rotating the refresh token', async () => {
     if (url.endsWith('/auth/refresh')) return json({ accessToken: 'access-new', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-new' })
     if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN', permissions: ['user:read', 'user:create', 'user:update', 'permission:read'] })
     if (url.endsWith('/menus/me')) return json([{ id: 'dashboard', label: '대시보드', route: '/', icon: 'layout-dashboard', order: 10, children: [] }])
-    if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+    if (url.endsWith('/monitoring/summary')) return json(monitoringSnapshot)
     throw new Error(`Unexpected request: ${url}`)
   })
 
   renderApp()
 
-  expect(await screen.findByText('표시할 항목이 없습니다.')).toBeInTheDocument()
+  expect(await screen.findByText('CPU')).toBeInTheDocument()
   expect(sessionStorage.getItem('ino-admin.refresh-token')).toBe('refresh-new')
   expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/auth/refresh'), expect.objectContaining({ method: 'POST' }))
 })
@@ -81,7 +88,7 @@ test('navigates to the authenticated user directory', async () => {
     if (url.endsWith('/auth/login') && init?.method === 'POST') return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
     if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN', permissions: ['user:read', 'user:create', 'user:update', 'permission:read'] })
     if (url.endsWith('/menus/me')) return json([{ id: 'dashboard', label: '대시보드', route: '/', icon: 'layout-dashboard', order: 10, children: [] }, { id: 'users', label: '사용자', route: '/users', icon: 'users', order: 20, children: [] }])
-    if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+    if (url.endsWith('/monitoring/summary')) return json(monitoringSnapshot)
     if (url.endsWith('/users')) return json({ content: [{ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', createdAt: '2026-08-14T00:00:00Z' }], page: 0, size: 20, totalElements: 1, totalPages: 1 })
     throw new Error(`Unexpected request: ${url}`)
   })
@@ -107,7 +114,7 @@ test('super admin creates a viewer from the user directory', async () => {
     if (url.endsWith('/auth/login')) return json({ accessToken: 'access-1', tokenType: 'Bearer', expiresIn: 900, refreshToken: 'refresh-1' })
     if (url.endsWith('/auth/me')) return json({ id: 'user-1', email: 'admin@example.com', displayName: '관리자', status: 'ACTIVE', role: 'SUPER_ADMIN', permissions: ['user:read', 'user:create', 'user:update', 'permission:read'] })
     if (url.endsWith('/menus/me')) return json([{ id: 'dashboard', label: '대시보드', route: '/', icon: 'layout-dashboard', order: 10, children: [] }, { id: 'users', label: '사용자', route: '/users', icon: 'users', order: 20, children: [] }, { id: 'permissions', label: '권한', route: '/permissions', icon: 'key-round', order: 30, children: [] }])
-    if (url.endsWith('/samples')) return json({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+    if (url.endsWith('/monitoring/summary')) return json(monitoringSnapshot)
     if (url.endsWith('/users/roles')) return json([{ role: 'ADMIN', displayName: '관리자' }, { role: 'VIEWER', displayName: '조회자' }])
     if (url.endsWith('/permissions/available')) return json(['permission:read', 'permission:update', 'user:create', 'user:read', 'user:update'])
     if (url.endsWith('/permissions')) return json([{ role: 'SUPER_ADMIN', displayName: '최고 관리자', systemRole: true, enabled: true, permissions: ['permission:read', 'permission:update', 'user:create', 'user:read', 'user:update'] }, { role: 'ADMIN', displayName: '관리자', systemRole: true, enabled: true, permissions: ['user:read'] }, { role: 'VIEWER', displayName: '조회자', systemRole: true, enabled: true, permissions: [] }])
