@@ -28,7 +28,10 @@ class AuditRequestFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().startsWith("/api/v1/") || !MUTATIONS.contains(request.getMethod());
+        var auditableExport = request.getMethod().equals("GET")
+                && request.getRequestURI().startsWith("/api/v1/excel/");
+        return !request.getRequestURI().startsWith("/api/v1/")
+                || (!MUTATIONS.contains(request.getMethod()) && !auditableExport);
     }
 
     @Override
@@ -72,6 +75,7 @@ class AuditRequestFilter extends OncePerRequestFilter {
         if (method.equals("PATCH") && path.startsWith("/api/v1/menus/")) return "MENU_UPDATE";
         if (method.equals("POST") && path.equals("/api/v1/files")) return "FILE_UPLOAD";
         if (method.equals("DELETE") && path.startsWith("/api/v1/files/")) return "FILE_DELETE";
+        if (method.equals("GET") && path.equals("/api/v1/excel/users/export")) return "USER_EXCEL_EXPORT";
         return method + "_REQUEST";
     }
 
