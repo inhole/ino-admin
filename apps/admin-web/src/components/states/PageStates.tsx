@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { ApiClientError } from "@/api/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,17 +48,33 @@ export function LoadingState({ label }: { label: string }) {
 export function ErrorState({
   title,
   description,
+  error,
+  forbiddenDescription,
   onRetry,
 }: {
   title: string;
-  description: ReactNode;
+  description?: ReactNode;
+  error?: unknown;
+  forbiddenDescription?: ReactNode;
   onRetry?: () => void;
 }) {
   const { t } = useTranslation("common");
+  const apiError = error instanceof ApiClientError ? error : undefined;
+  const resolvedDescription =
+    apiError?.status === 403 && forbiddenDescription
+      ? forbiddenDescription
+      : description ?? apiError?.message ?? t("connectionError");
   return (
     <Alert role="alert" variant="destructive">
       <AlertTitle>{title}</AlertTitle>
-      <AlertDescription>{description}</AlertDescription>
+      <AlertDescription>
+        <p>{resolvedDescription}</p>
+        {apiError?.traceId && (
+          <p className="mt-2 text-xs font-mono">
+            {t("inquiryCode", { traceId: apiError.traceId })}
+          </p>
+        )}
+      </AlertDescription>
       {onRetry && (
         <Button className="mt-3" onClick={onRetry} variant="outline">
           {t("retry")}

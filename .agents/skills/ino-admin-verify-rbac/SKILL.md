@@ -1,44 +1,44 @@
 ---
 name: ino-admin-verify-rbac
-description: Verify INO Admin role-based access control across the admin web and backend, including role-specific menu visibility, protected-route behavior, HTTP 403 handling, and server-side authorization. Use when changing permissions, roles, menus, protected routes, security configuration, or RBAC-related UI and tests.
+description: INO Admin의 관리자 웹과 백엔드 전반에서 역할별 메뉴 노출, 보호 경로 동작, HTTP 403 처리, 서버 측 인가를 포함한 역할 기반 접근 제어를 검증합니다. 권한, 역할, 메뉴, 보호 경로, 보안 설정 또는 RBAC 관련 UI와 테스트를 변경할 때 사용합니다.
 ---
 
-# Verify INO Admin RBAC
+# INO Admin RBAC 검증
 
-## Preserve the security boundary
+## 보안 경계 유지
 
-- Treat UI visibility as usability only, never as authorization.
-- Verify authentication, authorization, and object ownership on the server.
-- Keep menu access and API permission checks distinct even when they share permission keys.
-- Never expose credentials or tokens in fixtures, logs, screenshots, or reports.
+- UI 노출 여부는 사용성으로만 취급하며 인가 수단으로 사용하지 않는다.
+- 인증, 인가, 객체 소유권을 서버에서 검증한다.
+- 동일한 권한 키를 공유하더라도 메뉴 접근과 API 권한 검사를 구분한다.
+- fixture, 로그, 스크린샷, 보고서에 자격 증명이나 토큰을 노출하지 않는다.
 
-## Verify browser behavior
+## 브라우저 동작 검증
 
-From `apps/admin-web`:
+`apps/admin-web`에서 다음 명령을 실행한다.
 
 ```shell
 npx playwright install chromium
 npm run test:e2e
 ```
 
-Keep the core role scenarios:
+다음 핵심 역할 시나리오를 유지한다.
 
-- `SUPER_ADMIN`: user, permission, and menu management entries are visible and usable.
-- `VIEWER`: management entries are hidden; direct navigation to `/users` surfaces the server's `403` as a permission error.
+- `SUPER_ADMIN`: 사용자, 권한, 메뉴 관리 항목이 노출되며 사용할 수 있다.
+- `VIEWER`: 관리 항목이 숨겨지고 `/users`에 직접 접근하면 서버의 `403` 응답이 권한 오류로 표시된다.
 
-Browser-network mocks may make role-specific UI scenarios deterministic, but they do not prove backend authorization.
+브라우저 네트워크 mock으로 역할별 UI 시나리오를 결정적으로 만들 수 있지만, 이것만으로 백엔드 인가가 검증되지는 않는다.
 
-## Verify server enforcement
+## 서버 강제 적용 검증
 
-1. Identify every endpoint and object operation affected by the change.
-2. Add or update backend integration tests for an allowed role, a denied role, unauthenticated access, and object ownership when applicable.
-3. Verify denied requests use the documented error contract without leaking sensitive details.
-4. Run affected module tests and `:apps:admin-server:architectureTest`.
-5. Run the relevant integration test task when the changed permission is exercised through HTTP.
+1. 변경의 영향을 받는 모든 엔드포인트와 객체 작업을 식별한다.
+2. 해당하는 경우 허용된 역할, 거부된 역할, 미인증 접근, 객체 소유권에 대한 백엔드 통합 테스트를 추가하거나 수정한다.
+3. 거부된 요청이 민감한 세부 정보를 노출하지 않고 문서화된 오류 계약을 따르는지 확인한다.
+4. 영향받는 모듈 테스트와 `:apps:admin-server:architectureTest`를 실행한다.
+5. 변경된 권한이 HTTP를 통해 사용되는 경우 관련 통합 테스트 태스크를 실행한다.
 
-## Report results
+## 결과 보고
 
-- Separate browser visibility checks from backend enforcement checks.
-- List exact commands and outcomes.
-- Report skipped scenarios and environmental limitations explicitly.
-- Do not claim RBAC is verified when only menu hiding or mocked browser responses were tested.
+- 브라우저 노출 검증과 백엔드 강제 적용 검증을 구분한다.
+- 실행한 정확한 명령과 결과를 나열한다.
+- 건너뛴 시나리오와 환경 제약을 명확하게 보고한다.
+- 메뉴 숨김이나 mock 브라우저 응답만 테스트한 경우 RBAC 검증이 완료되었다고 주장하지 않는다.

@@ -1,12 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Server } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ApiClientError } from "@/api/client";
 import { getSamples } from "@/features/dashboard/api/dashboardApi";
 import { dashboardKeys } from "@/features/dashboard/hook/dashboardKeys";
 import { LoadingPanel, PageHeader, StatusPanel } from "@/components/layout/Page";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/states/PageStates";
 import {
   Card,
   CardContent,
@@ -47,22 +45,12 @@ export function DashboardPage() {
             <LoadingPanel label={t("loading")} />
           )}
           {samples.isError && (
-            <Alert variant="destructive" role="alert">
-              <AlertTitle>{t("errorTitle")}</AlertTitle>
-              <AlertDescription>
-                {samples.error instanceof ApiClientError &&
-                samples.error.status === 403
-                  ? t("forbidden")
-                  : samples.error.message}
-              </AlertDescription>
-              <Button
-                className="mt-3 min-h-10"
-                onClick={() => samples.refetch()}
-                variant="outline"
-              >
-                {common("retry")}
-              </Button>
-            </Alert>
+            <ErrorState
+              error={samples.error}
+              forbiddenDescription={t("forbidden")}
+              onRetry={() => samples.refetch()}
+              title={t("errorTitle")}
+            />
           )}
           {samples.data?.content.length === 0 && (
             <StatusPanel>{common("empty")}</StatusPanel>

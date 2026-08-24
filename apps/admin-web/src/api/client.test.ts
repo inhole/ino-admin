@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { getSamples } from '@/features/dashboard/api/dashboardApi'
 import { login } from '@/features/auth/api/authApi'
+import { ApiClientError } from '@/api/client'
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })
@@ -31,4 +32,26 @@ test('shares one refresh request across concurrent expired API calls', async () 
 
   expect(refreshCalls).toBe(1)
   expect(sessionStorage.getItem('ino-admin.refresh-token')).toBe('refresh-new')
+})
+
+test('preserves the trace ID from an API error response', async () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+    json(
+      {
+        code: 'FORBIDDEN',
+        message: '접근 권한이 없습니다.',
+        traceId: '01K3TRACE53',
+      },
+      403,
+    ),
+  )
+
+  const error = await getSamples().catch((caught: unknown) => caught)
+
+  expect(error).toBeInstanceOf(ApiClientError)
+  expect(error).toMatchObject({
+    status: 403,
+    code: 'FORBIDDEN',
+    traceId: '01K3TRACE53',
+  })
 })

@@ -1,8 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import {
   createUser,
+  getRoleCatalog,
   getUser,
   getUsers,
   updateUserProfile,
@@ -10,22 +23,16 @@ import {
   type UserSummary,
 } from "@/features/users/api/usersApi";
 import { ApiClientError } from "@/api/client";
-import { getPermissionCatalog, permissionKeys } from "@/features/permissions";
+import {
+  DEFAULT_USER_LIST_QUERY,
+  parseUserListQuery,
+  toUserListSearchParams,
+  type UserListQuery,
+} from "@/features/users/hook/userListQuery";
 import { userKeys } from "@/features/users/hook/userKeys";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { EmptyState, ErrorState } from "@/components/states/PageStates";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,38 +54,39 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useAuth } from "@/features/auth/hook/useAuth";
-import { formatDate } from "@/i18n/format";
+import { UserList } from "@/features/users/component/UserList";
+import { UserListPagination } from "@/features/users/component/UserListPagination";
+import { UserListToolbar } from "@/features/users/component/UserListToolbar";
 
 export function UsersPage() {
   const { t } = useTranslation("users");
   const { t: common } = useTranslation("common");
-  const users = useQuery({ queryKey: userKeys.all, queryFn: getUsers });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = parseUserListQuery(searchParams);
+  const users = useQuery({
+    queryKey: userKeys.list(query),
+    queryFn: () => getUsers(query),
+    placeholderData: keepPreviousData,
+  });
   const roles = useQuery({
-    queryKey: permissionKeys.all,
-    queryFn: getPermissionCatalog,
+    queryKey: userKeys.roles,
+    queryFn: getRoleCatalog,
   });
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [createError, setCreateError] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
-  const [statusDialogId, setStatusDialogId] = useState<string | null>(null);
   const [editing, setEditing] = useState<UserSummary | null>(null);
-  const roleOptions =
-    roles.data
-      ?.filter((role) => role.role !== "SUPER_ADMIN" && role.enabled)
-      .map((role) => ({
+  const correctedPageRef = useRef<string | null>(null);
+  const activeRoleOptions =
+    roles.data?.map((role) => ({
         value: role.role,
         label: role.displayName || role.role,
       })) ?? [];
+  const roleOptions = activeRoleOptions.filter(
+    (role) => role.value !== "SUPER_ADMIN",
+  );
   const create = useMutation({
     mutationFn: createUser,
     onSuccess: async (created) => {
@@ -157,12 +165,48 @@ export function UsersPage() {
     status:
       user.status === "ACTIVE" ? ("DISABLED" as const) : ("ACTIVE" as const),
   });
-  const statusLabel = (user: UserSummary) =>
-    user.status === "ACTIVE"
-      ? t("deactivate")
-      : user.status === "LOCKED"
-        ? t("unlock")
-        : t("activate");
+  const updateQuery = useCallback(
+    (next: UserListQuery, options?: { replace?: boolean }) => {
+      setSearchParams(toUserListSearchParams(next), options);
+    },
+    [setSearchParams],
+  );
+  const resetQuery = useCallback(() => {
+    updateQuery(DEFAULT_USER_LIST_QUERY);
+  }, [updateQuery]);
+
+  const rawSearch = searchParams.toString();
+  const canonicalSearch = toUserListSearchParams(query).toString();
+  useEffect(() => {
+    if (rawSearch !== canonicalSearch) {
+      setSearchParams(canonicalSearch, { replace: true });
+    }
+  }, [canonicalSearch, rawSearch, setSearchParams]);
+
+  useEffect(() => {
+    const data = users.data;
+    const correctedPage = data ? data.totalPages - 1 : -1;
+    if (
+      data?.content.length === 0 &&
+      query.page > 0 &&
+      data.totalPages > 0 &&
+      query.page !== correctedPage
+    ) {
+      const correctionKey = `${toUserListSearchParams(query)}:${correctedPage}`;
+      if (correctedPageRef.current === correctionKey) return;
+      correctedPageRef.current = correctionKey;
+      updateQuery(
+        { ...query, page: correctedPage },
+        { replace: true },
+      );
+      return;
+    }
+    correctedPageRef.current = null;
+  }, [query, updateQuery, users.data]);
+
+  const hasFilters =
+    query.query !== "" || query.role !== "" || query.status !== "";
+  const isRefreshing = users.isFetching && !users.isPending;
   return (
     <>
       <PageHeader
@@ -236,6 +280,12 @@ export function UsersPage() {
           <CardDescription>{t("listDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
+          <UserListToolbar
+            onChange={updateQuery}
+            onReset={resetQuery}
+            roles={activeRoleOptions}
+            value={query}
+          />
           {statusError && (
             <Alert className="mb-4" variant="destructive" role="alert">
               <AlertDescription>{statusError}</AlertDescription>
@@ -249,26 +299,47 @@ export function UsersPage() {
             </div>
           )}
           {users.isError && (
-            <Alert variant="destructive" role="alert">
-              <AlertTitle>{t("listError")}</AlertTitle>
-              <AlertDescription>
-                {users.error instanceof ApiClientError &&
-                users.error.status === 403
-                  ? t("forbidden")
-                  : users.error.message}
-              </AlertDescription>
-              <Button
-                className="mt-3"
-                onClick={() => users.refetch()}
-                variant="outline"
-              >
-                {common("retry")}
-              </Button>
-            </Alert>
+            <ErrorState
+              description={
+                users.error instanceof ApiClientError && users.error.status === 400
+                  ? t("invalidQuery")
+                  : undefined
+              }
+              error={users.error}
+              forbiddenDescription={t("forbidden")}
+              onRetry={() => users.refetch()}
+              title={t("listError")}
+            />
           )}
-          {users.data?.content.length === 0 && (
+          {!users.isError && isRefreshing && (
+            <p
+              aria-label={t("refreshing")}
+              aria-live="polite"
+              className="mb-3 text-sm text-muted-foreground"
+              role="status"
+            >
+              {t("refreshing")}
+            </p>
+          )}
+          {!users.isError &&
+            !isRefreshing &&
+            users.data?.content.length === 0 &&
+            !hasFilters && (
             <StatusPanel>{t("empty")}</StatusPanel>
           )}
+          {!users.isError &&
+            !isRefreshing &&
+            users.data?.content.length === 0 &&
+            hasFilters && (
+              <EmptyState
+                action={
+                  <Button onClick={resetQuery} type="button" variant="outline">
+                    {t("query.reset")}
+                  </Button>
+                }
+                title={t("filteredEmpty")}
+              />
+            )}
           {editing && (
             <form
               className="mb-5 rounded-xl border bg-muted/20 p-4"
@@ -313,85 +384,25 @@ export function UsersPage() {
               </FieldGroup>
             </form>
           )}
-          {users.data && users.data.content.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("name")}</TableHead>
-                  <TableHead>{t("email")}</TableHead>
-                  <TableHead>{t("role")}</TableHead>
-                  <TableHead>{t("status")}</TableHead>
-                  <TableHead>{t("createdAt")}</TableHead>
-                  <TableHead>{t("actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.data.content.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {user.displayName}
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{user.role}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          user.status === "ACTIVE" ? "secondary" : "outline"
-                        }
-                      >
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(user.createdAt)}</TableCell>
-                    <TableCell>
-                      {currentUser?.permissions.includes("user:update") &&
-                        currentUser.id !== user.id && (
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => startEditing(user.id)}
-                              size="sm"
-                              variant="outline"
-                            >
-                              {common("edit")}
-                            </Button>
-                            <AlertDialog
-                              onOpenChange={(open) =>
-                                setStatusDialogId(open ? user.id : null)
-                              }
-                              open={statusDialogId === user.id}
-                            >
-                              <AlertDialogTrigger render={
-                                <Button
-                                  disabled={changeStatus.isPending}
-                                  size="sm"
-                                  variant="outline"
-                                >
-                                  {statusLabel(user)}
-                                </Button>
-                              } />
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>{t("statusConfirmTitle", { action: statusLabel(user) })}</AlertDialogTitle>
-                                  <AlertDialogDescription>{t("statusConfirmDescription", { name: user.displayName })}</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>{common("cancel")}</AlertDialogCancel>
-                                  <AlertDialogAction variant={user.status === "ACTIVE" ? "destructive" : "default"} onClick={() => {
-                                    changeStatus.mutate(statusAction(user));
-                                    setStatusDialogId(null);
-                                  }}>{statusLabel(user)}</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          {!users.isError && users.data && users.data.content.length > 0 && (
+            <>
+              <UserList
+                canUpdate={
+                  currentUser?.permissions.includes("user:update") ?? false
+                }
+                currentUserId={currentUser?.id}
+                isStatusPending={changeStatus.isPending}
+                onEdit={startEditing}
+                onStatusChange={(user) => changeStatus.mutate(statusAction(user))}
+                users={users.data.content}
+              />
+              <UserListPagination
+                count={users.data.totalElements}
+                onPageChange={(page) => updateQuery({ ...query, page })}
+                page={query.page}
+                totalPages={users.data.totalPages}
+              />
+            </>
           )}
         </CardContent>
       </Card>

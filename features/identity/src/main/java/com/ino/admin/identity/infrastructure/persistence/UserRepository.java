@@ -1,6 +1,7 @@
 package com.ino.admin.identity.infrastructure.persistence;
 
 import com.ino.admin.identity.domain.User;
+import com.ino.admin.identity.domain.UserStatus;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -43,9 +44,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     @Query("""
             select user from User user
-            where :query = ''
+            where (:query = ''
                or lower(user.email) like lower(concat('%', :query, '%'))
-               or lower(user.displayName) like lower(concat('%', :query, '%'))
+               or lower(user.displayName) like lower(concat('%', :query, '%')))
+              and (:role is null or user.role = :role)
+              and (:status is null or user.status = :status)
             """)
-    Page<User> search(@Param("query") String query, Pageable pageable);
+    Page<User> search(@Param("query") String query,
+                      @Param("role") String role,
+                      @Param("status") UserStatus status,
+                      Pageable pageable);
 }

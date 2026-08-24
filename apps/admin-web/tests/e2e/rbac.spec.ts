@@ -22,7 +22,8 @@ async function json(route: Route, body: unknown, status = 200) {
 async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: unknown[] = []) {
   const isSuperAdmin = role === 'SUPER_ADMIN'
   await page.route('**/api/v1/**', async (route) => {
-    const path = new URL(route.request().url()).pathname
+    const url = new URL(route.request().url())
+    const path = url.pathname
     if (path === '/api/v1/auth/login') return json(route, tokens)
     if (path === '/api/v1/auth/refresh') return json(route, tokens)
     if (path === '/api/v1/auth/me') return json(route, {
@@ -30,10 +31,29 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: u
       status: 'ACTIVE', role, permissions: isSuperAdmin ? ['user:read', 'user:create', 'user:update', 'permission:read', 'permission:update', 'menu:read', 'menu:write'] : [],
     })
     if (path === '/api/v1/menus/me') return json(route, isSuperAdmin ? managementMenus : managementMenus.slice(0, 1))
-    if (path === '/api/v1/users') return isSuperAdmin
-      ? json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
-      : json(route, { code: 'FORBIDDEN', message: '접근 권한이 없습니다.' }, 403)
-    if (path === '/api/v1/permissions') return json(route, [])
+    if (path === '/api/v1/users') {
+      if (!isSuperAdmin) {
+        return json(route, { code: 'FORBIDDEN', message: '접근 권한이 없습니다.', traceId: '01K3E2ETRACE53' }, 403)
+      }
+      const pageNumber = Number(url.searchParams.get('page') ?? '0')
+      if (
+        url.searchParams.get('query') === 'kim'
+        && url.searchParams.get('role') === 'ADMIN'
+        && (pageNumber === 0 || pageNumber === 1)
+      ) {
+        const content = pageNumber === 0
+          ? [{ id: 'user-kim-1', email: 'kim@example.com', displayName: '김 관리자', status: 'ACTIVE', role: 'ADMIN', createdAt: '2026-08-01T00:00:00Z' }]
+          : [{ id: 'user-kim-2', email: 'kim.page2@example.com', displayName: '김 관리자 2', status: 'ACTIVE', role: 'ADMIN', createdAt: '2026-08-02T00:00:00Z' }]
+        return json(route, { content, page: pageNumber, size: 20, totalElements: 21, totalPages: 2 })
+      }
+      return json(route, { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+    }
+    if (path === '/api/v1/users/roles') return json(route, [
+      { role: 'ADMIN', displayName: 'ADMIN' },
+    ])
+    if (path === '/api/v1/permissions') return json(route, [
+      { role: 'ADMIN', displayName: 'ADMIN', systemRole: true, enabled: true, permissions: ['user:read'] },
+    ])
     if (path === '/api/v1/files') return json(route, {
       content: files, page: 0, size: 20, totalElements: files.length, totalPages: files.length > 0 ? 1 : 0,
     })
@@ -62,6 +82,23 @@ test('SUPER_ADMIN에게 관리 메뉴를 모두 노출한다', async ({ page }) 
   await expect(page.getByText('업로드한 파일이 없습니다.')).toBeVisible()
 })
 
+test('SUPER_ADMIN이 사용자 조회 조건과 페이지를 URL에 유지한다', async ({ page }) => {
+  await authenticate(page, 'SUPER_ADMIN')
+
+  await page.getByRole('link', { name: '사용자' }).click()
+  await page.getByPlaceholder('이름 또는 이메일 검색').fill('kim')
+  await expect(page).toHaveURL(/query=kim/)
+  await page.getByRole('combobox', { name: '역할' }).last().click()
+  await page.getByRole('option', { name: 'ADMIN' }).click()
+  await expect(page).toHaveURL(/role=ADMIN/)
+  await expect(page.getByText('kim@example.com').first()).toBeVisible()
+  await page.getByRole('button', { name: '다음 페이지' }).click()
+  await expect(page).toHaveURL(/page=1/)
+  await expect(page.getByText('kim.page2@example.com').first()).toBeVisible()
+  await page.reload()
+  await expect(page.getByPlaceholder('이름 또는 이메일 검색')).toHaveValue('kim')
+})
+
 test('VIEWER는 관리 메뉴가 없고 직접 접근해도 서버의 403을 처리한다', async ({ page }) => {
   await authenticate(page, 'VIEWER')
 
@@ -69,6 +106,7 @@ test('VIEWER는 관리 메뉴가 없고 직접 접근해도 서버의 403을 처
   await expect(page.getByRole('link', { name: '권한' })).toHaveCount(0)
   await page.goto('/users')
   await expect(page.getByRole('alert')).toContainText('사용자 목록을 볼 권한이 없습니다.')
+  await expect(page.getByRole('alert')).toContainText('문의 코드: 01K3E2ETRACE53')
 })
 
 test('모바일에서 메뉴를 열어 파일 관리로 이동한다', async ({ page }) => {

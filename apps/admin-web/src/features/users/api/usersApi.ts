@@ -1,4 +1,8 @@
 import { request, type PageResponse } from "@/api/client";
+import {
+  toUserListSearchParams,
+  type UserListQuery,
+} from "@/features/users/hook/userListQuery";
 
 export interface UserSummary {
   id: string;
@@ -9,8 +13,21 @@ export interface UserSummary {
   createdAt: string;
 }
 
-export function getUsers() {
-  return request<PageResponse<UserSummary>>("/api/v1/users");
+export interface RoleOption {
+  role: string;
+  displayName: string;
+}
+
+export function getRoleCatalog() {
+  return request<RoleOption[]>("/api/v1/users/roles");
+}
+
+export function getUsers(query: UserListQuery) {
+  const search = toUserListSearchParams(query).toString();
+
+  return request<PageResponse<UserSummary>>(
+    `/api/v1/users${search === "" ? "" : `?${search}`}`,
+  );
 }
 export function getUser(userId: string) {
   return request<UserSummary>(`/api/v1/users/${userId}`);
