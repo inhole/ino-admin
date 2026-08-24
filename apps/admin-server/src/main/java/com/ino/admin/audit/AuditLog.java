@@ -14,7 +14,7 @@ import java.util.UUID;
 class AuditLog {
     @Id private UUID id;
     @Column(name = "actor_id") private UUID actorId;
-    @Column(nullable = false, length = 16) private String action;
+    @Column(nullable = false, length = 100) private String action;
     @Column(nullable = false, length = 500) private String resource;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 16) private AuditResult result;
     @Column(name = "status_code", nullable = false) private int statusCode;

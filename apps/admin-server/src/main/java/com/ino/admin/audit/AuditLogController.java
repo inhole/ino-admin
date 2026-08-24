@@ -22,7 +22,7 @@ class AuditLogController {
 
     @GetMapping
     AuditLogPage find(@RequestParam(required = false) UUID actorId,
-            @RequestParam(required = false) @Pattern(regexp = "POST|PUT|PATCH|DELETE") String action,
+            @RequestParam(required = false) @Pattern(regexp = "[A-Z][A-Z0-9_]{1,99}") String action,
             @RequestParam(required = false) AuditResult result,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdTo,

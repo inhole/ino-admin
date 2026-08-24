@@ -49,16 +49,16 @@ class AuditLogControllerTest {
     @Test
     void returnsFilteredAuditPageForAuthorizedReader() throws Exception {
         var actorId = UUID.randomUUID();
-        var command = new AuditCommand(actorId, "PATCH", "/api/v1/users/1", AuditResult.SUCCESS,
+        var command = new AuditCommand(actorId, "USER_UPDATE", "/api/v1/users/1", AuditResult.SUCCESS,
                 200, "127.0.0.1", "browser", "trace-1");
         var log = AuditLog.create(command, Instant.parse("2026-08-24T00:00:00Z"));
-        when(service.find(eq(actorId), eq("PATCH"), eq(AuditResult.SUCCESS), any(), any(), eq(0), eq(20)))
+        when(service.find(eq(actorId), eq("USER_UPDATE"), eq(AuditResult.SUCCESS), any(), any(), eq(0), eq(20)))
                 .thenReturn(new PageImpl<>(List.of(log), PageRequest.of(0, 20), 1));
 
         mockMvc.perform(get("/api/v1/audit-logs")
                         .with(jwt().authorities(new SimpleGrantedAuthority("audit:read")))
                         .queryParam("actorId", actorId.toString())
-                        .queryParam("action", "PATCH")
+                        .queryParam("action", "USER_UPDATE")
                         .queryParam("result", "SUCCESS")
                         .queryParam("createdFrom", "2026-08-01T00:00:00Z")
                         .queryParam("createdTo", "2026-09-01T00:00:00Z"))
@@ -72,7 +72,7 @@ class AuditLogControllerTest {
     void rejectsUnsupportedAction() throws Exception {
         mockMvc.perform(get("/api/v1/audit-logs")
                         .with(jwt().authorities(new SimpleGrantedAuthority("audit:read")))
-                        .queryParam("action", "GET"))
+                        .queryParam("action", "invalid-action"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
         verifyNoInteractions(service);

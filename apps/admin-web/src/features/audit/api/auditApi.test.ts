@@ -9,11 +9,11 @@ test("serializes audit log filters", async () => {
       { status: 200, headers: { "Content-Type": "application/json" } }),
   );
 
-  await getAuditLogs({ action: "PATCH", result: "FAILURE", actorId: "actor-1",
+  await getAuditLogs({ action: "USER_UPDATE", result: "FAILURE", actorId: "actor-1",
     createdFrom: "2026-08-01T00:00:00.000Z", createdTo: "2026-09-01T00:00:00.000Z" });
 
   const search = new URL(fetchMock.mock.calls[0][0] as string, "http://localhost").searchParams;
-  expect(search.get("action")).toBe("PATCH");
+  expect(search.get("action")).toBe("USER_UPDATE");
   expect(search.get("result")).toBe("FAILURE");
   expect(search.get("actorId")).toBe("actor-1");
   expect(search.get("createdFrom")).toBe("2026-08-01T00:00:00.000Z");

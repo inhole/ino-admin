@@ -38,7 +38,7 @@ class AuditRequestFilterTest {
         filter.doFilter(request, response, new MockFilterChain());
 
         assertThat(writer.command.actorId()).isEqualTo(actorId);
-        assertThat(writer.command.action()).isEqualTo("PATCH");
+        assertThat(writer.command.action()).isEqualTo("USER_UPDATE");
         assertThat(writer.command.resource()).matches("/api/v1/users/[0-9a-f-]+")
                 .doesNotContain("password", "secret");
         assertThat(writer.command.result()).isEqualTo(AuditResult.SUCCESS);
@@ -54,6 +54,22 @@ class AuditRequestFilterTest {
                 new MockHttpServletResponse(), new MockFilterChain());
 
         assertThat(writer.command).isNull();
+    }
+
+    @Test
+    void mapsMajorAdminMutationsToSemanticActions() throws Exception {
+        assertThat(actionFor("POST", "/api/v1/auth/login")).isEqualTo("AUTH_LOGIN");
+        assertThat(actionFor("PATCH", "/api/v1/permissions/ADMIN")).isEqualTo("PERMISSION_UPDATE");
+        assertThat(actionFor("POST", "/api/v1/users")).isEqualTo("USER_CREATE");
+        assertThat(actionFor("POST", "/api/v1/files")).isEqualTo("FILE_UPLOAD");
+        assertThat(actionFor("DELETE", "/api/v1/files/file-1")).isEqualTo("FILE_DELETE");
+    }
+
+    private String actionFor(String method, String path) throws Exception {
+        var writer = new CapturingAuditWriter();
+        new AuditRequestFilter(writer).doFilter(new MockHttpServletRequest(method, path),
+                new MockHttpServletResponse(), new MockFilterChain());
+        return writer.command.action();
     }
 
     private static final class CapturingAuditWriter implements AuditWriter {
