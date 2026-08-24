@@ -19,8 +19,11 @@ import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -29,11 +32,14 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag("integration")
 @Transactional
 @AutoConfigureMockMvc
 @SpringBootTest
+@Import(AuthFlowIntegrationTest.MonitoringTestConfiguration.class)
 class AuthFlowIntegrationTest {
     private static final String EMAIL = "login@example.com";
     private static final String PASSWORD = "Login-Password-2026!";
@@ -90,6 +96,34 @@ class AuthFlowIntegrationTest {
         mockMvc.perform(get("/api/v1/users").header("Authorization", "Bearer " + viewerToken))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void protectsMonitoringGetRequestsWithMonitoringReadPermission() throws Exception {
+        mockMvc.perform(get("/api/v1/monitoring/test"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
+        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + viewerToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        var tokenWithoutMonitoringPermission = signedToken(Instant.now(), Instant.now().plusSeconds(60),
+                "ino-admin-web", "ADMIN", List.of("user:read"));
+        mockMvc.perform(get("/api/v1/monitoring/test")
+                        .header("Authorization", "Bearer " + tokenWithoutMonitoringPermission))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        var superAdminToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "SUPER_ADMIN");
+        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + superAdminToken))
+                .andExpect(status().isOk());
+
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        String monitoringToken = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
+        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + monitoringToken))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -441,6 +475,13 @@ class AuthFlowIntegrationTest {
     }
 
     private String signedToken(Instant issuedAt, Instant expiresAt, String audience, String role) {
+        return signedToken(issuedAt, expiresAt, audience, role, role.equals("SUPER_ADMIN")
+                ? java.util.Arrays.stream(com.ino.admin.identity.domain.Permission.values())
+                        .map(permission -> permission.key()).toList()
+                : role.equals("ADMIN") ? List.of("user:read") : List.of());
+    }
+
+    private String signedToken(Instant issuedAt, Instant expiresAt, String audience, String role, List<String> permissions) {
         var claims = JwtClaimsSet.builder()
                 .issuer("ino-admin")
                 .audience(List.of(audience))
@@ -448,12 +489,25 @@ class AuthFlowIntegrationTest {
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .claim("role", role)
-                .claim("permissions", role.equals("SUPER_ADMIN")
-                        ? java.util.Arrays.stream(com.ino.admin.identity.domain.Permission.values())
-                                .map(permission -> permission.key()).toList()
-                        : role.equals("ADMIN") ? List.of("user:read") : List.of())
+                .claim("permissions", permissions)
                 .build();
         return jwtEncoder.encode(JwtEncoderParameters.from(
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class MonitoringTestConfiguration {
+        @Bean
+        MonitoringTestController monitoringTestController() {
+            return new MonitoringTestController();
+        }
+    }
+
+    @RestController
+    static class MonitoringTestController {
+        @GetMapping("/api/v1/monitoring/test")
+        String test() {
+            return "reachable";
+        }
     }
 }
