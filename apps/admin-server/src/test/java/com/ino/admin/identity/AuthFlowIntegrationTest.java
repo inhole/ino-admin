@@ -19,11 +19,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -32,14 +29,11 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @Tag("integration")
 @Transactional
 @AutoConfigureMockMvc
 @SpringBootTest
-@Import(AuthFlowIntegrationTest.MonitoringTestConfiguration.class)
 class AuthFlowIntegrationTest {
     private static final String EMAIL = "login@example.com";
     private static final String PASSWORD = "Login-Password-2026!";
@@ -100,7 +94,7 @@ class AuthFlowIntegrationTest {
 
     @Test
     void protectsMonitoringGetRequestsWithMonitoringReadPermission() throws Exception {
-        mockMvc.perform(get("/api/v1/monitoring/test"))
+        mockMvc.perform(get("/api/v1/monitoring/summary"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
 
@@ -111,16 +105,16 @@ class AuthFlowIntegrationTest {
 
         String viewerToken = JsonPath.read(login("monitoring-viewer@example.com", "Monitoring-Viewer-Password-2026!")
                 .getResponse().getContentAsString(), "$.accessToken");
-        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + viewerToken))
+        mockMvc.perform(get("/api/v1/monitoring/summary").header("Authorization", "Bearer " + viewerToken))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
 
         String adminToken = JsonPath.read(login("monitoring-admin@example.com", "Monitoring-Admin-Password-2026!")
                 .getResponse().getContentAsString(), "$.accessToken");
-        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + adminToken))
+        mockMvc.perform(get("/api/v1/monitoring/summary").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/v1/monitoring/test").header("Authorization", "Bearer " + superAdminToken))
+        mockMvc.perform(get("/api/v1/monitoring/summary").header("Authorization", "Bearer " + superAdminToken))
                 .andExpect(status().isOk());
     }
 
@@ -506,19 +500,4 @@ class AuthFlowIntegrationTest {
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
     }
 
-    @TestConfiguration(proxyBeanMethods = false)
-    static class MonitoringTestConfiguration {
-        @Bean
-        MonitoringTestController monitoringTestController() {
-            return new MonitoringTestController();
-        }
-    }
-
-    @RestController
-    static class MonitoringTestController {
-        @GetMapping("/api/v1/monitoring/test")
-        String test() {
-            return "reachable";
-        }
-    }
 }
