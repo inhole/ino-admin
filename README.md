@@ -52,7 +52,7 @@ $env:APP_BOOTSTRAP_ADMIN_DISPLAY_NAME='시스템 관리자'
 
 비밀번호는 12~128자이며 대문자·소문자·숫자·특수문자를 포함해야 합니다. 서버는 BCrypt hash만 저장하고 비밀번호를 로그에 출력하지 않습니다. 생성 후 `APP_BOOTSTRAP_ADMIN_ENABLED`를 `false`로 되돌리고 비밀번호 환경 변수를 제거하십시오. 같은 이메일로 다시 실행하면 계정을 중복 생성하지 않습니다.
 
-운영 환경에서의 secret 주입과 실패 복구 절차는 [초기 관리자 Bootstrap 운영 문서](docs/operations/admin-bootstrap.md)를 참고하십시오.
+선택적 `.env` 파일로 초기 관리자 값을 설정한다면 파일은 UTF-8로 저장해야 하며, 콘솔 코드 페이지에 의존해 작성하거나 변환하지 마십시오. 이미 깨진 표시 이름은 자동 변환하지 않고 사용자 관리 또는 운영자 검토를 거친 파라미터 바인딩 SQL로 수정합니다. 운영 환경에서의 secret 주입과 실패 복구 절차는 [초기 관리자 Bootstrap 운영 문서](docs/operations/admin-bootstrap.md)를 참고하십시오.
 
 ## 로그인과 API 인증
 
