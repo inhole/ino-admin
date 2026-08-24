@@ -13,6 +13,9 @@
 
 ## Workflow
 - Preserve unrelated user changes and keep each change focused on one verifiable objective.
+- Default to a low-context workflow: inspect only relevant files and sections, keep commentary and completion reports concise, and avoid dumping raw logs.
+- Do not create design documents, implementation plans, ADRs, or extra summaries unless the user requests them or the change genuinely requires a durable architectural, API, security, persistence, build, or operational decision.
+- Prefer focused searches and affected tests over broad repository scans and repeated full-suite local runs. This efficiency rule must never reduce required tests, security review, Issue/Milestone tracking, or GitHub Actions verification.
 - Write commit summaries in Korean using `type: 변경사항`. Use `ino-admin-work-on-issue` when implementing an Issue, preparing its commits, or preparing a feature/Codex → `dev` PR. Reserve `ino-admin-deliver-change` for `dev` → `main` batch delivery only.
 - Use `dev` as the long-lived integration branch. Send small, isolated changes directly to `dev`; use a feature branch for risky, long-running, or parallel work and merge it into `dev` with a merge commit.
 - After the one-time trusted policy bootstrap documented in `docs/development/branch-strategy.md`, only a `dev` → `main` batch PR may target `main`. Keep logical commits by avoiding squash and rebase merges, and fast-forward `dev` from `main` after the batch merge.
