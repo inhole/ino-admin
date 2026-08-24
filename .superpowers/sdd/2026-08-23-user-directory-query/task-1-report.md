@@ -18,7 +18,7 @@ GREEN command and result:
 - Additional compatibility check: `.\gradlew.bat :apps:admin-server:compileJava` PASS (`BUILD SUCCESSFUL`)
 
 commit SHA:
-- PENDING
+- `37ca251`
 
 self-review findings and concerns:
 - Findings: Added typed query/sort/direction contract, service-side normalization for query/role/status, repository filtering for role/status, and stable secondary sort by `id ASC`.
