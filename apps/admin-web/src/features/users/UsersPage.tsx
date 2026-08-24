@@ -200,6 +200,7 @@ export function UsersPage() {
 
   const hasFilters =
     query.query !== "" || query.role !== "" || query.status !== "";
+  const isRefreshing = users.isFetching && !users.isPending;
   return (
     <>
       <PageHeader
@@ -304,12 +305,24 @@ export function UsersPage() {
               title={t("listError")}
             />
           )}
+          {!users.isError && isRefreshing && (
+            <p
+              aria-label={t("refreshing")}
+              aria-live="polite"
+              className="mb-3 text-sm text-muted-foreground"
+              role="status"
+            >
+              {t("refreshing")}
+            </p>
+          )}
           {!users.isError &&
+            !isRefreshing &&
             users.data?.content.length === 0 &&
             !hasFilters && (
             <StatusPanel>{t("empty")}</StatusPanel>
           )}
           {!users.isError &&
+            !isRefreshing &&
             users.data?.content.length === 0 &&
             hasFilters && (
               <EmptyState
@@ -367,16 +380,6 @@ export function UsersPage() {
           )}
           {!users.isError && users.data && users.data.content.length > 0 && (
             <>
-              {users.isFetching && (
-                <p
-                  aria-label={t("refreshing")}
-                  aria-live="polite"
-                  className="mb-3 text-sm text-muted-foreground"
-                  role="status"
-                >
-                  {t("refreshing")}
-                </p>
-              )}
               <UserList
                 canUpdate={
                   currentUser?.permissions.includes("user:update") ?? false

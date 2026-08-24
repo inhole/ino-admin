@@ -43,6 +43,7 @@ export function UserListToolbar({
 }: UserListToolbarProps) {
   const { t } = useTranslation("users");
   const [searchDraft, setSearchDraft] = useState(value.query);
+  const searchTimeoutRef = useRef<number | null>(null);
   const valueRef = useRef(value);
   valueRef.current = value;
   const roleOptions = [
@@ -74,13 +75,29 @@ export function UserListToolbar({
   useEffect(() => {
     if (searchDraft === value.query) return;
     const timeout = window.setTimeout(() => {
+      searchTimeoutRef.current = null;
       onChange({ ...valueRef.current, query: searchDraft, page: 0 });
     }, 300);
-    return () => window.clearTimeout(timeout);
+    searchTimeoutRef.current = timeout;
+    return () => {
+      window.clearTimeout(timeout);
+      if (searchTimeoutRef.current === timeout) {
+        searchTimeoutRef.current = null;
+      }
+    };
   }, [onChange, searchDraft, value.query]);
 
   const update = (next: Partial<UserListQuery>) => {
     onChange({ ...value, ...next, page: 0 });
+  };
+
+  const reset = () => {
+    if (searchTimeoutRef.current !== null) {
+      window.clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+    setSearchDraft(DEFAULT_USER_LIST_QUERY.query);
+    onReset();
   };
 
   return (
@@ -227,7 +244,7 @@ export function UserListToolbar({
         </Field>
         <Button
           className="min-h-9 md:w-fit xl:self-end"
-          onClick={onReset}
+          onClick={reset}
           type="button"
           variant="outline"
         >

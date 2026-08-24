@@ -14,6 +14,7 @@ import {
   Route,
   Routes,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthContext } from "@/features/auth/provider/authContextValue";
@@ -93,13 +94,21 @@ function LocationProbe({ onChange }: { onChange?: (value: string) => void }) {
   return <output data-testid="location">{value}</output>;
 }
 
+function HistoryBackButton() {
+  const navigate = useNavigate();
+  return <button onClick={() => navigate(-1)}>테스트 뒤로</button>;
+}
+
 function renderPage(
-  initialEntry = "/users",
+  initialEntry: string | string[] = "/users",
   onLocationChange?: (value: string) => void,
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
+  const initialEntries = Array.isArray(initialEntry)
+    ? initialEntry
+    : [initialEntry];
 
   render(
     <AuthContext.Provider
@@ -109,19 +118,16 @@ function renderPage(
         login: vi.fn(),
         logout: vi.fn(),
       }}
-    >
+      >
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={[initialEntry]}>
+        <MemoryRouter
+          initialEntries={initialEntries}
+          initialIndex={initialEntries.length - 1}
+        >
+          <HistoryBackButton />
+          <LocationProbe onChange={onLocationChange} />
           <Routes>
-            <Route
-              path="/users"
-              element={
-                <>
-                  <UsersPage />
-                  <LocationProbe onChange={onLocationChange} />
-                </>
-              }
-            />
+            <Route path="/users" element={<UsersPage />} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>
@@ -240,6 +246,26 @@ describe("사용자 조회 URL", () => {
       "",
     );
   });
+
+  test("검색 debounce 전에 초기화하면 draft와 예약된 URL 변경을 함께 취소한다", async () => {
+    mockApi();
+    renderPage();
+    const search = await screen.findByRole("textbox", {
+      name: "사용자 검색",
+    });
+    vi.useFakeTimers();
+
+    fireEvent.change(search, { target: { value: "kim" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: "조회 조건 초기화" }),
+    );
+
+    expect(search).toHaveValue("");
+    expect(screen.getByTestId("location").textContent).toBe("/users");
+    act(() => vi.advanceTimersByTime(300));
+    expect(search).toHaveValue("");
+    expect(screen.getByTestId("location").textContent).toBe("/users");
+  });
 });
 
 describe("사용자 조회 결과", () => {
@@ -293,6 +319,47 @@ describe("사용자 조회 결과", () => {
     await act(async () => {
       resolveFiltered(page({ content: [], totalElements: 0, totalPages: 0 }));
     });
+  });
+
+  test("빈 이전 결과를 유지하는 재조회 중에는 진행 상태만 표시한다", async () => {
+    let resolveFiltered!: (value: Page) => void;
+    const filteredResponse = new Promise<Page>((resolve) => {
+      resolveFiltered = resolve;
+    });
+    mockApi((url) =>
+      url.searchParams.get("role") === "VIEWER"
+        ? filteredResponse
+        : page({ content: [], totalElements: 0, totalPages: 0 }),
+    );
+    renderPage();
+    expect(
+      await screen.findByText("등록된 사용자가 없습니다."),
+    ).toBeInTheDocument();
+
+    const role = screen.getByRole("combobox", { name: "역할" });
+    fireEvent.click(role);
+    const option = await screen.findByRole("option", { name: "조회자" });
+    fireEvent.pointerDown(option, { pointerType: "mouse" });
+    fireEvent.click(option);
+
+    expect(
+      await screen.findByRole("status", {
+        name: "사용자 목록을 갱신하는 중…",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("등록된 사용자가 없습니다."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("조건에 맞는 사용자가 없습니다."),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveFiltered(page({ content: [], totalElements: 0, totalPages: 0 }));
+    });
+    expect(
+      await screen.findByText("조건에 맞는 사용자가 없습니다."),
+    ).toBeInTheDocument();
   });
 
   test("전체 목록이 비었으면 기존 문구를 유지한다", async () => {
@@ -386,7 +453,7 @@ describe("사용자 조회 결과", () => {
         ? page({ content: [], page: 9, totalElements: 41, totalPages: 3 })
         : page({ content: [user], page: current, totalElements: 41, totalPages: 3 });
     });
-    renderPage("/users?page=9", (value) => locations.push(value));
+    renderPage(["/previous", "/users?page=9"], (value) => locations.push(value));
 
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent("page=2"),
@@ -398,5 +465,10 @@ describe("사용자 조회 결과", () => {
       ),
     ).toHaveLength(2);
     expect(locations.filter((value) => value === "/users?page=2")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "테스트 뒤로" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location").textContent).toBe("/previous"),
+    );
   });
 });
