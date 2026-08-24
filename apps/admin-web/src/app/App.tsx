@@ -6,6 +6,7 @@ import { UsersPage } from '@/features/users'
 import { PermissionsPage } from '@/features/permissions'
 import { MenuManagementPage } from '@/features/menus'
 import { FileManagementPage } from '@/features/files'
+import { AuditLogPage } from '@/features/audit'
 
 export function App() {
   return (
@@ -18,6 +19,7 @@ export function App() {
           <Route element={<PermissionsPage />} path="/permissions" />
           <Route element={<MenuManagementPage />} path="/menu-management" />
           <Route element={<FileManagementPage />} path="/files" />
+          <Route element={<AuditLogPage />} path="/audit-logs" />
         </Route>
       </Route>
     </Routes>
