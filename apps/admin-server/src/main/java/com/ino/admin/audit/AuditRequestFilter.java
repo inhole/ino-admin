@@ -76,6 +76,7 @@ class AuditRequestFilter extends OncePerRequestFilter {
         if (method.equals("POST") && path.equals("/api/v1/files")) return "FILE_UPLOAD";
         if (method.equals("DELETE") && path.startsWith("/api/v1/files/")) return "FILE_DELETE";
         if (method.equals("GET") && path.equals("/api/v1/excel/users/export")) return "USER_EXCEL_EXPORT";
+        if (method.equals("POST") && path.equals("/api/v1/excel/users/import")) return "USER_EXCEL_IMPORT";
         return method + "_REQUEST";
     }
 

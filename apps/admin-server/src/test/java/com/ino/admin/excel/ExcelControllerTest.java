@@ -4,6 +4,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,6 +30,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class ExcelControllerTest {
     @Autowired MockMvc mockMvc;
     @MockitoBean UserExcelExporter exporter;
+    @MockitoBean UserExcelImporter importer;
+    @MockitoBean UserExcelTemplate template;
     @MockitoBean JwtDecoder jwtDecoder;
 
     @Test
@@ -47,6 +50,26 @@ class ExcelControllerTest {
         mockMvc.perform(get("/api/v1/excel/users/export").with(jwt()))
                 .andExpect(status().isForbidden());
         verifyNoInteractions(exporter);
+    }
+
+    @Test
+    void importsXlsxForAuthorizedCaller() throws Exception {
+        var file = new org.springframework.mock.web.MockMultipartFile("file", "users.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", new byte[] { 1, 2, 3 });
+        when(importer.importUsers(file)).thenReturn(new UserExcelImporter.ImportResult(2));
+
+        mockMvc.perform(multipart("/api/v1/excel/users/import").file(file)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("excel:import"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void rejectsImportWithoutPermission() throws Exception {
+        var file = new org.springframework.mock.web.MockMultipartFile("file", "users.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", new byte[] { 1 });
+        mockMvc.perform(multipart("/api/v1/excel/users/import").file(file).with(jwt()))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(importer);
     }
 
     @TestConfiguration

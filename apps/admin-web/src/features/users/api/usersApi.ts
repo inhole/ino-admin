@@ -1,4 +1,4 @@
-import { request, requestBlob, type PageResponse } from "@/api/client";
+import { request, requestBlob, requestForm, type PageResponse } from "@/api/client";
 import {
   toUserListSearchParams,
   type UserListQuery,
@@ -31,6 +31,14 @@ export function getUsers(query: UserListQuery) {
 }
 export function exportUsersExcel() {
   return requestBlob("/api/v1/excel/users/export");
+}
+export function downloadUserImportTemplate() {
+  return requestBlob("/api/v1/excel/users/import-template");
+}
+export function importUsersExcel(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return requestForm<{ createdCount: number }>("/api/v1/excel/users/import", form);
 }
 export function getUser(userId: string) {
   return request<UserSummary>(`/api/v1/users/${userId}`);
