@@ -1,1 +1,1 @@
-export { AuditLogPage } from "./AuditLogPage";
+export { AccessHistoryPage } from "./AuditLogPage";

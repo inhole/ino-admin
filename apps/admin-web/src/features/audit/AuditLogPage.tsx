@@ -9,7 +9,7 @@ import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/comp
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AuditLogFilters } from "@/features/audit/AuditLogFilters";
-import { getAuditLogs, type AuditLogParams } from "@/features/audit/api/auditApi";
+import { getAccessHistory, type AccessHistoryParams } from "@/features/audit/api/auditApi";
 import { emptyAuditFilters, type AuditFilters } from "@/features/audit/model/auditFilters";
 import { formatDateTime } from "@/i18n/format";
 
@@ -19,16 +19,16 @@ function boundary(value: string, nextDay = false) {
   return new Date(year, month - 1, day + (nextDay ? 1 : 0)).toISOString();
 }
 
-function params(filters: AuditFilters): AuditLogParams {
-  return { actorId: filters.actorId.trim() || undefined, action: filters.action === "all" ? undefined : filters.action,
-    result: filters.result === "all" ? undefined : filters.result, createdFrom: boundary(filters.createdFrom), createdTo: boundary(filters.createdTo, true) };
+function params(filters: AuditFilters): AccessHistoryParams {
+  return { result: filters.result === "all" ? undefined : filters.result,
+    createdFrom: boundary(filters.createdFrom), createdTo: boundary(filters.createdTo, true) };
 }
 
-export function AuditLogPage() {
+export function AccessHistoryPage() {
   const { t } = useTranslation("audit");
   const [filters, setFilters] = useState(emptyAuditFilters);
   const queryParams = useMemo(() => params(filters), [filters]);
-  const logs = useQuery({ queryKey: ["audit-logs", queryParams], queryFn: () => getAuditLogs(queryParams) });
+  const logs = useQuery({ queryKey: ["access-history", queryParams], queryFn: () => getAccessHistory(queryParams) });
   return <>
     <PageHeader eyebrow={t("eyebrow")} title={t("title")} description={t("description")} />
     <Card><CardHeader><CardTitle>{t("listTitle")}</CardTitle><CardDescription>{t("listDescription")}</CardDescription></CardHeader>
@@ -37,7 +37,7 @@ export function AuditLogPage() {
         {logs.isError && <Alert variant="destructive" role="alert"><AlertDescription>{t("loadError")}</AlertDescription></Alert>}
         {logs.data?.content.length === 0 && <StatusPanel>{t("empty")}</StatusPanel>}
         {logs.data && logs.data.content.length > 0 && <ItemGroup>{logs.data.content.map((log) => <Item key={log.id} variant="outline">
-          <ItemContent><ItemTitle className="break-all">{log.resource}</ItemTitle><ItemDescription>{log.action} · {log.actorId ?? t("anonymous")} · {formatDateTime(log.createdAt)}</ItemDescription></ItemContent>
+          <ItemContent><ItemTitle className="break-all">{log.ipAddress ?? t("unknownIp")}</ItemTitle><ItemDescription>{log.userAgent ?? t("unknownUserAgent")} · {formatDateTime(log.createdAt)}</ItemDescription></ItemContent>
           <Badge variant={log.result === "FAILURE" ? "destructive" : "secondary"}>{t(log.result.toLowerCase())}</Badge>
         </Item>)}</ItemGroup>}
       </CardContent></Card>

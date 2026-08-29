@@ -16,9 +16,7 @@ export function AuditLogFilters({ value, onApply }: { value: AuditFilters; onApp
   const reset = () => { setDraft(emptyAuditFilters); onApply(emptyAuditFilters); };
 
   return <form className="flex flex-col gap-4" onSubmit={submit}>
-    <FieldGroup className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-      <Field><FieldLabel htmlFor="audit-actor">{t("actorId")}</FieldLabel><Input id="audit-actor" value={draft.actorId} onChange={(event) => setDraft({ ...draft, actorId: event.target.value })} /></Field>
-      <Field><FieldLabel htmlFor="audit-action">{t("action")}</FieldLabel><Input id="audit-action" maxLength={100} placeholder={t("actionPlaceholder")} value={draft.action === "all" ? "" : draft.action} onChange={(event) => setDraft({ ...draft, action: event.target.value.toUpperCase() || "all" })} /></Field>
+    <FieldGroup className="grid gap-3 md:grid-cols-3">
       <Field><FieldLabel htmlFor="audit-result">{t("result")}</FieldLabel>
         <Select items={results} value={draft.result} onValueChange={(result) => setDraft({ ...draft, result: (result ?? "all") as AuditFilters["result"] })}>
           <SelectTrigger className="w-full" id="audit-result"><SelectValue /></SelectTrigger>
