@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/hook/useAuth";
 import { LanguageMenu, ThemeMenu } from "@/features/settings";
+import { GlobalMenuSearch } from "@/components/layout/GlobalMenuSearch";
 
 const iconMap = {
   users: Users,
@@ -125,6 +126,11 @@ export function AdminLayout() {
         <header className="safe-top sticky top-0 z-20 flex min-h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur sm:px-6">
           <SidebarTrigger aria-label={t("openMenu")} />
           <Separator className="h-5" orientation="vertical" />
+          <GlobalMenuSearch
+            className="w-36 shrink-0 sm:w-64"
+            getMenuLabel={menuLabel}
+            menus={menus.data ?? []}
+          />
           <Breadcrumb className="min-w-0 flex-1">
             <BreadcrumbList className="flex-nowrap">
               <BreadcrumbItem className="hidden sm:inline-flex">

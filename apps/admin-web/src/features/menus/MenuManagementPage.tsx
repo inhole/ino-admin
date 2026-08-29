@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   createMenu,
@@ -19,8 +19,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { MenuDialog } from "@/features/menus/component/MenuDialog";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
   Item,
   ItemActions,
@@ -36,17 +34,6 @@ export function MenuManagementPage() {
   const queryClient = useQueryClient();
   const menus = useQuery({ queryKey: menuKeys.all, queryFn: getMenus });
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const filteredMenus = useMemo(() => {
-    const normalizedSearch = search.trim().toLocaleLowerCase();
-    if (!normalizedSearch) return menus.data ?? [];
-
-    return (menus.data ?? []).filter((menu) =>
-      [menu.label, menu.route, menu.requiredPermission]
-        .filter((value): value is string => value !== null)
-        .some((value) => value.toLocaleLowerCase().includes(normalizedSearch)),
-    );
-  }, [menus.data, search]);
   const save = useMutation({
     mutationFn: createMenu,
     onSuccess: async () => {
@@ -93,16 +80,6 @@ export function MenuManagementPage() {
           <CardTitle>{t("allTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Field className="mb-4 max-w-md">
-            <FieldLabel htmlFor="menu-search">{t("search")}</FieldLabel>
-            <Input
-              id="menu-search"
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t("searchPlaceholder")}
-              type="search"
-              value={search}
-            />
-          </Field>
           {error && (
             <Alert className="mb-4" variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -117,12 +94,9 @@ export function MenuManagementPage() {
             </Alert>
           )}
           {menus.data?.length === 0 && <StatusPanel>{t("empty")}</StatusPanel>}
-          {menus.data && menus.data.length > 0 && filteredMenus.length === 0 && (
-            <StatusPanel>{t("searchEmpty")}</StatusPanel>
-          )}
           {menus.data && (
             <ItemGroup>
-              {filteredMenus.map((menu) => (
+              {menus.data.map((menu) => (
                 <Item key={menu.id} variant="outline">
                   <ItemContent>
                     <ItemTitle>{menu.label}</ItemTitle>
