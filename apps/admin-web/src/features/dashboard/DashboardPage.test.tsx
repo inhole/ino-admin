@@ -106,6 +106,7 @@ test("collects the first snapshot, then shows derived metrics after the five-sec
   expect(screen.getByText("3.00 TPS")).toBeInTheDocument();
   expect(screen.getByText("200.0 ms")).toBeInTheDocument();
   expect(screen.getByText("6.7%")).toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "CPU 사용률" })).not.toBeInTheDocument();
   expect(dashboardApi.getMonitoringSummary).toHaveBeenCalledTimes(2);
 });
 
@@ -144,15 +145,6 @@ test("labels derived HTTP metrics unavailable when the source counters are absen
   expect(metricCard("TPS").getAllByText("사용 불가")).toHaveLength(2);
   expect(metricCard("평균 지연 시간").getAllByText("사용 불가")).toHaveLength(2);
   expect(metricCard("5xx 비율").getAllByText("사용 불가")).toHaveLength(2);
-  expect(
-    within(screen.getByRole("region", { name: "처리량" })).getByText("최신 · 사용 불가"),
-  ).toBeInTheDocument();
-  expect(
-    within(screen.getByRole("region", { name: "응답 지연 시간" })).getByText("최신 · 사용 불가"),
-  ).toBeInTheDocument();
-  expect(
-    within(screen.getByRole("region", { name: "5xx 비율" })).getByText("최신 · 사용 불가"),
-  ).toBeInTheDocument();
 });
 
 test("keeps derived metrics collecting when valid counters reset between snapshots", async () => {
@@ -236,22 +228,7 @@ test("stops interval polling while the document is hidden", async () => {
   expect(dashboardApi.getMonitoringSummary).toHaveBeenCalledTimes(1);
 });
 
-test("names every monitoring chart as its own accessible region", async () => {
-  dashboardApi.getMonitoringSummary.mockResolvedValue(firstSnapshot);
-  renderPage();
-
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(1);
-  });
-
-  expect(screen.getByRole("region", { name: "CPU 사용률" })).toBeInTheDocument();
-  expect(screen.getByRole("region", { name: "힙 메모리" })).toBeInTheDocument();
-  expect(screen.getByRole("region", { name: "처리량" })).toBeInTheDocument();
-  expect(screen.getByRole("region", { name: "응답 지연 시간" })).toBeInTheDocument();
-  expect(screen.getByRole("region", { name: "5xx 비율" })).toBeInTheDocument();
-});
-
-test("localizes chart labels, loading status, and uptime units in English", async () => {
+test("localizes metric labels, loading status, and uptime units in English", async () => {
   await i18n.changeLanguage("en");
   dashboardApi.getMonitoringSummary.mockResolvedValue(firstSnapshot);
   renderPage();
@@ -263,5 +240,4 @@ test("localizes chart labels, loading status, and uptime units in English", asyn
 
   expect(metricCard("Uptime").getByText("1 hr 0 min")).toBeInTheDocument();
   expect(screen.getAllByText("System CPU usage")).not.toHaveLength(0);
-  expect(screen.getAllByText("Process CPU usage")).not.toHaveLength(0);
 });
