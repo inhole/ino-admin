@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
-import java.util.Locale;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,8 +36,8 @@ public class AuthController {
     @PostMapping("/login")
     LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
         var result = loginService.login(request.email(), request.password());
-        servletRequest.setAttribute(AuditCommand.LOGIN_EMAIL_ATTRIBUTE,
-                request.email().strip().toLowerCase(Locale.ROOT));
+        servletRequest.setAttribute(AuditCommand.LOGIN_ACCOUNT_ATTRIBUTE,
+                new AuditCommand.LoginAccount(result.email(), result.displayName(), result.role()));
         return new LoginResponse(result.accessToken(), "Bearer", result.expiresInSeconds(), result.refreshToken());
     }
 

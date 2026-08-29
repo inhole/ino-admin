@@ -36,6 +36,8 @@ class AuditLogService implements AuditWriter {
             predicates.add(builder.equal(root.get("action"), "AUTH_LOGIN"));
             predicates.add(builder.equal(root.get("result"), AuditResult.SUCCESS));
             predicates.add(builder.isNotNull(root.get("loginEmail")));
+            predicates.add(builder.isNotNull(root.get("loginDisplayName")));
+            predicates.add(builder.isNotNull(root.get("loginRole")));
             if (from != null) predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
             if (to != null) predicates.add(builder.lessThan(root.get("createdAt"), to));
             return builder.and(predicates.toArray(Predicate[]::new));

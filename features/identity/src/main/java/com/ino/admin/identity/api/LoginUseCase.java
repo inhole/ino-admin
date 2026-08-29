@@ -7,6 +7,7 @@ public interface LoginUseCase {
     LoginResult login(String email, String password);
     CurrentUser currentUser(UUID userId);
 
-    record LoginResult(String accessToken, long expiresInSeconds, String refreshToken) {}
+    record LoginResult(String accessToken, long expiresInSeconds, String refreshToken,
+            String email, String displayName, String role) {}
     record CurrentUser(UUID id, String email, String displayName, String status, String role, List<String> permissions) {}
 }

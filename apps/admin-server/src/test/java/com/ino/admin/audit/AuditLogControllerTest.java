@@ -48,7 +48,8 @@ class AuditLogControllerTest {
 
     @Test
     void returnsLoginHistoryForAuthorizedReader() throws Exception {
-        var command = new AuditCommand(null, "admin@example.com", "AUTH_LOGIN", "/api/v1/auth/login", AuditResult.SUCCESS,
+        var command = new AuditCommand(null, "admin@example.com", "관리자", "SUPER_ADMIN",
+                "AUTH_LOGIN", "/api/v1/auth/login", AuditResult.SUCCESS,
                 200, "127.0.0.1", "browser", "trace-1");
         var log = AuditLog.create(command, Instant.parse("2026-08-24T00:00:00Z"));
         when(service.findAccessHistory(any(), any(), eq(0), eq(20)))
@@ -60,6 +61,8 @@ class AuditLogControllerTest {
                         .queryParam("createdTo", "2026-09-01T00:00:00Z"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].email").value("admin@example.com"))
+                .andExpect(jsonPath("$.content[0].displayName").value("관리자"))
+                .andExpect(jsonPath("$.content[0].role").value("SUPER_ADMIN"))
                 .andExpect(jsonPath("$.content[0].createdAt").value("2026-08-24T00:00:00Z"))
                 .andExpect(jsonPath("$.content[0].ipAddress").doesNotExist())
                 .andExpect(jsonPath("$.content[0].userAgent").doesNotExist())

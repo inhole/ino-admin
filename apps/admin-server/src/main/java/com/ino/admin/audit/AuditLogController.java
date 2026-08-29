@@ -28,9 +28,9 @@ class AccessHistoryController {
                 resultPage.getTotalElements(), resultPage.getTotalPages());
     }
 
-    record AccessHistoryView(java.util.UUID id, String email, Instant createdAt) {
+    record AccessHistoryView(java.util.UUID id, String email, String displayName, String role, Instant createdAt) {
         static AccessHistoryView from(AuditLog log) {
-            return new AccessHistoryView(log.id(), log.loginEmail(), log.createdAt());
+            return new AccessHistoryView(log.id(), log.loginEmail(), log.loginDisplayName(), log.loginRole(), log.createdAt());
         }
     }
     record AccessHistoryPage(List<AccessHistoryView> content, int page, int size, long totalElements, int totalPages) {}

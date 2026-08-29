@@ -41,7 +41,9 @@ class AuditRequestFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
         } finally {
             try {
-                writer.write(new AuditCommand(actorId(), loginEmail(request), semanticAction(request), limit(request.getRequestURI(), 500),
+                var loginAccount = loginAccount(request);
+                writer.write(new AuditCommand(actorId(), loginAccount.email(), loginAccount.displayName(), loginAccount.role(),
+                        semanticAction(request), limit(request.getRequestURI(), 500),
                         response.getStatus() < 400 ? AuditResult.SUCCESS : AuditResult.FAILURE,
                         response.getStatus(), limit(request.getRemoteAddr(), 45),
                         limit(request.getHeader("User-Agent"), 512), limit(MDC.get(TraceIdFilter.MDC_KEY), 100)));
@@ -60,9 +62,13 @@ class AuditRequestFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private String loginEmail(HttpServletRequest request) {
-        var value = request.getAttribute(AuditCommand.LOGIN_EMAIL_ATTRIBUTE);
-        return value instanceof String email ? limit(email, 320) : null;
+    private AuditCommand.LoginAccount loginAccount(HttpServletRequest request) {
+        var value = request.getAttribute(AuditCommand.LOGIN_ACCOUNT_ATTRIBUTE);
+        if (value instanceof AuditCommand.LoginAccount account) {
+            return new AuditCommand.LoginAccount(limit(account.email(), 320),
+                    limit(account.displayName(), 100), limit(account.role(), 100));
+        }
+        return new AuditCommand.LoginAccount(null, null, null);
     }
 
     private String semanticAction(HttpServletRequest request) {

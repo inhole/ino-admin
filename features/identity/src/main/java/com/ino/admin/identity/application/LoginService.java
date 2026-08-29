@@ -58,7 +58,8 @@ public class LoginService implements LoginUseCase {
         var token = accessTokenIssuer.issue(user.id(), user.role(),
                 role.permissions());
         var refreshToken = refreshTokenService.issue(user);
-        return new LoginResult(token.value(), token.expiresInSeconds(), refreshToken.rawToken());
+        return new LoginResult(token.value(), token.expiresInSeconds(), refreshToken.rawToken(),
+                user.email(), user.displayName(), user.role());
     }
 
     @Transactional(readOnly = true)
