@@ -9,7 +9,8 @@ const tokens = {
 
 const managementMenus = [
   { id: 'dashboard', label: '대시보드', route: '/', icon: 'layout-dashboard', order: 10, children: [] },
-  { id: 'users', label: '사용자 관리', route: '/users', icon: 'users', order: 20, children: [
+  { id: 'user-management', label: '사용자 관리', route: '/users', icon: 'users', order: 20, children: [
+    { id: 'users', label: '사용자', route: '/users', icon: 'users', order: 10, children: [] },
     { id: 'permissions', label: '권한 관리', route: '/permissions', icon: 'key-round', order: 10, children: [] },
     { id: 'access-history', label: '접속 이력', route: '/access-history', icon: 'history', order: 20, children: [] },
   ] },
@@ -76,6 +77,10 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: u
 test('SUPER_ADMIN에게 관리 메뉴를 모두 노출한다', async ({ page }) => {
   await authenticate(page, 'SUPER_ADMIN')
 
+  const userManagement = page.getByRole('button', { name: '사용자 관리' })
+  await expect(userManagement).toHaveAttribute('aria-expanded', 'false')
+  await userManagement.click()
+  await expect(userManagement).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('link', { name: '사용자' })).toBeVisible()
   await expect(page.getByRole('link', { name: '권한' })).toBeVisible()
   await expect(page.getByRole('link', { name: '접속 이력' })).toBeVisible()
@@ -93,6 +98,7 @@ test('SUPER_ADMIN에게 관리 메뉴를 모두 노출한다', async ({ page }) 
 test('SUPER_ADMIN이 사용자 조회 조건과 페이지를 URL에 유지한다', async ({ page }) => {
   await authenticate(page, 'SUPER_ADMIN')
 
+  await page.getByRole('button', { name: '사용자 관리' }).click()
   await page.getByRole('link', { name: '사용자' }).click()
   await page.getByPlaceholder('이름 또는 이메일 검색').fill('kim')
   await expect(page).toHaveURL(/query=kim/)

@@ -140,9 +140,9 @@ class AuthFlowIntegrationTest {
         mockMvc.perform(get("/api/v1/menus/me").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].id").value(org.hamcrest.Matchers.contains(
-                        "dashboard", "users", "menu-management", "files")))
+                        "dashboard", "user-management", "menu-management", "files")))
                 .andExpect(jsonPath("$[1].children[*].id").value(org.hamcrest.Matchers.contains(
-                        "permissions", "access-history")));
+                        "users", "permissions", "access-history")));
 
         var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
         mockMvc.perform(get("/api/v1/menus/me").header("Authorization", "Bearer " + viewerToken))
