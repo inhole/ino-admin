@@ -19,21 +19,18 @@ class AccessHistoryController {
     AccessHistoryController(AuditLogService service) { this.service = service; }
 
     @GetMapping
-    AccessHistoryPage find(@RequestParam(required = false) AuditResult result,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdFrom,
+    AccessHistoryPage find(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdTo,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-        var resultPage = service.findAccessHistory(result, createdFrom, createdTo, page, size);
+        var resultPage = service.findAccessHistory(createdFrom, createdTo, page, size);
         return new AccessHistoryPage(resultPage.getContent().stream().map(AccessHistoryView::from).toList(), page, size,
                 resultPage.getTotalElements(), resultPage.getTotalPages());
     }
 
-    record AccessHistoryView(java.util.UUID id, AuditResult result,
-            int statusCode, String ipAddress, String userAgent, String traceId, Instant createdAt) {
+    record AccessHistoryView(java.util.UUID id, String email, Instant createdAt) {
         static AccessHistoryView from(AuditLog log) {
-            return new AccessHistoryView(log.id(), log.result(),
-                    log.statusCode(), log.ipAddress(), log.userAgent(), log.traceId(), log.createdAt());
+            return new AccessHistoryView(log.id(), log.loginEmail(), log.createdAt());
         }
     }
     record AccessHistoryPage(List<AccessHistoryView> content, int page, int size, long totalElements, int totalPages) {}

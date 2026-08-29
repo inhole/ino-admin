@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
@@ -20,8 +19,7 @@ function boundary(value: string, nextDay = false) {
 }
 
 function params(filters: AuditFilters): AccessHistoryParams {
-  return { result: filters.result === "all" ? undefined : filters.result,
-    createdFrom: boundary(filters.createdFrom), createdTo: boundary(filters.createdTo, true) };
+  return { createdFrom: boundary(filters.createdFrom), createdTo: boundary(filters.createdTo, true) };
 }
 
 export function AccessHistoryPage() {
@@ -37,8 +35,7 @@ export function AccessHistoryPage() {
         {logs.isError && <Alert variant="destructive" role="alert"><AlertDescription>{t("loadError")}</AlertDescription></Alert>}
         {logs.data?.content.length === 0 && <StatusPanel>{t("empty")}</StatusPanel>}
         {logs.data && logs.data.content.length > 0 && <ItemGroup>{logs.data.content.map((log) => <Item key={log.id} variant="outline">
-          <ItemContent><ItemTitle className="break-all">{log.ipAddress ?? t("unknownIp")}</ItemTitle><ItemDescription>{log.userAgent ?? t("unknownUserAgent")} · {formatDateTime(log.createdAt)}</ItemDescription></ItemContent>
-          <Badge variant={log.result === "FAILURE" ? "destructive" : "secondary"}>{t(log.result.toLowerCase())}</Badge>
+          <ItemContent><ItemTitle className="break-all">{log.email}</ItemTitle><ItemDescription>{formatDateTime(log.createdAt)}</ItemDescription></ItemContent>
         </Item>)}</ItemGroup>}
       </CardContent></Card>
   </>;

@@ -1,19 +1,12 @@
 import { request, type PageResponse } from "@/api/client";
 
-export type AuditResult = "SUCCESS" | "FAILURE";
-
 export interface AccessHistoryEntry {
   id: string;
-  result: AuditResult;
-  statusCode: number;
-  ipAddress: string | null;
-  userAgent: string | null;
-  traceId: string | null;
+  email: string;
   createdAt: string;
 }
 
 export interface AccessHistoryParams {
-  result?: AuditResult;
   createdFrom?: string;
   createdTo?: string;
   page?: number;

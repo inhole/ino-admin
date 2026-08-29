@@ -14,8 +14,7 @@ function renderPage() {
 beforeEach(() => {
   auditApi.getAccessHistory.mockReset();
   auditApi.getAccessHistory.mockResolvedValue({
-    content: [{ id: "audit-1", result: "SUCCESS", statusCode: 200,
-      ipAddress: "127.0.0.1", userAgent: "browser", traceId: "trace-1",
+    content: [{ id: "audit-1", email: "admin@example.com",
       createdAt: "2026-08-24T00:00:00Z" }],
     page: 0, size: 20, totalElements: 1, totalPages: 1,
   });
@@ -23,11 +22,13 @@ beforeEach(() => {
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-test("shows access history and applies filters", async () => {
+test("shows only the administrator account and login time", async () => {
   renderPage();
-  expect(await screen.findByText("127.0.0.1")).toBeInTheDocument();
-  expect(screen.getByText(/browser/)).toBeInTheDocument();
-  expect(screen.getByText("성공")).toBeInTheDocument();
+  expect(await screen.findByText("admin@example.com")).toBeInTheDocument();
+  expect(screen.getByText(/2026/)).toBeInTheDocument();
+  expect(screen.queryByText("127.0.0.1")).not.toBeInTheDocument();
+  expect(screen.queryByText("browser")).not.toBeInTheDocument();
+  expect(screen.queryByText("성공")).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "검색" }));
 

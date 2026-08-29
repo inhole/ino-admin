@@ -355,9 +355,9 @@ export const ko = {
   audit: {
     eyebrow: "ACCESS SECURITY",
     title: "접속 이력",
-    description: "관리자 로그인 성공과 실패 이력을 확인합니다.",
+    description: "관리자 계정별 로그인 시각을 확인합니다.",
     listTitle: "로그인 이력",
-    listDescription: "접속 시각, 결과, IP와 브라우저 정보를 표시합니다.",
+    listDescription: "로그인한 관리자 계정과 시각을 표시합니다.",
     result: "결과",
     createdFrom: "시작일",
     createdTo: "종료일",
@@ -729,9 +729,9 @@ export const en = {
   audit: {
     eyebrow: "ACCESS SECURITY",
     title: "Access history",
-    description: "Review successful and failed administrator sign-ins.",
+    description: "Review administrator accounts and their login times.",
     listTitle: "Sign-in history",
-    listDescription: "Shows access time, result, IP address, and browser information.",
+    listDescription: "Shows the administrator account and login time.",
     result: "Result",
     createdFrom: "From",
     createdTo: "To",

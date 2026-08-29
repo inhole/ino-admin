@@ -9,11 +9,11 @@ test("serializes access history filters", async () => {
       { status: 200, headers: { "Content-Type": "application/json" } }),
   );
 
-  await getAccessHistory({ result: "FAILURE",
-    createdFrom: "2026-08-01T00:00:00.000Z", createdTo: "2026-09-01T00:00:00.000Z" });
+  await getAccessHistory({ createdFrom: "2026-08-01T00:00:00.000Z",
+    createdTo: "2026-09-01T00:00:00.000Z" });
 
   const search = new URL(fetchMock.mock.calls[0][0] as string, "http://localhost").searchParams;
-  expect(search.get("result")).toBe("FAILURE");
+  expect(search.has("result")).toBe(false);
   expect(fetchMock.mock.calls[0][0]).toContain("/api/v1/access-history");
   expect(search.get("createdFrom")).toBe("2026-08-01T00:00:00.000Z");
   expect(search.get("createdTo")).toBe("2026-09-01T00:00:00.000Z");

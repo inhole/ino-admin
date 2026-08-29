@@ -48,20 +48,22 @@ class AuditLogControllerTest {
 
     @Test
     void returnsLoginHistoryForAuthorizedReader() throws Exception {
-        var command = new AuditCommand(null, "AUTH_LOGIN", "/api/v1/auth/login", AuditResult.SUCCESS,
+        var command = new AuditCommand(null, "admin@example.com", "AUTH_LOGIN", "/api/v1/auth/login", AuditResult.SUCCESS,
                 200, "127.0.0.1", "browser", "trace-1");
         var log = AuditLog.create(command, Instant.parse("2026-08-24T00:00:00Z"));
-        when(service.findAccessHistory(eq(AuditResult.SUCCESS), any(), any(), eq(0), eq(20)))
+        when(service.findAccessHistory(any(), any(), eq(0), eq(20)))
                 .thenReturn(new PageImpl<>(List.of(log), PageRequest.of(0, 20), 1));
 
         mockMvc.perform(get("/api/v1/access-history")
                         .with(jwt().authorities(new SimpleGrantedAuthority("access-history:read")))
-                        .queryParam("result", "SUCCESS")
                         .queryParam("createdFrom", "2026-08-01T00:00:00Z")
                         .queryParam("createdTo", "2026-09-01T00:00:00Z"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].ipAddress").value("127.0.0.1"))
-                .andExpect(jsonPath("$.content[0].userAgent").value("browser"))
+                .andExpect(jsonPath("$.content[0].email").value("admin@example.com"))
+                .andExpect(jsonPath("$.content[0].createdAt").value("2026-08-24T00:00:00Z"))
+                .andExpect(jsonPath("$.content[0].ipAddress").doesNotExist())
+                .andExpect(jsonPath("$.content[0].userAgent").doesNotExist())
+                .andExpect(jsonPath("$.content[0].result").doesNotExist())
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 

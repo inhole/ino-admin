@@ -41,7 +41,7 @@ class AuditRequestFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
         } finally {
             try {
-                writer.write(new AuditCommand(actorId(), semanticAction(request), limit(request.getRequestURI(), 500),
+                writer.write(new AuditCommand(actorId(), loginEmail(request), semanticAction(request), limit(request.getRequestURI(), 500),
                         response.getStatus() < 400 ? AuditResult.SUCCESS : AuditResult.FAILURE,
                         response.getStatus(), limit(request.getRemoteAddr(), 45),
                         limit(request.getHeader("User-Agent"), 512), limit(MDC.get(TraceIdFilter.MDC_KEY), 100)));
@@ -58,6 +58,11 @@ class AuditRequestFilter extends OncePerRequestFilter {
             catch (IllegalArgumentException ignored) { return null; }
         }
         return null;
+    }
+
+    private String loginEmail(HttpServletRequest request) {
+        var value = request.getAttribute(AuditCommand.LOGIN_EMAIL_ATTRIBUTE);
+        return value instanceof String email ? limit(email, 320) : null;
     }
 
     private String semanticAction(HttpServletRequest request) {

@@ -1,13 +1,16 @@
 package com.ino.admin.auth;
 
+import com.ino.admin.audit.AuditCommand;
 import com.ino.admin.identity.api.LoginUseCase;
 import com.ino.admin.identity.api.PasswordChangeUseCase;
 import com.ino.admin.identity.api.RefreshTokenUseCase;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
+import java.util.Locale;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,8 +35,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    LoginResponse login(@Valid @RequestBody LoginRequest request) {
+    LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
         var result = loginService.login(request.email(), request.password());
+        servletRequest.setAttribute(AuditCommand.LOGIN_EMAIL_ATTRIBUTE,
+                request.email().strip().toLowerCase(Locale.ROOT));
         return new LoginResponse(result.accessToken(), "Bearer", result.expiresInSeconds(), result.refreshToken());
     }
 
