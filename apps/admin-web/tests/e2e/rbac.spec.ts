@@ -9,7 +9,8 @@ const tokens = {
 
 const managementMenus = [
   { id: 'dashboard', label: '대시보드', route: '/', icon: 'layout-dashboard', order: 10, children: [] },
-  { id: 'users', label: '사용자 관리', route: '/users', icon: 'users', order: 20, children: [
+  { id: 'user-management', label: '사용자 관리', route: '/users', icon: 'users', order: 20, children: [
+    { id: 'users', label: '사용자', route: '/users', icon: 'users', order: 10, children: [] },
     { id: 'permissions', label: '권한 관리', route: '/permissions', icon: 'key-round', order: 10, children: [] },
     { id: 'access-history', label: '접속 이력', route: '/access-history', icon: 'history', order: 20, children: [] },
   ] },
@@ -17,11 +18,21 @@ const managementMenus = [
   { id: 'files', label: '파일 관리', route: '/files', icon: 'file', order: 50, children: [] },
 ]
 
+const managedMenus = [
+  { id: 'dashboard', parentId: null, label: '대시보드', route: '/', icon: 'layout-dashboard', order: 10, requiredPermission: null, enabled: true },
+  { id: 'user-management', parentId: null, label: '사용자 관리', route: '/users', icon: 'users', order: 20, requiredPermission: 'user:read', enabled: true },
+  { id: 'users', parentId: 'user-management', label: '사용자', route: '/users', icon: 'users', order: 10, requiredPermission: 'user:read', enabled: true },
+  { id: 'permissions', parentId: 'user-management', label: '권한', route: '/permissions', icon: 'key-round', order: 20, requiredPermission: 'permission:read', enabled: true },
+  { id: 'access-history', parentId: 'user-management', label: '접속 이력', route: '/access-history', icon: 'history', order: 30, requiredPermission: 'access-history:read', enabled: true },
+  { id: 'menu-management', parentId: null, label: '메뉴 관리', route: '/menu-management', icon: 'menu', order: 40, requiredPermission: 'menu:read', enabled: true },
+  { id: 'files', parentId: null, label: '파일 관리', route: '/files', icon: 'file', order: 50, requiredPermission: 'file:read', enabled: true },
+]
+
 async function json(route: Route, body: unknown, status = 200) {
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
 }
 
-async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: unknown[] = []) {
+async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: unknown[] = [], onReorder?: (body: unknown) => void) {
   const isSuperAdmin = role === 'SUPER_ADMIN'
   await page.route('**/api/v1/**', async (route) => {
     const url = new URL(route.request().url())
@@ -33,6 +44,11 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: u
       status: 'ACTIVE', role, permissions: isSuperAdmin ? ['user:read', 'user:create', 'user:update', 'permission:read', 'permission:update', 'menu:read', 'menu:write', 'access-history:read'] : [],
     })
     if (path === '/api/v1/menus/me') return json(route, isSuperAdmin ? managementMenus : managementMenus.slice(0, 1))
+    if (path === '/api/v1/menus' && route.request().method() === 'GET') return json(route, managedMenus)
+    if (path === '/api/v1/menus/order' && route.request().method() === 'PATCH') {
+      onReorder?.(route.request().postDataJSON())
+      return json(route, managedMenus)
+    }
     if (path === '/api/v1/users') {
       if (!isSuperAdmin) {
         return json(route, { code: 'FORBIDDEN', message: '접근 권한이 없습니다.', traceId: '01K3E2ETRACE53' }, 403)
@@ -76,6 +92,10 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: u
 test('SUPER_ADMIN에게 관리 메뉴를 모두 노출한다', async ({ page }) => {
   await authenticate(page, 'SUPER_ADMIN')
 
+  const userManagement = page.getByRole('button', { name: '사용자 관리' })
+  await expect(userManagement).toHaveAttribute('aria-expanded', 'false')
+  await userManagement.click()
+  await expect(userManagement).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('link', { name: '사용자' })).toBeVisible()
   await expect(page.getByRole('link', { name: '권한' })).toBeVisible()
   await expect(page.getByRole('link', { name: '접속 이력' })).toBeVisible()
@@ -93,6 +113,7 @@ test('SUPER_ADMIN에게 관리 메뉴를 모두 노출한다', async ({ page }) 
 test('SUPER_ADMIN이 사용자 조회 조건과 페이지를 URL에 유지한다', async ({ page }) => {
   await authenticate(page, 'SUPER_ADMIN')
 
+  await page.getByRole('button', { name: '사용자 관리' }).click()
   await page.getByRole('link', { name: '사용자' }).click()
   await page.getByPlaceholder('이름 또는 이메일 검색').fill('kim')
   await expect(page).toHaveURL(/query=kim/)
@@ -105,6 +126,28 @@ test('SUPER_ADMIN이 사용자 조회 조건과 페이지를 URL에 유지한다
   await expect(page.getByText('kim.page2@example.com').first()).toBeVisible()
   await page.reload()
   await expect(page.getByPlaceholder('이름 또는 이메일 검색')).toHaveValue('kim')
+})
+
+test('SUPER_ADMIN이 dnd-kit으로 메뉴를 이동한다', async ({ page }) => {
+  let reordered: unknown
+  await authenticate(page, 'SUPER_ADMIN', [], (body) => { reordered = body })
+  await page.getByRole('link', { name: '메뉴 관리' }).click()
+  await expect(page.getByRole('button', { name: '파일 관리 메뉴 드래그', exact: true })).toBeVisible()
+  const source = page.getByRole('button', { name: '파일 관리 메뉴 드래그', exact: true })
+  const target = page.locator('[data-menu-id="dashboard"]')
+  const sourceBox = await source.boundingBox()
+  const targetBox = await target.boundingBox()
+  if (!sourceBox || !targetBox) throw new Error('드래그 대상 메뉴를 찾을 수 없습니다.')
+  await source.hover({ position: { x: 8, y: sourceBox.height / 2 } })
+  await page.mouse.down()
+  await page.mouse.move(sourceBox.x + 8, sourceBox.y + sourceBox.height / 2 - 12, { steps: 2 })
+  await expect(page.locator('[data-menu-id="files"]')).toHaveAttribute('data-dragging', 'true')
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 10 })
+  await page.mouse.up()
+  await page.getByRole('button', { name: '메뉴 구성 저장' }).click()
+  await expect.poll(() => reordered).toEqual(expect.arrayContaining([
+    expect.objectContaining({ id: 'files', parentId: 'permissions', order: 10 }),
+  ]))
 })
 
 test('VIEWER는 관리 메뉴가 없고 직접 접근해도 서버의 403을 처리한다', async ({ page }) => {

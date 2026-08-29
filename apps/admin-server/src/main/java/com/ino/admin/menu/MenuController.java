@@ -42,6 +42,11 @@ class MenuController {
         return menuManagement.update(id, request.toCommand());
     }
 
+    @PatchMapping("/order")
+    List<MenuManagementUseCase.MenuView> reorder(@Valid @RequestBody List<ReorderMenuRequest> request) {
+        return menuManagement.reorder(request.stream().map(ReorderMenuRequest::toCommand).toList());
+    }
+
     @GetMapping("/me")
     List<MenuQueryUseCase.MenuItem> findMine(@AuthenticationPrincipal Jwt jwt) {
         return menuQuery.findAccessibleMenus(Set.copyOf(
@@ -54,6 +59,14 @@ class MenuController {
             @Size(max = 100) String requiredPermission, boolean enabled) {
         MenuManagementUseCase.SaveMenu toCommand() {
             return new MenuManagementUseCase.SaveMenu(id, parentId, label, route, icon, order, requiredPermission, enabled);
+        }
+    }
+
+
+    record ReorderMenuRequest(@NotBlank @Size(max = 50) String id, @Size(max = 50) String parentId,
+            @Min(0) int order) {
+        MenuManagementUseCase.MenuPosition toCommand() {
+            return new MenuManagementUseCase.MenuPosition(id, parentId, order);
         }
     }
 }

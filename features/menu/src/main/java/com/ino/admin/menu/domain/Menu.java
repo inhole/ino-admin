@@ -71,4 +71,10 @@ public class Menu {
         this.enabled = enabled;
         this.updatedAt = now;
     }
+
+    public void move(String parentId, int sortOrder, Instant now) {
+        this.parentId = parentId;
+        this.sortOrder = sortOrder;
+        this.updatedAt = now;
+    }
 }

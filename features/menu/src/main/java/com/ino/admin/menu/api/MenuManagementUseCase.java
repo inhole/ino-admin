@@ -6,9 +6,11 @@ public interface MenuManagementUseCase {
     List<MenuView> findAll();
     MenuView create(SaveMenu command);
     MenuView update(String id, SaveMenu command);
+    List<MenuView> reorder(List<MenuPosition> positions);
 
     record SaveMenu(String id, String parentId, String label, String route, String icon, int order,
                     String requiredPermission, boolean enabled) {}
+    record MenuPosition(String id, String parentId, int order) {}
     record MenuView(String id, String parentId, String label, String route, String icon, int order,
                     String requiredPermission, boolean enabled) {}
 }

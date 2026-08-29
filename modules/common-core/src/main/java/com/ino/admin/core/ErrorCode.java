@@ -30,6 +30,8 @@ public enum ErrorCode {
     INVALID_MENU_PARENT("부모 메뉴가 존재하지 않습니다."),
     MENU_CYCLE("메뉴 트리에 순환을 만들 수 없습니다."),
     MENU_ORDER_DUPLICATED("같은 부모 아래 정렬 순서가 중복됩니다."),
+    MENU_DEPTH_EXCEEDED("메뉴는 최대 3뎁스까지 구성할 수 있습니다."),
+    INVALID_MENU_REORDER("전체 메뉴의 올바른 재정렬 정보가 필요합니다."),
     EXCEL_TEMPLATE_FAILED("Excel 양식을 생성하지 못했습니다."),
     EXCEL_IMPORT_INVALID("Excel 가져오기 내용이 올바르지 않습니다."),
     EXCEL_ROW_LIMIT("Excel 내보내기 최대 행 수를 초과했습니다."),
