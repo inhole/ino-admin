@@ -28,12 +28,12 @@ import { Separator } from "@/components/ui/separator";
 import {
   Sidebar, SidebarContent, SidebarHeader, SidebarInset,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSkeleton,
+  SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem,
   SidebarProvider, SidebarRail, SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/hook/useAuth";
 import { LanguageMenu, ThemeMenu } from "@/features/settings";
-import { GlobalMenuSearch } from "@/components/layout/GlobalMenuSearch";
 
 const iconMap = {
   users: Users,
@@ -50,7 +50,7 @@ const menuLabelKeys = {
   permissions: "navPermissions",
   "menu-management": "navMenuManagement",
   files: "navFiles",
-  "audit-logs": "navAuditLogs",
+  "access-history": "navAccessHistory",
 } as const;
 
 function CloseMobileSidebarOnNavigation() {
@@ -71,7 +71,8 @@ export function AdminLayout() {
     queryFn: getMyMenus,
     enabled: Boolean(user),
   });
-  const currentMenu = menus.data?.find((menu) =>
+  const allMenus = menus.data?.flatMap((menu) => [menu, ...menu.children]) ?? [];
+  const currentMenu = allMenus.find((menu) =>
     menu.route === "/"
       ? location.pathname === "/"
       : location.pathname.startsWith(menu.route),
@@ -104,7 +105,8 @@ export function AdminLayout() {
               const label = menuLabel(menu);
               const active = menu.route === "/"
                 ? location.pathname === "/"
-                : location.pathname.startsWith(menu.route);
+                : location.pathname.startsWith(menu.route)
+                  || menu.children.some((child) => location.pathname.startsWith(child.route));
               return (
                 <SidebarMenuItem key={menu.id}>
                   <SidebarMenuButton
@@ -115,6 +117,20 @@ export function AdminLayout() {
                     <Icon aria-hidden="true" />
                     <span>{label}</span>
                   </SidebarMenuButton>
+                  {menu.children.length > 0 && (
+                    <SidebarMenuSub>
+                      {menu.children.map((child) => (
+                        <SidebarMenuSubItem key={child.id}>
+                          <SidebarMenuSubButton
+                            isActive={location.pathname.startsWith(child.route)}
+                            render={<NavLink to={child.route} />}
+                          >
+                            <span>{menuLabel(child)}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  )}
                 </SidebarMenuItem>
               );
             })}
@@ -126,11 +142,6 @@ export function AdminLayout() {
         <header className="safe-top sticky top-0 z-20 flex min-h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur sm:px-6">
           <SidebarTrigger aria-label={t("openMenu")} />
           <Separator className="h-5" orientation="vertical" />
-          <GlobalMenuSearch
-            className="w-36 shrink-0 sm:w-64"
-            getMenuLabel={menuLabel}
-            menus={menus.data ?? []}
-          />
           <Breadcrumb className="min-w-0 flex-1">
             <BreadcrumbList className="flex-nowrap">
               <BreadcrumbItem className="hidden sm:inline-flex">

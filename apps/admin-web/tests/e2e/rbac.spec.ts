@@ -9,8 +9,10 @@ const tokens = {
 
 const managementMenus = [
   { id: 'dashboard', label: '대시보드', route: '/', icon: 'layout-dashboard', order: 10, children: [] },
-  { id: 'users', label: '사용자 관리', route: '/users', icon: 'users', order: 20, children: [] },
-  { id: 'permissions', label: '권한 관리', route: '/permissions', icon: 'key-round', order: 30, children: [] },
+  { id: 'users', label: '사용자 관리', route: '/users', icon: 'users', order: 20, children: [
+    { id: 'permissions', label: '권한 관리', route: '/permissions', icon: 'key-round', order: 10, children: [] },
+    { id: 'access-history', label: '접속 이력', route: '/access-history', icon: 'history', order: 20, children: [] },
+  ] },
   { id: 'menus', label: '메뉴 관리', route: '/menu-management', icon: 'menu', order: 40, children: [] },
   { id: 'files', label: '파일 관리', route: '/files', icon: 'file', order: 50, children: [] },
 ]
@@ -28,7 +30,7 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: u
     if (path === '/api/v1/auth/refresh') return json(route, tokens)
     if (path === '/api/v1/auth/me') return json(route, {
       id: role.toLowerCase(), email: `${role.toLowerCase()}@example.com`, displayName: role,
-      status: 'ACTIVE', role, permissions: isSuperAdmin ? ['user:read', 'user:create', 'user:update', 'permission:read', 'permission:update', 'menu:read', 'menu:write'] : [],
+      status: 'ACTIVE', role, permissions: isSuperAdmin ? ['user:read', 'user:create', 'user:update', 'permission:read', 'permission:update', 'menu:read', 'menu:write', 'access-history:read'] : [],
     })
     if (path === '/api/v1/menus/me') return json(route, isSuperAdmin ? managementMenus : managementMenus.slice(0, 1))
     if (path === '/api/v1/users') {
@@ -54,6 +56,9 @@ async function authenticate(page: Page, role: 'SUPER_ADMIN' | 'VIEWER', files: u
     if (path === '/api/v1/permissions') return json(route, [
       { role: 'ADMIN', displayName: 'ADMIN', systemRole: true, enabled: true, permissions: ['user:read'] },
     ])
+    if (path === '/api/v1/access-history') return json(route, {
+      content: [], page: 0, size: 20, totalElements: 0, totalPages: 0,
+    })
     if (path === '/api/v1/files') return json(route, {
       content: files, page: 0, size: 20, totalElements: files.length, totalPages: files.length > 0 ? 1 : 0,
     })
@@ -73,10 +78,13 @@ test('SUPER_ADMIN에게 관리 메뉴를 모두 노출한다', async ({ page }) 
 
   await expect(page.getByRole('link', { name: '사용자' })).toBeVisible()
   await expect(page.getByRole('link', { name: '권한' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '접속 이력' })).toBeVisible()
   await expect(page.getByRole('link', { name: '메뉴 관리' })).toBeVisible()
   await page.getByRole('button', { name: '계정 메뉴' }).click()
   await expect(page.getByRole('menuitem', { name: '로그아웃' })).toBeVisible()
   await page.keyboard.press('Escape')
+  await page.getByRole('link', { name: '접속 이력' }).click()
+  await expect(page.getByRole('heading', { name: '접속 이력' })).toBeVisible()
   await page.getByRole('link', { name: '파일 관리' }).click()
   await expect(page.getByRole('heading', { name: '파일 관리' })).toBeVisible()
   await expect(page.getByText('업로드한 파일이 없습니다.')).toBeVisible()

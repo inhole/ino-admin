@@ -29,12 +29,11 @@ class AuditLogService implements AuditWriter {
     }
 
     @Transactional(readOnly = true)
-    Page<AuditLog> find(UUID actorId, String action, AuditResult result, Instant from, Instant to,
+    Page<AuditLog> findAccessHistory(AuditResult result, Instant from, Instant to,
             int page, int size) {
         return repository.findAll((root, ignored, builder) -> {
             var predicates = new ArrayList<Predicate>();
-            if (actorId != null) predicates.add(builder.equal(root.get("actorId"), actorId));
-            if (action != null) predicates.add(builder.equal(root.get("action"), action));
+            predicates.add(builder.equal(root.get("action"), "AUTH_LOGIN"));
             if (result != null) predicates.add(builder.equal(root.get("result"), result));
             if (from != null) predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
             if (to != null) predicates.add(builder.lessThan(root.get("createdAt"), to));

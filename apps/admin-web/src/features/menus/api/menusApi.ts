@@ -4,7 +4,7 @@ export interface MenuItem {
   id: string;
   label: string;
   route: string;
-  icon: "layout-dashboard" | "users" | "key-round" | "menu" | "file";
+  icon: "layout-dashboard" | "users" | "key-round" | "menu" | "file" | "history";
   order: number;
   children: MenuItem[];
 }
