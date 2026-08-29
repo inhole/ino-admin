@@ -33,3 +33,9 @@ export function updateMenu(id: string, input: ManagedMenu) {
     body: JSON.stringify(input),
   });
 }
+export function reorderMenus(input: Pick<ManagedMenu, "id" | "parentId" | "order">[]) {
+  return request<ManagedMenu[]>("/api/v1/menus/order", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
