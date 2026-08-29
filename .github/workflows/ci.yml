@@ -52,16 +52,16 @@ jobs:
           APP_FILE_STORAGE_S3_ACCESS_KEY: ino_admin
           APP_FILE_STORAGE_S3_SECRET_KEY: ino_admin_local_password
           APP_FILE_STORAGE_S3_PATH_STYLE_ACCESS: "true"
-      - name: 실행 결과 요약
+      - name: 자동 테스트 결과 요약
         if: always()
-        run: |
-          case "${{ job.status }}" in success) result="성공";; failure) result="실패";; cancelled) result="취소";; *) result="${{ job.status }}";; esac
-          {
-            echo "## 실행 결과 요약"
-            echo "- 작업: 백엔드 통합·아키텍처 검증"
-            echo "- 결과: **${result}**"
-            echo "- 커밋: \`${GITHUB_SHA}\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: >-
+          node .github/scripts/test-summary.cjs
+          --title "백엔드 단위·통합·아키텍처"
+          --include "build/test-results/test"
+          --include "build/test-results/integrationTest"
+          --include "build/test-results/architectureTest"
+          --status "${{ job.status }}"
+          --commit "$GITHUB_SHA"
 
   frontend:
     runs-on: ubuntu-latest
@@ -80,16 +80,14 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - name: 실행 결과 요약
+      - name: 자동 테스트 결과 요약
         if: always()
-        run: |
-          case "${{ job.status }}" in success) result="성공";; failure) result="실패";; cancelled) result="취소";; *) result="${{ job.status }}";; esac
-          {
-            echo "## 실행 결과 요약"
-            echo "- 작업: 프론트엔드 정적·단위·빌드 검증"
-            echo "- 결과: **${result}**"
-            echo "- 커밋: \`${GITHUB_SHA}\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: >-
+          node ../../.github/scripts/test-summary.cjs
+          --title "프론트엔드 단위"
+          --include "test-results/vitest"
+          --status "${{ job.status }}"
+          --commit "$GITHUB_SHA"
 
   frontend-e2e:
     runs-on: ubuntu-latest
@@ -106,16 +104,14 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
-      - name: 실행 결과 요약
+      - name: 자동 테스트 결과 요약
         if: always()
-        run: |
-          case "${{ job.status }}" in success) result="성공";; failure) result="실패";; cancelled) result="취소";; *) result="${{ job.status }}";; esac
-          {
-            echo "## 실행 결과 요약"
-            echo "- 작업: 프론트엔드 E2E 검증"
-            echo "- 결과: **${result}**"
-            echo "- 커밋: \`${GITHUB_SHA}\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: >-
+          node ../../.github/scripts/test-summary.cjs
+          --title "프론트엔드 E2E"
+          --include "test-results/playwright"
+          --status "${{ job.status }}"
+          --commit "$GITHUB_SHA"
 
   compose:
     runs-on: ubuntu-latest

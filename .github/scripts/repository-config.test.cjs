@@ -138,13 +138,60 @@ test('main 통합 CI는 main 대상 PR과 수동 실행에서 전체 검증을 �
 });
 
 test('GitHub Actions는 모든 workflow의 실행 결과를 한글 Summary로 남긴다', () => {
-  for (const fileName of ['ci.yml', 'dev-ci.yml', 'dev-infra.yml', 'pr-policy.yml']) {
+  for (const fileName of ['dev-infra.yml', 'pr-policy.yml']) {
     assertIncludesAll(readWorkflow(fileName), [
       'GITHUB_STEP_SUMMARY',
       '실행 결과 요약',
       '결과:',
     ]);
   }
+
+  for (const fileName of ['ci.yml', 'dev-ci.yml']) {
+    assertIncludesAll(readWorkflow(fileName), [
+      'test-summary.cjs',
+      '자동 테스트 결과 요약',
+    ]);
+  }
+  assertIncludesAll(readRepositoryFile('.github', 'scripts', 'test-summary.cjs'), [
+    'GITHUB_STEP_SUMMARY',
+    '자동 테스트 결과',
+    '전체 결과:',
+  ]);
+});
+
+test('테스트 workflow는 JUnit XML을 실제 테스트 집계 Summary로 변환한다', () => {
+  for (const fileName of ['ci.yml', 'dev-ci.yml']) {
+    assertIncludesAll(readWorkflow(fileName), [
+      'test-summary.cjs',
+      '자동 테스트 결과',
+      'if: always()',
+    ]);
+  }
+
+  assertIncludesAll(readWorkflow('dev-ci.yml'), [
+    '--include "build/test-results/test"',
+    '--include "build/test-results/architectureTest"',
+  ]);
+  assert.ok(
+    !readWorkflow('dev-ci.yml').includes('--include "build/test-results/integrationTest"'),
+    'dev 빠른 CI는 이전 integrationTest 리포트를 집계하면 안 됩니다',
+  );
+  assertIncludesAll(readWorkflow('ci.yml'), [
+    '--include "build/test-results/test"',
+    '--include "build/test-results/integrationTest"',
+    '--include "build/test-results/architectureTest"',
+  ]);
+
+  assertIncludesAll(readRepositoryFile('apps', 'admin-web', 'vite.config.ts'), [
+    "reporters: process.env.CI",
+    "'junit'",
+    "test-results/vitest/results.xml",
+  ]);
+  assertIncludesAll(readRepositoryFile('apps', 'admin-web', 'playwright.config.ts'), [
+    "['github']",
+    "['junit'",
+    "test-results/playwright/results.xml",
+  ]);
 });
 
 test('개발 규칙 문서는 dev 배치 흐름과 이슈 연결 규칙을 일관되게 설명한다', () => {
