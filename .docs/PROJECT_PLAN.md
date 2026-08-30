@@ -504,7 +504,7 @@ public interface FileStorage {
 - [x] `BusinessException`은 문자열 code/message 또는 최소 오류 descriptor 계약만 사용하게 하고 특정 enum 의존을 제거한다.
 - [x] `ApiErrorFactory`가 앱 오류 enum을 알지 않도록 문자열 기반 생성 계약만 유지한다.
 - [x] 독립 consumer에서 앱 오류 catalog의 부재와 최소 오류 descriptor 소비를 검증한다.
-- [ ] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
+- [x] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
 
 **완료 기준:** 기존 API 오류 응답 회귀 테스트가 유지되고, `common-core`와 `common-web`에 identity/menu/file/excel 업무 오류 상수가 없다.
 
