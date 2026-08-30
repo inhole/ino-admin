@@ -13,8 +13,9 @@ description: Use when INO Admin의 GitHub 이슈를 구현하며 작업 브랜�
 4. 최소 구현으로 GREEN을 만든 뒤 필요한 리팩터링을 수행하고 영향받는 검증을 다시 통과시킨다.
 5. 아래 문서 동기화 기준에 따라 코드와 현재 상태 문서를 같은 변경에서 맞춘다.
 6. 한 논리적 변경을 `type: 한글 변경사항`으로 커밋하고, 커밋 본문에 반드시 `Refs: #번호`를 넣는다.
-7. `dev`에 push한 뒤 `Dev CI`를 확인한다. `infra/**`를 변경했다면 `Dev Infra CI`도 확인한다.
-8. 빠른 CI가 실패하거나 Actions를 확인할 수 없으면 다음 Issue로 진행하지 말고 현재 Issue를 수정하거나 미검증 상태로 보고한다.
+7. feature/Codex 브랜치 작업이면 로컬 검증 후 최신 `dev`에 `--no-ff` merge commit으로 병합한다. `dev` 전달 PR은 만들지 않는다.
+8. `dev`를 push한 뒤 그 merge SHA의 `Dev CI`를 확인한다. `infra/**`를 변경했다면 `Dev Infra CI`도 확인한다.
+9. 빠른 CI가 실패하거나 Actions를 확인할 수 없으면 다음 Issue로 진행하지 말고 현재 Issue를 수정하거나 미검증 상태로 보고한다.
 
 ## TDD와 회귀 검증
 
@@ -35,9 +36,9 @@ description: Use when INO Admin의 GitHub 이슈를 구현하며 작업 브랜�
 | 변경 | 작업 위치 | 전달 |
 | --- | --- | --- |
 | 작은 기능, 격리된 버그, 테스트, 문서 | `dev` 직접 커밋 | `Dev CI` 통과 확인 |
-| migration, 보안 경계, 공개 API·공용 설정, 장기·병렬·고위험 작업 | `feature/Codex` 브랜치 | `dev` 대상 PR을 merge commit으로 병합 |
+| migration, 보안 경계, 공개 API·공용 설정, 장기·병렬·고위험 작업 | `feature/Codex` 브랜치 | 로컬 `dev`에 `--no-ff` 병합 후 push |
 
-feature 브랜치는 위 고위험 기준을 하나 이상 충족할 때만 선택하며, 이름은 사람은 `<type>/<issue>-<slug>`, Codex는 `codex/<issue>-<slug>`를 사용한다. feature 브랜치도 `dev`에서 시작해 `dev`로만 전달한다.
+feature 브랜치는 위 고위험 기준을 하나 이상 충족할 때만 선택하며, 이름은 사람은 `<type>/<issue>-<slug>`, Codex는 `codex/<issue>-<slug>`를 사용한다. feature 브랜치도 `dev`에서 시작해 `dev`로만 전달한다. 병합 전에 `dev`가 `origin/dev`와 fast-forward 가능한 최신 상태인지 확인하고, 충돌이 있으면 feature 브랜치에서 해결·재검증한 뒤 병합한다. `dev → main` 배치 전달에만 PR을 사용한다.
 
 ## 잘못된 요청의 교정
 

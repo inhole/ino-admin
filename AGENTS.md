@@ -17,7 +17,7 @@
 - 사용자가 요청하지 않았고 지속적인 필요가 없다면 설계 문서, 구현 계획, ADR, 추가 요약을 만들지 않는다.
 - 광범위한 저장소 스캔과 반복되는 전체 테스트보다 집중된 검색과 영향받는 테스트를 우선한다. 단, 필수 테스트·보안 검토·Issue/Milestone 추적·GitHub Actions 검증을 줄이지 않는다.
 - 커밋 요약은 `type: 변경사항` 형식의 한글로 작성한다. Issue 구현·커밋·feature/Codex → `dev` PR에는 `ino-admin-work-on-issue`를 사용하고, `ino-admin-deliver-change`는 `dev` → `main` 배치 전달에만 사용한다.
-- `dev`를 장기 통합 브랜치로 사용한다. 작고 격리된 변경은 `dev`에 직접 반영하고, 위험하거나 장기간·병렬 작업은 feature 브랜치에서 진행한 뒤 merge commit으로 `dev`에 병합한다.
+- `dev`를 장기 통합 브랜치로 사용한다. 작고 격리된 변경은 `dev`에 직접 반영하고, 위험하거나 장기간·병렬 작업은 feature 브랜치에서 진행한 뒤 PR 없이 로컬 merge commit으로 `dev`에 병합한다.
 - `docs/development/branch-strategy.md`의 최초 정책 bootstrap 이후 `main`을 대상으로 하는 PR은 `dev` → `main` 배치 PR만 허용한다. squash·rebase merge를 피하고, 배치 병합 후 `main`에서 `dev`를 fast-forward한다.
 - 독립적으로 추적할 가치가 있는 기능, 버그, 기술·운영 작업은 GitHub Issue를 만든다. 작은 단계마다 별도 Issue를 만들기보다 Phase나 vertical slice 단위의 Issue와 checklist를 선호한다.
 - 범위 내 문서, 테스트, 리팩토링, 후속 수정은 기준 Issue에 포함한다. 결함이 독립적인 우선순위 관리가 필요하거나 기존 범위 밖이면 별도 버그 Issue를 만든다.

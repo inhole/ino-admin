@@ -959,9 +959,9 @@ redis      MVP 이후 cache/rate limit용, 선택
 - 기본 브랜치: `main`, 항상 배포 가능 상태 유지
 - 장기 dev 통합 브랜치: `dev`, 완료된 이슈의 논리적 커밋을 누적한다.
 - 작은 기능, 격리된 버그, 테스트, 문서는 `dev`에 직접 커밋한다.
-- migration, 보안, 공개 API/공용 설정, 장기·병렬·고위험 작업은 feature branch를 사용한다.
+- migration, 보안, 공개 API/공용 설정, 장기·병렬·고위험 작업은 feature branch를 사용하고 로컬 검증 후 PR 없이 `dev`에 merge commit으로 병합한다.
 - 사람 브랜치 형식: `<type>/<issue-number>-<slug>`, Codex 브랜치 형식: `codex/<issue-number>-<slug>`
-- 최초 정책 부트스트랩 예외는 브랜치 전략 문서의 신뢰 경계를 따르며, 그 이후 feature branch는 `dev`로 merge commit 병합하고 `main`은 `dev → main` 배치 PR만 받는다.
+- 최초 정책 부트스트랩 예외는 브랜치 전략 문서의 신뢰 경계를 따르며, feature branch는 PR 없이 `dev`로 merge commit 병합하고 `main`은 `dev → main` 배치 PR만 받는다.
 
 ### 15.2 커밋 규칙
 
