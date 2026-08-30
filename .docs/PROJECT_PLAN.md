@@ -516,7 +516,7 @@ public interface FileStorage {
 - [x] `poi-ooxml` 의존성을 `api`에서 `implementation`으로 변경한다.
 - [x] staged artifact만 사용하는 외부 consumer compile test에서 POI 없이 `XlsxTableReader`/`XlsxTableWriter`를 사용할 수 있음을 검증한다.
 - [x] formula 거부, typed date, streaming export와 행 제한 회귀를 유지한다.
-- [ ] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
+- [x] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
 
 **완료 기준:** common-excel public signature에 `org.apache.poi.*`가 없고 생성 POM의 compile scope에 POI가 노출되지 않는다.
 
