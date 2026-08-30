@@ -545,7 +545,7 @@ public interface FileStorage {
 - [x] 공통 감사 계약은 actor/action/resource/result/trace 등 저장소 독립적인 최소 이벤트만 유지하고, 필요한 actor snapshot 확장 방식은 명시적으로 정의한다.
 - [x] 개인정보 필드는 allowlist, 길이 제한과 저장 목적이 검증된 경우에만 앱 adapter에서 구성한다.
 - [x] 기존 감사 검색 데이터와 민감정보 회귀 테스트를 통과한다.
-- [ ] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
+- [x] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
 
 **완료 기준:** `common-audit`이 servlet·로그인 API 문맥을 알지 않고 기존 감사 검색 데이터와 민감정보 회귀 테스트가 통과한다.
 
