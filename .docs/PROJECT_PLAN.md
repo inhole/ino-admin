@@ -532,7 +532,7 @@ public interface FileStorage {
 - [x] Local-only, S3, consumer override 세 구성을 각각 context/contract test로 검증한다.
 - [x] `admin-server`는 S3 기능이 필요하므로 두 artifact를 명시적으로 조립한다.
 - [x] Local-only consumer의 compile/runtime dependency graph에 AWS SDK가 없음을 검증한다.
-- [ ] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
+- [x] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
 
 **완료 기준:** Local-only consumer의 compile/runtime dependency graph에 AWS SDK가 없고 Local/S3 저장 계약 테스트가 동일하게 통과한다.
 
