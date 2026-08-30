@@ -1,6 +1,8 @@
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JavaToolchainService
 
 plugins {
     base
@@ -100,6 +102,42 @@ tasks.register("verifyCommonModulePublications") {
             val forbiddenArtifacts = listOf("admin-server", "identity", "menu", "file-management")
             check(forbiddenArtifacts.none { "<artifactId>$it</artifactId>" in pomText }) {
                 "Forbidden app or feature dependency in $pom"
+            }
+            if (moduleName == "common-excel") {
+                val poiDependency = Regex("<dependency>.*?<artifactId>poi-ooxml</artifactId>.*?</dependency>", RegexOption.DOT_MATCHES_ALL)
+                    .find(pomText)?.value
+                check(poiDependency != null && "<scope>runtime</scope>" in poiDependency) {
+                    "common-excel must keep Apache POI as a runtime implementation detail in $pom"
+                }
+                val fixtureRoot = layout.buildDirectory.dir("artifact-consumer/common-excel").get().asFile
+                val source = fixtureRoot.resolve("src/ArtifactConsumer.java")
+                val classes = fixtureRoot.resolve("classes")
+                source.parentFile.mkdirs()
+                classes.mkdirs()
+                source.writeText(
+                    """
+                    import com.ino.admin.excel.io.XlsxCell;
+                    import com.ino.admin.excel.io.XlsxReadOptions;
+                    import com.ino.admin.excel.io.XlsxTableReader;
+                    import com.ino.admin.excel.io.XlsxTableWriter;
+                    import com.ino.admin.excel.io.XlsxWriteOptions;
+                    import java.util.List;
+
+                    final class ArtifactConsumer {
+                        XlsxTableReader reader = new XlsxTableReader();
+                        XlsxTableWriter writer = new XlsxTableWriter();
+                        XlsxReadOptions read = new XlsxReadOptions(List.of("Value"), 1);
+                        XlsxWriteOptions write = new XlsxWriteOptions("Sheet", List.of("Value"));
+                        XlsxCell cell = XlsxCell.text("value");
+                    }
+                    """.trimIndent()
+                )
+                val toolchains = project(":modules:common-excel").extensions.getByType(JavaToolchainService::class.java)
+                val compiler = toolchains.compilerFor { languageVersion.set(JavaLanguageVersion.of(25)) }.get()
+                providers.exec {
+                    commandLine(compiler.executablePath.asFile.absolutePath, "-classpath", jar.absolutePath,
+                        "-d", classes.absolutePath, source.absolutePath)
+                }.result.get().assertNormalExitValue()
             }
         }
     }

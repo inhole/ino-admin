@@ -512,10 +512,11 @@ public interface FileStorage {
 
 **목표:** Apache POI를 구현 세부사항으로 격리하고 consumer compile classpath를 최소화한다.
 
-- POI `Row`를 받는 `ExcelCellSafety.rejectFormulas`의 실제 consumer가 없는 상태를 테스트로 확인한 뒤 제거하거나 내부 구현으로 축소한다.
-- `poi-ooxml` 의존성을 `api`에서 `implementation`으로 변경한다.
-- staged artifact만 사용하는 외부 consumer compile test에서 POI 없이 `XlsxTableReader`/`XlsxTableWriter`를 사용할 수 있음을 검증한다.
-- formula 거부, typed date, streaming export와 행 제한 회귀를 유지한다.
+- [x] POI `Row`를 받는 `ExcelCellSafety.rejectFormulas`의 실제 consumer가 없는 상태를 확인하고 제거한다.
+- [x] `poi-ooxml` 의존성을 `api`에서 `implementation`으로 변경한다.
+- [x] staged artifact만 사용하는 외부 consumer compile test에서 POI 없이 `XlsxTableReader`/`XlsxTableWriter`를 사용할 수 있음을 검증한다.
+- [x] formula 거부, typed date, streaming export와 행 제한 회귀를 유지한다.
+- [ ] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
 
 **완료 기준:** common-excel public signature에 `org.apache.poi.*`가 없고 생성 POM의 compile scope에 POI가 노출되지 않는다.
 
