@@ -1,6 +1,8 @@
-package com.ino.admin.core;
+package com.ino.admin.error;
 
-public enum ErrorCode {
+import com.ino.admin.core.ErrorDescriptor;
+
+public enum ErrorCode implements ErrorDescriptor {
     VALIDATION_ERROR("요청 값이 올바르지 않습니다."),
     FORBIDDEN("요청을 수행할 권한이 없습니다."),
     INTERNAL_ERROR("서버 오류가 발생했습니다."),
@@ -39,10 +41,8 @@ public enum ErrorCode {
 
     private final String message;
 
-    ErrorCode(String message) {
-        this.message = message;
-    }
+    ErrorCode(String message) { this.message = message; }
 
-    public String code() { return name(); }
-    public String message() { return message; }
+    @Override public String code() { return name(); }
+    @Override public String message() { return message; }
 }

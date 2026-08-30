@@ -1,6 +1,6 @@
 package com.ino.admin.auth;
 
-import com.ino.admin.core.ErrorCode;
+import com.ino.admin.error.ErrorCode;
 import com.ino.admin.web.ApiError;
 import com.ino.admin.web.TraceIdFilter;
 import jakarta.servlet.http.HttpServletRequest;

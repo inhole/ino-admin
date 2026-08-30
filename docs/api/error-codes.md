@@ -34,3 +34,5 @@ All errors include `code`, `message`, `fieldErrors`, `traceId`, and an ISO-8601 
 | `INTERNAL_ERROR` | 500 | An unexpected server error occurred. |
 
 Clients should branch on `code`, not localized `message` text. Quote the `traceId` when reporting an incident.
+
+오류 catalog와 기본 메시지는 `admin-server`의 `com.ino.admin.error.ErrorCode`가 소유한다. `common-core`는 consumer가 자체 catalog를 정의할 수 있도록 `ErrorDescriptor`와 `BusinessException` 계약만 제공한다.

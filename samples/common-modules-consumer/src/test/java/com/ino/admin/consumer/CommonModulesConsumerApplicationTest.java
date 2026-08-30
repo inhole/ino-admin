@@ -1,8 +1,11 @@
 package com.ino.admin.consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.ino.admin.audit.AuditWriter;
+import com.ino.admin.core.BusinessException;
+import com.ino.admin.core.ErrorDescriptor;
 import com.ino.admin.core.PageResponse;
 import com.ino.admin.excel.io.XlsxCell;
 import com.ino.admin.excel.io.XlsxReadOptions;
@@ -41,6 +44,13 @@ class CommonModulesConsumerApplicationTest {
         assertThat(fileStorage).isNotNull();
         assertThat(auditWriter).isNotNull();
         assertThat(new PageResponse<>(List.of("ok"), 0, 1, 1, 1).content()).containsExactly("ok");
+        ErrorDescriptor error = new ErrorDescriptor() {
+            @Override public String code() { return "CONSUMER_ERROR"; }
+            @Override public String message() { return "consumer message"; }
+        };
+        assertThat(new BusinessException(error).code()).isEqualTo("CONSUMER_ERROR");
+        assertThatThrownBy(() -> Class.forName("com.ino.admin.core.ErrorCode"))
+                .isInstanceOf(ClassNotFoundException.class);
         assertThat(ExcelCellSafety.safeText("=1+1")).isEqualTo("'=1+1");
         var workbook = new XlsxTableWriter().write(new XlsxWriteOptions("Sample", List.of("Value")),
                 rows -> rows.append(List.of(XlsxCell.text("ok"))));

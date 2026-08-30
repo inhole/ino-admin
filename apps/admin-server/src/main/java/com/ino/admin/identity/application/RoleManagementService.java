@@ -1,7 +1,7 @@
 package com.ino.admin.identity.application;
 
 import com.ino.admin.core.BusinessException;
-import com.ino.admin.core.ErrorCode;
+import com.ino.admin.error.ErrorCode;
 import com.ino.admin.identity.api.RoleManagementUseCase;
 import com.ino.admin.identity.domain.Permission;
 import com.ino.admin.identity.domain.Role;

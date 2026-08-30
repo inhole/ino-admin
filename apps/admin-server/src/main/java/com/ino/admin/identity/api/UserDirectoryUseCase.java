@@ -1,7 +1,7 @@
 package com.ino.admin.identity.api;
 
 import com.ino.admin.core.BusinessException;
-import com.ino.admin.core.ErrorCode;
+import com.ino.admin.error.ErrorCode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;

@@ -8,12 +8,12 @@ public class BusinessException extends RuntimeException {
         this.code = code;
     }
 
-    public BusinessException(ErrorCode errorCode) {
-        this(errorCode.code(), errorCode.message());
+    public BusinessException(ErrorDescriptor error) {
+        this(error.code(), error.message());
     }
 
-    public BusinessException(ErrorCode errorCode, String message) {
-        this(errorCode.code(), message);
+    public BusinessException(ErrorDescriptor error, String message) {
+        this(error.code(), message);
     }
 
     public String code() {
