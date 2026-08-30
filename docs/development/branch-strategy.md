@@ -9,7 +9,7 @@
 - 작은 기능, 격리된 버그, 테스트, 문서 변경은 `dev`에 직접 커밋한다.
 - migration, 보안 경계, 공개 API/공용 설정, 장기·병렬·고위험 작업은 feature 브랜치에서 시작한다. 사람은 `<type>/<issue>-<slug>`, Codex는 `codex/<issue>-<slug>`를 사용한다.
 
-고위험 작업은 **feature branch → dev** PR로 전달한다. `dev` 대상 PR은 빠른 검증과 필요한 리뷰를 마친 뒤 squash 또는 rebase 없이 **merge commit**으로 병합하여 논리적 커밋을 보존한다.
+고위험 작업은 feature 브랜치에서 로컬 검증한 뒤 최신 `dev`에 `git merge --no-ff <feature-branch>`로 직접 병합한다. **feature branch → dev PR은 만들지 않는다.** merge commit으로 이슈별 논리적 커밋을 보존하고 `dev`를 push한 뒤 해당 merge SHA의 `Dev CI`를 확인한다. PR은 `dev → main` 배치 전달에만 사용한다.
 
 ## 최초 1회 부트스트랩
 
@@ -33,6 +33,17 @@ git push origin dev
 ```
 
 커밋을 push한 뒤 GitHub Actions의 `Dev CI`를 확인한다. `infra/**`를 바꿨다면 `Dev Infra CI`도 확인한다. Actions가 실패하면 다음 이슈로 넘어가지 말고 같은 이슈에서 수정한다.
+
+feature 브랜치 작업은 다음 순서로 전달한다.
+
+```powershell
+git switch dev
+git pull --ff-only origin dev
+git merge --no-ff <feature-branch>
+git push origin dev
+```
+
+병합 전 feature 브랜치에서 영향받는 로컬 검증을 통과해야 한다. `dev` push 후 실행된 CI가 실패하면 병합을 되돌리거나 이력을 rewrite하지 않고 같은 Issue의 후속 커밋으로 수정한다.
 
 ## 배치 PR과 동기화
 
