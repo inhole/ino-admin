@@ -1,45 +1,22 @@
 package com.ino.admin.auth;
 
 import com.ino.admin.identity.application.port.AccessTokenIssuer;
+import com.ino.admin.security.jwt.JwtTokenService;
 import java.util.List;
-import java.time.Clock;
-import java.time.Instant;
 import java.util.UUID;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.JwsHeader;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Component;
 
 @Component
 class JwtAccessTokenIssuer implements AccessTokenIssuer {
-    private final JwtEncoder jwtEncoder;
-    private final JwtProperties properties;
-    private final Clock clock;
+    private final JwtTokenService jwtTokenService;
 
-    JwtAccessTokenIssuer(JwtEncoder jwtEncoder, JwtProperties properties, Clock clock) {
-        this.jwtEncoder = jwtEncoder;
-        this.properties = properties;
-        this.clock = clock;
+    JwtAccessTokenIssuer(JwtTokenService jwtTokenService) {
+        this.jwtTokenService = jwtTokenService;
     }
 
     @Override
     public IssuedAccessToken issue(UUID userId, String role, List<String> permissions) {
-        var issuedAt = Instant.now(clock);
-        var expiresAt = issuedAt.plus(properties.getAccessTokenTtl());
-        var claims = JwtClaimsSet.builder()
-                .issuer(properties.getIssuer())
-                .audience(java.util.List.of(properties.getAudience()))
-                .subject(userId.toString())
-                .claim("role", role)
-                .claim("permissions", permissions)
-                .id(UUID.randomUUID().toString())
-                .issuedAt(issuedAt)
-                .expiresAt(expiresAt)
-                .build();
-        var header = JwsHeader.with(MacAlgorithm.HS256).build();
-        var token = jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
-        return new IssuedAccessToken(token, properties.getAccessTokenTtl().toSeconds());
+        var issued = jwtTokenService.issue(userId, role, permissions);
+        return new IssuedAccessToken(issued.value(), issued.expiresInSeconds());
     }
 }

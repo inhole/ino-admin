@@ -35,6 +35,7 @@ dependencies {
     implementation(project(":features:file-management"))
     implementation(project(":modules:common-core"))
     implementation(project(":modules:common-web"))
+    implementation(project(":modules:common-security"))
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")

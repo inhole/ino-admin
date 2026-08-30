@@ -1,10 +1,10 @@
-package com.ino.admin.auth;
+package com.ino.admin.security.jwt;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("app.jwt")
-public class JwtProperties {
+public class JwtSecurityProperties {
     private String secret;
     private String issuer = "ino-admin";
     private String audience = "ino-admin-web";
