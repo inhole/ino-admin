@@ -52,6 +52,7 @@ val commonModuleNames = listOf(
     "common-web",
     "common-security",
     "common-file",
+    "common-file-s3",
     "common-audit",
     "common-excel",
 )
@@ -85,6 +86,7 @@ tasks.register("verifyCommonModulePublications") {
     group = "verification"
     description = "Verifies common module JARs and POMs in the repository-local staging repository."
     dependsOn(commonModuleNames.map { ":modules:$it:publishMavenJavaPublicationToStagingRepository" })
+    dependsOn(":samples:common-modules-consumer:verifyNoAwsSdk")
 
     doLast {
         val repository = layout.buildDirectory.dir("staging-repository/com/ino/admin").get().asFile
@@ -102,6 +104,11 @@ tasks.register("verifyCommonModulePublications") {
             val forbiddenArtifacts = listOf("admin-server", "identity", "menu", "file-management")
             check(forbiddenArtifacts.none { "<artifactId>$it</artifactId>" in pomText }) {
                 "Forbidden app or feature dependency in $pom"
+            }
+            if (moduleName == "common-file") {
+                check("software.amazon.awssdk" !in pomText) {
+                    "common-file must not expose AWS SDK dependencies in $pom"
+                }
             }
             if (moduleName == "common-excel") {
                 val poiDependency = Regex("<dependency>.*?<artifactId>poi-ooxml</artifactId>.*?</dependency>", RegexOption.DOT_MATCHES_ALL)

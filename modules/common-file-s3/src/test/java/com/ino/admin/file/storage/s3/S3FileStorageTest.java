@@ -1,4 +1,4 @@
-package com.ino.admin.file.storage;
+package com.ino.admin.file.storage.s3;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,7 +19,8 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 class S3FileStorageTest {
-    @Test void savesAndDeletesUsingConfiguredBucketAndOpaqueKey() {
+    @Test
+    void savesAndDeletesUsingConfiguredBucketAndOpaqueKey() {
         var client = mock(S3Client.class);
         var storage = new S3FileStorage(client, "admin-files");
         storage.save("opaque-key", new byte[] { 1, 2 });
@@ -31,7 +32,8 @@ class S3FileStorageTest {
         verify(client).deleteObject(DeleteObjectRequest.builder().bucket("admin-files").key("opaque-key").build());
     }
 
-    @Test void loadsObjectBytes() {
+    @Test
+    void loadsObjectBytes() {
         var client = mock(S3Client.class);
         when(client.getObject(any(GetObjectRequest.class))).thenReturn(new ResponseInputStream<>(
                 GetObjectResponse.builder().build(),

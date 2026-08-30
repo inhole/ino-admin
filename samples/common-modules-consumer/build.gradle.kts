@@ -24,3 +24,20 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach { useJUnitPlatform() }
+
+tasks.register("verifyNoAwsSdk") {
+    group = "verification"
+    description = "Verifies that the local-only common-file consumer does not resolve AWS SDK."
+
+    doLast {
+        listOf("compileClasspath", "runtimeClasspath").forEach { configurationName ->
+            val awsComponents = configurations.getByName(configurationName)
+                .incoming.resolutionResult.allComponents
+                .mapNotNull { it.moduleVersion }
+                .filter { it.group == "software.amazon.awssdk" }
+            check(awsComponents.isEmpty()) {
+                "Local-only consumer $configurationName must not contain AWS SDK: $awsComponents"
+            }
+        }
+    }
+}

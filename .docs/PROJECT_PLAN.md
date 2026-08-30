@@ -135,6 +135,7 @@ admin-starter/
 │  ├─ common-web/
 │  ├─ common-security/
 │  ├─ common-file/
+│  ├─ common-file-s3/
 │  ├─ common-audit/
 │  ├─ common-excel/
 │  └─ common-codegen/
@@ -157,7 +158,8 @@ admin-starter/
 | `common-core` | 공통 오류 코드, 시간/ID 추상화, 페이지 모델, 기반 타입 | HTTP, Security, JPA Entity, 업무 정책 |
 | `common-web` | 공통 API 응답, 예외 변환, 요청 추적 ID, 웹 설정 | 업무 Controller, 화면별 DTO |
 | `common-security` | 인증 principal, JWT 처리, 보안 확장점, 권한 검사 기반 | 사용자 화면, 조직별 권한 정책 |
-| `common-file` | 저장소 port, Local/S3 adapter, 파일 검증, metadata 모델 | 관리자 전용 API와 화면 |
+| `common-file` | 저장소 port, Local adapter와 기본 auto-configuration | S3 SDK, 관리자 전용 API와 화면 |
+| `common-file-s3` | 선택적 S3 adapter, properties와 client auto-configuration | Local-only consumer에 필수적인 기본 계약 |
 | `common-audit` | 감사 이벤트 모델, publisher/store port, 공통 기록 지원 | 화면별 검색 정책 |
 | `common-excel` | export/import 기반 계약, 변환·검증 지원 | 특정 게시판/사용자 컬럼 정의 |
 | `common-codegen` | schema/template 처리, 생성 규칙, overwrite 보호 | 모든 업무 규칙 자동 추론 |
@@ -171,6 +173,7 @@ admin-server 업무 패키지 ─────> common-*
 common-web ───────────────────> common-core
 common-security ──────────────> common-core
 common-file/common-audit ─────> common-core
+common-file-s3 ─────────────> common-file
 ```
 
 - `common-*`는 `apps/*`를 참조하지 않는다.
@@ -467,7 +470,7 @@ public interface FileStorage {
 1. `common-core`: 기반 타입, clock/ID, 오류 code
 2. `common-web`: 오류 응답, pagination, trace
 3. `common-security`: JWT, principal, 권한 검사 확장점
-4. `common-file`: storage port와 Local/S3 adapter
+4. `common-file`: storage port와 Local adapter, `common-file-s3`: 선택적 S3 adapter
 5. `common-audit`: audit event와 기록 port
 6. `common-excel`: reader/writer와 검증 기반
 
@@ -524,10 +527,12 @@ public interface FileStorage {
 
 **목표:** Local 저장소만 사용하는 consumer가 AWS SDK를 내려받지 않게 한다.
 
-- `FileStorage` port와 Local adapter를 경량 core artifact에 유지한다.
-- S3 adapter, S3 properties와 client auto-configuration을 별도 선택 artifact로 분리한다.
-- Local-only, S3, consumer override 세 구성을 각각 context/contract test로 검증한다.
-- `admin-server`는 S3 기능이 필요하므로 두 artifact를 명시적으로 조립한다.
+- [x] `FileStorage` port와 Local adapter를 경량 core artifact에 유지한다.
+- [x] S3 adapter, S3 properties와 client auto-configuration을 별도 선택 artifact로 분리한다.
+- [x] Local-only, S3, consumer override 세 구성을 각각 context/contract test로 검증한다.
+- [x] `admin-server`는 S3 기능이 필요하므로 두 artifact를 명시적으로 조립한다.
+- [x] Local-only consumer의 compile/runtime dependency graph에 AWS SDK가 없음을 검증한다.
+- [ ] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
 
 **완료 기준:** Local-only consumer의 compile/runtime dependency graph에 AWS SDK가 없고 Local/S3 저장 계약 테스트가 동일하게 통과한다.
 
