@@ -25,8 +25,10 @@ val verifyModuleDependencies = tasks.register("verifyModuleDependencies") {
                     val featureViolation = source.path.startsWith(":features:") &&
                         (target.startsWith(":apps:") ||
                             (target.startsWith(":features:") && target != source.path))
+                    val consumerFixtureViolation = source.path == ":samples:common-modules-consumer" &&
+                        !target.startsWith(":modules:common-")
 
-                    if (commonViolation || featureViolation) {
+                    if (commonViolation || featureViolation || consumerFixtureViolation) {
                         throw GradleException("Forbidden module dependency: ${source.path} -> $target")
                     }
                 }
