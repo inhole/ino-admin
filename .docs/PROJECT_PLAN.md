@@ -491,6 +491,96 @@ public interface FileStorage {
 - 소비자가 필요한 설정과 확장 지점을 문서만으로 이해할 수 있다.
 - 최소 한 개의 독립 test application에서 모듈 사용이 검증된다.
 
+### Phase 8 경계 강화 실행 계획
+
+현재 Gradle project 역의존은 차단되어 있고 독립 consumer도 존재하지만, public API와 선택 의존성 및 애플리케이션 패키지 경계는 아래 순서로 추가 강화한다. 각 단계는 별도 Issue로 추적하고 이전 단계의 필수 CI가 통과한 뒤 다음 단계로 진행한다.
+
+#### 8.1 앱 오류 정책을 `common-core`에서 분리
+
+**목표:** 공통 기반 타입이 사용자·역할·메뉴·Excel 같은 관리자 업무 정책과 한국어 메시지를 소유하지 않게 한다.
+
+- [x] characterization test로 현재 오류 code/message와 HTTP 응답을 고정한다.
+- [x] `ErrorCode`의 업무별 항목을 `admin-server`가 소유하는 오류 catalog로 이동한다.
+- [x] `BusinessException`은 문자열 code/message 또는 최소 오류 descriptor 계약만 사용하게 하고 특정 enum 의존을 제거한다.
+- [x] `ApiErrorFactory`가 앱 오류 enum을 알지 않도록 문자열 기반 생성 계약만 유지한다.
+- [x] 독립 consumer에서 앱 오류 catalog의 부재와 최소 오류 descriptor 소비를 검증한다.
+- [ ] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
+
+**완료 기준:** 기존 API 오류 응답 회귀 테스트가 유지되고, `common-core`와 `common-web`에 identity/menu/file/excel 업무 오류 상수가 없다.
+
+#### 8.2 `common-excel`의 POI 비노출 계약 완성
+
+**목표:** Apache POI를 구현 세부사항으로 격리하고 consumer compile classpath를 최소화한다.
+
+- POI `Row`를 받는 `ExcelCellSafety.rejectFormulas`의 실제 consumer가 없는 상태를 테스트로 확인한 뒤 제거하거나 내부 구현으로 축소한다.
+- `poi-ooxml` 의존성을 `api`에서 `implementation`으로 변경한다.
+- staged artifact만 사용하는 외부 consumer compile test에서 POI 없이 `XlsxTableReader`/`XlsxTableWriter`를 사용할 수 있음을 검증한다.
+- formula 거부, typed date, streaming export와 행 제한 회귀를 유지한다.
+
+**완료 기준:** common-excel public signature에 `org.apache.poi.*`가 없고 생성 POM의 compile scope에 POI가 노출되지 않는다.
+
+#### 8.3 파일 adapter 선택 의존성 분리
+
+**목표:** Local 저장소만 사용하는 consumer가 AWS SDK를 내려받지 않게 한다.
+
+- `FileStorage` port와 Local adapter를 경량 core artifact에 유지한다.
+- S3 adapter, S3 properties와 client auto-configuration을 별도 선택 artifact로 분리한다.
+- Local-only, S3, consumer override 세 구성을 각각 context/contract test로 검증한다.
+- `admin-server`는 S3 기능이 필요하므로 두 artifact를 명시적으로 조립한다.
+
+**완료 기준:** Local-only consumer의 compile/runtime dependency graph에 AWS SDK가 없고 Local/S3 저장 계약 테스트가 동일하게 통과한다.
+
+#### 8.4 감사 계약에서 관리자 로그인 문맥 분리
+
+**목표:** 감사 port가 servlet request attribute와 관리자 로그인 전용 필드를 공통 계약으로 강제하지 않게 한다.
+
+- 현재 로그인 성공 감사와 일반 변경 감사 결과를 characterization test로 고정한다.
+- `LOGIN_ACCOUNT_ATTRIBUTE`와 로그인 계정 전달 방식은 `admin-server` 웹 계층으로 이동한다.
+- 공통 감사 계약은 actor/action/resource/result/trace 등 저장소 독립적인 최소 이벤트만 유지하고, 필요한 actor snapshot 확장 방식은 명시적으로 정의한다.
+- 개인정보 필드는 allowlist, 길이 제한과 저장 목적이 검증된 경우에만 앱 adapter에서 구성한다.
+
+**완료 기준:** `common-audit`이 servlet·로그인 API 문맥을 알지 않고 기존 감사 검색 데이터와 민감정보 회귀 테스트가 통과한다.
+
+#### 8.5 애플리케이션 package 경계 자동 검증
+
+**목표:** Gradle project 검사만으로 놓치는 `admin-server` 내부 feature 간 결합과 계층 역참조를 CI에서 차단한다.
+
+- ArchUnit을 추가해 identity/menu/file 등 업무 패키지 간 참조는 상대 feature의 `api` 또는 명시적 event만 허용한다.
+- domain이 controller/config/infrastructure에 의존하지 않고, common 모듈이 app package를 참조하지 않는 규칙을 검사한다.
+- `architectureTest`가 실제 ArchUnit test를 최소 한 개 이상 실행했는지 확인하는 guard를 추가한다.
+- 허용 예외는 클래스별 임시 allowlist가 아니라 조립 계층과 공개 use case 경계로 설명한다.
+
+**완료 기준:** 의도적인 위반 fixture가 RED가 되고, 전체 현행 코드가 규칙을 만족하도록 경계를 정리한 뒤 GREEN이 된다.
+
+#### 8.6 배포 artifact 기준 소비 검증
+
+**목표:** project dependency가 가려 주는 POM scope, 누락 resource와 자동설정 문제를 배포 전 발견한다.
+
+- repository-local staging에 발행한 JAR/POM만 사용하는 별도 Gradle fixture를 구성한다.
+- 모듈별 최소 consumer와 전체 조합 consumer를 분리해 불필요한 전이 의존성을 검사한다.
+- auto-configuration imports, configuration properties binding, bean override와 누락 설정 실패 메시지를 검증한다.
+- public API 변경에는 binary/source compatibility 검사를 추가하고 semantic version 변경 기준과 연결한다.
+
+**완료 기준:** project dependency 없이 모든 공통 artifact의 단독·조합 소비가 통과하고 POM scope 및 public API 호환성 검증이 Dev CI에 포함된다.
+
+#### 실행 우선순위와 범위 제한
+
+| 순서 | 작업 | 우선도 | 주요 위험 |
+|---|---|---|---|
+| 1 | 앱 오류 정책 분리 | P0 | 공개 오류 응답 회귀 |
+| 2 | Excel POI 비노출 완성 | P0 | published POM의 불필요한 compile 의존 |
+| 3 | package 경계 자동 검증 | P0 | 현재 숨은 feature 간 결합 발견 |
+| 4 | 파일 S3 선택 artifact 분리 | P1 | auto-configuration 조합과 설정 호환성 |
+| 5 | 감사 로그인 문맥 분리 | P1 | 기존 감사 데이터 의미 변경 |
+| 6 | 배포 artifact 소비·호환성 검증 | P1 | CI 시간과 fixture 유지비 |
+
+다음 항목은 실제 두 번째 사용처나 실패 사례가 생기기 전에는 진행하지 않는다.
+
+- `common-security`를 JWT core와 Spring adapter로 세분화
+- `common-web`의 일반 예외 handler를 자동설정으로 제공
+- 공통 clock/ID abstraction 추가
+- 업무 feature를 다시 별도 Gradle project로 분리
+
 ---
 
 ## Phase 9. CRUD 코드 생성기

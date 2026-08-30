@@ -2,7 +2,6 @@ package com.ino.admin.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.ino.admin.core.ErrorCode;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -17,7 +16,8 @@ class ApiErrorFactoryTest {
         MDC.put(TraceIdFilter.MDC_KEY, "test-trace-id");
         try {
             var error = new ApiErrorFactory(Clock.fixed(now, ZoneOffset.UTC))
-                    .create(ErrorCode.VALIDATION_ERROR, List.of(new ApiError.FieldError("email", "INVALID_VALUE")));
+                    .create("VALIDATION_ERROR", "요청 값이 올바르지 않습니다.",
+                            List.of(new ApiError.FieldError("email", "INVALID_VALUE")));
 
             assertThat(error.code()).isEqualTo("VALIDATION_ERROR");
             assertThat(error.message()).isEqualTo("요청 값이 올바르지 않습니다.");

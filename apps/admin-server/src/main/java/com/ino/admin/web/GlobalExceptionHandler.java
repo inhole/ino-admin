@@ -1,7 +1,7 @@
 package com.ino.admin.web;
 
 import com.ino.admin.core.BusinessException;
-import com.ino.admin.core.ErrorCode;
+import com.ino.admin.error.ErrorCode;
 import com.ino.admin.identity.api.AuthenticationFailedException;
 import com.ino.admin.identity.api.InvalidRefreshTokenException;
 import com.ino.admin.file.api.FileNotFoundException;
