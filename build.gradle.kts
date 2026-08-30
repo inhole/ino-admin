@@ -21,6 +21,11 @@ val verifyModuleDependencies = tasks.register("verifyModuleDependencies") {
     description = "Verifies modular-monolith project dependency direction."
 
     doLast {
+        val legacyFeatureProjects = allprojects.filter { it.path.startsWith(":features:") }
+        check(legacyFeatureProjects.isEmpty()) {
+            "Business features must live in apps/admin-server packages, not separate Gradle projects: " +
+                legacyFeatureProjects.joinToString { it.path }
+        }
         allprojects.forEach { source ->
             source.configurations
                 .flatMap { configuration -> configuration.dependencies.withType(ProjectDependency::class.java) }
@@ -29,13 +34,10 @@ val verifyModuleDependencies = tasks.register("verifyModuleDependencies") {
                 .forEach { target ->
                     val commonViolation = source.path.startsWith(":modules:common-") &&
                         (target.startsWith(":apps:") || target.startsWith(":features:"))
-                    val featureViolation = source.path.startsWith(":features:") &&
-                        (target.startsWith(":apps:") ||
-                            (target.startsWith(":features:") && target != source.path))
                     val consumerFixtureViolation = source.path == ":samples:common-modules-consumer" &&
                         !target.startsWith(":modules:common-")
 
-                    if (commonViolation || featureViolation || consumerFixtureViolation) {
+                    if (commonViolation || consumerFixtureViolation) {
                         throw GradleException("Forbidden module dependency: ${source.path} -> $target")
                     }
                 }

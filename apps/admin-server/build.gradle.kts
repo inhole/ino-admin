@@ -30,12 +30,10 @@ tasks.named<BootRun>("bootRun") {
 }
 
 dependencies {
-    implementation(project(":features:identity"))
-    implementation(project(":features:menu"))
-    implementation(project(":features:file-management"))
     implementation(project(":modules:common-core"))
     implementation(project(":modules:common-web"))
     implementation(project(":modules:common-security"))
+    implementation(project(":modules:common-file"))
     implementation(project(":modules:common-audit"))
     implementation(project(":modules:common-excel"))
     implementation("org.springframework.boot:spring-boot-starter-actuator")

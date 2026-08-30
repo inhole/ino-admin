@@ -19,7 +19,7 @@ Phase 8 공통 모듈은 `com.ino.admin:<module-name>:<version>` Maven 좌표를
 .\gradlew.bat "-PreleaseVersion=0.1.0" verifyCommonModulePublications
 ```
 
-이 task는 `build/staging-repository`에 여섯 모듈의 JAR/POM을 실제 발행하고, 버전 일치와 `apps/*`·`features/*` 역의존 부재를 검사합니다.
+이 task는 `build/staging-repository`에 여섯 모듈의 JAR/POM을 실제 발행하고, 버전 일치와 `admin-server`·기존 feature artifact 역의존 부재를 검사합니다.
 생성물은 검증용이며 Git에 커밋하지 않습니다.
 
 consumer 좌표 예시는 다음과 같습니다.
