@@ -6,6 +6,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -41,34 +43,39 @@ class AuditRequestFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
         } finally {
             try {
-                var loginAccount = loginAccount(request);
-                writer.write(new AuditCommand(actorId(), loginAccount.email(), loginAccount.displayName(), loginAccount.role(),
-                        semanticAction(request), limit(request.getRequestURI(), 500),
+                writer.write(new AuditCommand(actor(request), semanticAction(request), limit(request.getRequestURI(), 500),
                         response.getStatus() < 400 ? AuditResult.SUCCESS : AuditResult.FAILURE,
-                        response.getStatus(), limit(request.getRemoteAddr(), 45),
-                        limit(request.getHeader("User-Agent"), 512), limit(MDC.get(TraceIdFilter.MDC_KEY), 100)));
+                        response.getStatus(), limit(MDC.get(TraceIdFilter.MDC_KEY), 100), requestContext(request)));
             } catch (RuntimeException exception) {
                 log.error("Failed to persist audit log. traceId={}", MDC.get(TraceIdFilter.MDC_KEY), exception);
             }
         }
     }
 
-    private UUID actorId() {
+    private AuditActor actor(HttpServletRequest request) {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
+        UUID actorId = null;
         if (authentication instanceof JwtAuthenticationToken token) {
-            try { return UUID.fromString(token.getToken().getSubject()); }
-            catch (IllegalArgumentException ignored) { return null; }
+            try { actorId = UUID.fromString(token.getToken().getSubject()); }
+            catch (IllegalArgumentException ignored) { actorId = null; }
         }
-        return null;
+        var loginAccount = LoginAuditContext.read(request);
+        var attributes = new LinkedHashMap<String, String>();
+        putIfPresent(attributes, AuditAttributeKeys.LOGIN_EMAIL, limit(loginAccount.email(), 320));
+        putIfPresent(attributes, AuditAttributeKeys.LOGIN_DISPLAY_NAME, limit(loginAccount.displayName(), 100));
+        putIfPresent(attributes, AuditAttributeKeys.LOGIN_ROLE, limit(loginAccount.role(), 100));
+        return new AuditActor(actorId, attributes);
     }
 
-    private AuditCommand.LoginAccount loginAccount(HttpServletRequest request) {
-        var value = request.getAttribute(AuditCommand.LOGIN_ACCOUNT_ATTRIBUTE);
-        if (value instanceof AuditCommand.LoginAccount account) {
-            return new AuditCommand.LoginAccount(limit(account.email(), 320),
-                    limit(account.displayName(), 100), limit(account.role(), 100));
-        }
-        return new AuditCommand.LoginAccount(null, null, null);
+    private Map<String, String> requestContext(HttpServletRequest request) {
+        var attributes = new LinkedHashMap<String, String>();
+        putIfPresent(attributes, AuditAttributeKeys.IP_ADDRESS, limit(request.getRemoteAddr(), 45));
+        putIfPresent(attributes, AuditAttributeKeys.USER_AGENT, limit(request.getHeader("User-Agent"), 512));
+        return attributes;
+    }
+
+    private void putIfPresent(Map<String, String> attributes, String key, String value) {
+        if (value != null) attributes.put(key, value);
     }
 
     private String semanticAction(HttpServletRequest request) {

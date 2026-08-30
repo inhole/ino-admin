@@ -15,6 +15,7 @@ import com.ino.admin.web.GlobalExceptionHandler;
 import com.ino.admin.web.TraceIdFilter;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,9 +49,13 @@ class AuditLogControllerTest {
 
     @Test
     void returnsLoginHistoryForAuthorizedReader() throws Exception {
-        var command = new AuditCommand(null, "admin@example.com", "관리자", "SUPER_ADMIN",
-                "AUTH_LOGIN", "/api/v1/auth/login", AuditResult.SUCCESS,
-                200, "127.0.0.1", "browser", "trace-1");
+        var command = new AuditCommand(new AuditActor(null, Map.of(
+                AuditAttributeKeys.LOGIN_EMAIL, "admin@example.com",
+                AuditAttributeKeys.LOGIN_DISPLAY_NAME, "관리자",
+                AuditAttributeKeys.LOGIN_ROLE, "SUPER_ADMIN")),
+                "AUTH_LOGIN", "/api/v1/auth/login", AuditResult.SUCCESS, 200, "trace-1", Map.of(
+                AuditAttributeKeys.IP_ADDRESS, "127.0.0.1",
+                AuditAttributeKeys.USER_AGENT, "browser"));
         var log = AuditLog.create(command, Instant.parse("2026-08-24T00:00:00Z"));
         when(service.findAccessHistory(any(), any(), eq(0), eq(20)))
                 .thenReturn(new PageImpl<>(List.of(log), PageRequest.of(0, 20), 1));

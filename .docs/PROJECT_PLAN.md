@@ -160,7 +160,7 @@ admin-starter/
 | `common-security` | 인증 principal, JWT 처리, 보안 확장점, 권한 검사 기반 | 사용자 화면, 조직별 권한 정책 |
 | `common-file` | 저장소 port, Local adapter와 기본 auto-configuration | S3 SDK, 관리자 전용 API와 화면 |
 | `common-file-s3` | 선택적 S3 adapter, properties와 client auto-configuration | Local-only consumer에 필수적인 기본 계약 |
-| `common-audit` | 감사 이벤트 모델, publisher/store port, 공통 기록 지원 | 화면별 검색 정책 |
+| `common-audit` | 저장소 독립적 감사 actor/event 계약과 writer port | servlet 문맥, 로그인 계정 필드, 화면별 검색 정책 |
 | `common-excel` | export/import 기반 계약, 변환·검증 지원 | 특정 게시판/사용자 컬럼 정의 |
 | `common-codegen` | schema/template 처리, 생성 규칙, overwrite 보호 | 모든 업무 규칙 자동 추론 |
 | `admin-server` 업무 패키지 | 도메인별 use case, entity, repository, 정책과 실행 조립 | 재사용 가능한 핵심 구현의 중복 |
@@ -540,10 +540,12 @@ public interface FileStorage {
 
 **목표:** 감사 port가 servlet request attribute와 관리자 로그인 전용 필드를 공통 계약으로 강제하지 않게 한다.
 
-- 현재 로그인 성공 감사와 일반 변경 감사 결과를 characterization test로 고정한다.
-- `LOGIN_ACCOUNT_ATTRIBUTE`와 로그인 계정 전달 방식은 `admin-server` 웹 계층으로 이동한다.
-- 공통 감사 계약은 actor/action/resource/result/trace 등 저장소 독립적인 최소 이벤트만 유지하고, 필요한 actor snapshot 확장 방식은 명시적으로 정의한다.
-- 개인정보 필드는 allowlist, 길이 제한과 저장 목적이 검증된 경우에만 앱 adapter에서 구성한다.
+- [x] 현재 로그인 성공 감사와 일반 변경 감사 결과를 characterization test로 고정한다.
+- [x] `LOGIN_ACCOUNT_ATTRIBUTE`와 로그인 계정 전달 방식은 `admin-server` 웹 계층으로 이동한다.
+- [x] 공통 감사 계약은 actor/action/resource/result/trace 등 저장소 독립적인 최소 이벤트만 유지하고, 필요한 actor snapshot 확장 방식은 명시적으로 정의한다.
+- [x] 개인정보 필드는 allowlist, 길이 제한과 저장 목적이 검증된 경우에만 앱 adapter에서 구성한다.
+- [x] 기존 감사 검색 데이터와 민감정보 회귀 테스트를 통과한다.
+- [ ] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
 
 **완료 기준:** `common-audit`이 servlet·로그인 API 문맥을 알지 않고 기존 감사 검색 데이터와 민감정보 회귀 테스트가 통과한다.
 
