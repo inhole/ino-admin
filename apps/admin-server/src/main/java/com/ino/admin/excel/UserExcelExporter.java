@@ -6,6 +6,7 @@ import com.ino.admin.identity.api.UserDirectoryUseCase;
 import com.ino.admin.identity.api.UserDirectoryUseCase.SortDirection;
 import com.ino.admin.identity.api.UserDirectoryUseCase.UserQuery;
 import com.ino.admin.identity.api.UserDirectoryUseCase.UserSort;
+import com.ino.admin.excel.safety.ExcelCellSafety;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -53,8 +54,8 @@ class UserExcelExporter {
                 for (var user : result.content()) {
                     var row = sheet.createRow(rowIndex++);
                     row.createCell(0).setCellValue(user.id().toString());
-                    row.createCell(1).setCellValue(safeText(user.email()));
-                    row.createCell(2).setCellValue(safeText(user.displayName()));
+                    row.createCell(1).setCellValue(ExcelCellSafety.safeText(user.email()));
+                    row.createCell(2).setCellValue(ExcelCellSafety.safeText(user.displayName()));
                     row.createCell(3).setCellValue(user.status());
                     row.createCell(4).setCellValue(user.role());
                     var createdAt = row.createCell(5);
@@ -78,10 +79,4 @@ class UserExcelExporter {
         }
     }
 
-    private String safeText(String value) {
-        if (value == null || value.isEmpty()) return "";
-        var inspected = value.stripLeading();
-        if (!inspected.isEmpty() && "=+-@".indexOf(inspected.charAt(0)) >= 0) return "'" + value;
-        return value;
-    }
 }

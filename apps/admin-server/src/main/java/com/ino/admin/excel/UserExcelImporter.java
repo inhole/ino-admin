@@ -3,6 +3,7 @@ package com.ino.admin.excel;
 import com.ino.admin.core.BusinessException;
 import com.ino.admin.core.ErrorCode;
 import com.ino.admin.identity.api.UserManagementUseCase;
+import com.ino.admin.excel.safety.ExcelCellSafety;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -54,10 +54,8 @@ class UserExcelImporter {
                 var row = sheet.getRow(index);
                 if (row == null || isBlank(row, formatter)) continue;
                 var rowNumber = index + 1;
-                for (int column = 0; column < HEADERS.length; column++) {
-                    var cell = row.getCell(column);
-                    if (cell != null && cell.getCellType() == CellType.FORMULA) throw invalid(rowNumber + "행: 수식은 입력할 수 없습니다.");
-                }
+                try { ExcelCellSafety.rejectFormulas(row, HEADERS.length); }
+                catch (IllegalArgumentException exception) { throw invalid(rowNumber + "행: 수식은 입력할 수 없습니다."); }
                 var email = value(row.getCell(0), formatter).strip().toLowerCase(Locale.ROOT);
                 var displayName = value(row.getCell(1), formatter).strip();
                 var role = value(row.getCell(2), formatter).strip();
