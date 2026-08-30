@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":modules:common-web"))
     implementation(project(":modules:common-security"))
     implementation(project(":modules:common-file"))
+    implementation(project(":modules:common-file-s3"))
     implementation(project(":modules:common-audit"))
     implementation(project(":modules:common-excel"))
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -52,7 +53,6 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("software.amazon.awssdk:s3:2.46.11")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
