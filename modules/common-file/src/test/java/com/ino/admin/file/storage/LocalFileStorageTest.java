@@ -1,21 +1,22 @@
-package com.ino.admin.file.infrastructure.storage;
+package com.ino.admin.file.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import java.nio.file.Path;
 
 class LocalFileStorageTest {
     @TempDir Path tempDir;
 
-    @Test void savesAndLoadsInsideConfiguredRoot() {
+    @Test void savesLoadsAndDeletesInsideConfiguredRoot() {
         var storage = new LocalFileStorage(tempDir);
         storage.save("safe-key", "hello".getBytes());
         assertThat(storage.load("safe-key")).isEqualTo("hello".getBytes());
-        assertThat(Files.exists(tempDir.resolve("safe-key"))).isTrue();
+        storage.delete("safe-key");
+        assertThat(Files.exists(tempDir.resolve("safe-key"))).isFalse();
     }
 
     @Test void rejectsPathTraversal() {

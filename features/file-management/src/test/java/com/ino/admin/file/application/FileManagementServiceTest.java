@@ -9,8 +9,8 @@ import static org.mockito.Mockito.when;
 
 import com.ino.admin.file.api.FileNotFoundException;
 import com.ino.admin.file.api.InvalidFileException;
-import com.ino.admin.file.application.port.FileStorage;
-import com.ino.admin.file.config.FileStorageProperties;
+import com.ino.admin.file.storage.FileStorage;
+import com.ino.admin.file.config.FileUploadProperties;
 import com.ino.admin.file.domain.StoredFile;
 import com.ino.admin.file.infrastructure.persistence.StoredFileRepository;
 import java.time.Clock;
@@ -38,7 +38,7 @@ class FileManagementServiceTest {
 
     @BeforeEach void setUp() {
         MockitoAnnotations.openMocks(this);
-        var properties = new FileStorageProperties();
+        var properties = new FileUploadProperties();
         service = new FileManagementService(repository, storage, properties,
                 Clock.fixed(Instant.parse("2026-08-14T00:00:00Z"), ZoneOffset.UTC), deletionCoordinator);
     }

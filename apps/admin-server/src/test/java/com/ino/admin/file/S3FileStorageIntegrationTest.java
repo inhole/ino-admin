@@ -3,8 +3,8 @@ package com.ino.admin.file;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.ino.admin.file.application.port.FileStorage;
-import com.ino.admin.file.config.FileStorageProperties;
+import com.ino.admin.file.storage.FileStorage;
+import com.ino.admin.file.storage.FileStorageProperties;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

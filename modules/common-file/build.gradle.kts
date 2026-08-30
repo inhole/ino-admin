@@ -14,16 +14,12 @@ dependencyManagement {
 }
 
 dependencies {
-    api(project(":modules:common-core"))
-    api(project(":modules:common-file"))
-    implementation("org.springframework:spring-context")
+    api("software.amazon.awssdk:s3:2.46.11")
     implementation("org.springframework.boot:spring-boot-autoconfigure")
-    implementation("org.springframework.boot:spring-boot")
-    implementation("org.springframework.data:spring-data-jpa")
-    implementation("jakarta.persistence:jakarta.persistence-api")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.mockito:mockito-core")
+    testImplementation("org.springframework.boot:spring-boot-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
