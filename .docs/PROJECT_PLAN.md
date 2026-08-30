@@ -550,7 +550,7 @@ public interface FileStorage {
 - [x] domain이 application/infrastructure/web/auth/config 외부 계층에 역참조하지 않는 규칙을 검사한다.
 - [x] `architectureTest`에서 실제 ArchUnit 경계 테스트를 실행한다.
 - [x] 의도적 위반 fixture로 RED를 확인한 뒤 예외 allowlist 없이 현행 production 경계를 GREEN으로 만든다.
-- [ ] 전체 backend test와 Dev CI를 통과한다.
+- [x] 전체 backend test와 Dev CI를 통과한다.
 
 **완료 기준:** 의도적인 위반 fixture가 RED가 되고, 전체 현행 코드가 규칙을 만족하도록 경계를 정리한 뒤 GREEN이 된다.
 
