@@ -1,4 +1,4 @@
-package com.ino.admin.file.application.port;
+package com.ino.admin.file.storage;
 
 public interface FileStorage {
     void save(String storageKey, byte[] content);

@@ -3,8 +3,8 @@ package com.ino.admin.file.application;
 import com.ino.admin.file.api.FileManagementUseCase;
 import com.ino.admin.file.api.FileNotFoundException;
 import com.ino.admin.file.api.InvalidFileException;
-import com.ino.admin.file.application.port.FileStorage;
-import com.ino.admin.file.config.FileStorageProperties;
+import com.ino.admin.file.storage.FileStorage;
+import com.ino.admin.file.config.FileUploadProperties;
 import com.ino.admin.file.domain.FileStatus;
 import com.ino.admin.file.domain.StoredFile;
 import com.ino.admin.file.infrastructure.persistence.StoredFileRepository;
@@ -27,11 +27,11 @@ public class FileManagementService implements FileManagementUseCase {
             "application/pdf", ".pdf", "image/png", ".png", "image/jpeg", ".jpg", "text/plain", ".txt");
     private final StoredFileRepository repository;
     private final FileStorage storage;
-    private final FileStorageProperties properties;
+    private final FileUploadProperties properties;
     private final Clock clock;
     private final FileDeletionCoordinator deletionCoordinator;
 
-    public FileManagementService(StoredFileRepository repository, FileStorage storage, FileStorageProperties properties, Clock clock,
+    public FileManagementService(StoredFileRepository repository, FileStorage storage, FileUploadProperties properties, Clock clock,
             FileDeletionCoordinator deletionCoordinator) {
         this.repository = repository; this.storage = storage; this.properties = properties; this.clock = clock;
         this.deletionCoordinator = deletionCoordinator;

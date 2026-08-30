@@ -5,7 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.ino.admin.file.application.FileDeletionStateService.DeletionTarget;
-import com.ino.admin.file.application.port.FileStorage;
+import com.ino.admin.file.storage.FileStorage;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
