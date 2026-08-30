@@ -1,6 +1,6 @@
 package com.ino.admin.auth;
 
-import com.ino.admin.audit.AuditCommand;
+import com.ino.admin.audit.LoginAuditContext;
 import com.ino.admin.identity.api.LoginUseCase;
 import com.ino.admin.identity.api.PasswordChangeUseCase;
 import com.ino.admin.identity.api.RefreshTokenUseCase;
@@ -36,8 +36,7 @@ public class AuthController {
     @PostMapping("/login")
     LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
         var result = loginService.login(request.email(), request.password());
-        servletRequest.setAttribute(AuditCommand.LOGIN_ACCOUNT_ATTRIBUTE,
-                new AuditCommand.LoginAccount(result.email(), result.displayName(), result.role()));
+        LoginAuditContext.attach(servletRequest, result.email(), result.displayName(), result.role());
         return new LoginResponse(result.accessToken(), "Bearer", result.expiresInSeconds(), result.refreshToken());
     }
 

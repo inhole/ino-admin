@@ -31,16 +31,16 @@ class AuditLog {
     static AuditLog create(AuditCommand command, Instant now) {
         var log = new AuditLog();
         log.id = UUID.randomUUID();
-        log.actorId = command.actorId();
-        log.loginEmail = command.loginEmail();
-        log.loginDisplayName = command.loginDisplayName();
-        log.loginRole = command.loginRole();
+        log.actorId = command.actor().id();
+        log.loginEmail = command.actor().attributes().get(AuditAttributeKeys.LOGIN_EMAIL);
+        log.loginDisplayName = command.actor().attributes().get(AuditAttributeKeys.LOGIN_DISPLAY_NAME);
+        log.loginRole = command.actor().attributes().get(AuditAttributeKeys.LOGIN_ROLE);
         log.action = command.action();
         log.resource = command.resource();
         log.result = command.result();
         log.statusCode = command.statusCode();
-        log.ipAddress = command.ipAddress();
-        log.userAgent = command.userAgent();
+        log.ipAddress = command.contextAttributes().get(AuditAttributeKeys.IP_ADDRESS);
+        log.userAgent = command.contextAttributes().get(AuditAttributeKeys.USER_AGENT);
         log.traceId = command.traceId();
         log.createdAt = now;
         return log;
