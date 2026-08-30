@@ -3,15 +3,14 @@
 현재 의존 방향은 다음과 같다.
 
 ```text
-apps/admin-server -> features/identity -> modules/common-core
-apps/admin-server -> features/menu
-apps/admin-server ---------------------> modules/common-core
+apps/admin-server/{identity,menu,file,...} -> modules/common-*
+samples/common-modules-consumer ----------> modules/common-*
 ```
 
-- `admin-server`는 HTTP API, 보안 filter/JWT 구현, 실행 설정과 migration을 조립한다.
-- `identity`는 인증 도메인, 유스케이스, JPA entity/repository를 소유한다.
-- `admin-server`는 identity의 `api` 및 `application.port`만 참조한다.
-- `common-core`는 앱 또는 feature를 참조하지 않는다.
-- feature 간 직접 의존과 역방향 의존은 허용하지 않는다.
+- `admin-server`는 HTTP API, 실행 설정과 migration뿐 아니라 identity, menu, file 등 앱 전용 업무 패키지를 소유한다.
+- 각 업무 패키지는 기존 `api`, `application`, `domain`, `infrastructure` 하위 경계를 유지한다.
+- 앱 전용 controller, DTO, entity와 정책은 `common-*`로 이동하지 않는다.
+- `common-*`는 `apps/*`를 참조하지 않는다.
+- 독립 consumer fixture는 `common-*`만 project dependency로 사용할 수 있다.
 
-Gradle project dependency가 이 방향을 물리적으로 강제한다. `verifyModuleDependencies`가 금지된 project dependency를 검사하며 `architectureTest` 실행 시 자동으로 함께 실행된다. 신규 feature는 독립 Gradle project로 추가하며 실행 앱에서만 조립한다.
+`verifyModuleDependencies`는 common 모듈의 앱 역의존, consumer fixture의 비공통 의존과 별도 `features:*` Gradle project 재도입을 검사하며 `architectureTest` 실행 시 자동으로 함께 실행된다. 신규 업무 기능은 먼저 `apps/admin-server` 내부 패키지의 vertical slice로 구현하고, 검증된 범용 계약만 `common-*`로 추출한다.

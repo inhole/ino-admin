@@ -6,8 +6,8 @@
 
 ## 아키텍처
 - 모듈형 모노리스를 유지하고, 재사용 모듈을 추출하기 전에 동작하는 vertical slice를 먼저 구현한다.
-- 의존 방향을 지킨다. `apps/admin-server`는 `features/*`와 `modules/common-*`에 의존할 수 있고, feature는 common 모듈에 의존할 수 있다. common 모듈은 app이나 feature에 의존하면 안 된다.
-- 순환 의존성과 feature 간 직접 의존성을 피한다. 명시적인 public use case나 event로 통신한다.
+- 의존 방향을 지킨다. `apps/admin-server`의 업무 패키지는 `modules/common-*`에 의존할 수 있지만 common 모듈은 app에 의존하면 안 된다.
+- 업무 기능은 `apps/admin-server` 내부의 identity/menu/file 등 패키지로 구분한다. 기능 간 결합은 명시적인 use case나 event를 통해 최소화한다.
 - JPA entity를 API에 직접 노출하지 않는다. 애플리케이션 전용 controller, route, DTO를 common 모듈에 두지 않는다.
 - public REST endpoint는 `/api/v1`로 시작하고 문서화된 오류·페이지네이션 계약을 유지한다.
 

@@ -121,7 +121,11 @@ admin-starter/
 │  └─ prompts/
 ├─ apps/
 │  ├─ admin-server/
-│  │  └─ src/{main,test}/
+│  │  └─ src/{main,test}/java/com/ino/admin/
+│  │     ├─ identity/       # 사용자, 역할, 권한
+│  │     ├─ menu/
+│  │     ├─ file/
+│  │     └─ ...             # 앱 전용 업무 vertical slice
 │  └─ admin-web/
 │     ├─ src/
 │     ├─ tests/
@@ -134,11 +138,6 @@ admin-starter/
 │  ├─ common-audit/
 │  ├─ common-excel/
 │  └─ common-codegen/
-├─ features/
-│  ├─ identity/          # 사용자, 역할, 권한
-│  ├─ menu/
-│  ├─ board/
-│  └─ file-management/
 ├─ tools/
 │  ├─ codegen-cli/
 │  └─ scripts/
@@ -162,22 +161,20 @@ admin-starter/
 | `common-audit` | 감사 이벤트 모델, publisher/store port, 공통 기록 지원 | 화면별 검색 정책 |
 | `common-excel` | export/import 기반 계약, 변환·검증 지원 | 특정 게시판/사용자 컬럼 정의 |
 | `common-codegen` | schema/template 처리, 생성 규칙, overwrite 보호 | 모든 업무 규칙 자동 추론 |
-| `features/*` | 도메인별 use case, entity, repository, 정책 | 범용 기반 기능 |
-| `admin-server` | 실행 조립, API, 프로젝트 설정 | 재사용 가능한 핵심 구현의 중복 |
+| `admin-server` 업무 패키지 | 도메인별 use case, entity, repository, 정책과 실행 조립 | 재사용 가능한 핵심 구현의 중복 |
 | `admin-web` | 관리자 UX, routing, 화면 권한, API 사용 | 서버 권한 판정 |
 
 ### 4.2 의존성 규칙
 
 ```text
-admin-server ──> features/* ──> common-*
-admin-server ─────────────────> common-*
+admin-server 업무 패키지 ─────> common-*
 common-web ───────────────────> common-core
 common-security ──────────────> common-core
 common-file/common-audit ─────> common-core
 ```
 
 - `common-*`는 `apps/*`를 참조하지 않는다.
-- feature 간 직접 참조는 최소화하고 공개 use case/event를 사용한다.
+- admin-server의 업무 패키지 간 직접 참조는 최소화하고 명시적인 use case/event를 사용한다.
 - 순환 의존은 허용하지 않는다.
 - 모듈 경계는 ArchUnit 테스트로 검사한다.
 
@@ -193,7 +190,7 @@ DB 테이블만 모두 만든 뒤 UI를 한꺼번에 만드는 방식 대신, �
 
 ### 5.2 앱 우선, 추출은 나중
 
-기능은 먼저 `admin-server` 또는 해당 `features/*` 안에서 구현한다. 다음 조건이 충족되면 `common-*`로 추출한다.
+기능은 먼저 `admin-server`의 업무 패키지 안에서 구현한다. 다음 조건이 충족되면 `common-*`로 추출한다.
 
 - 실제 통합 흐름이 테스트되었다.
 - API가 최소 한 차례 사용되며 불편한 점이 확인되었다.
