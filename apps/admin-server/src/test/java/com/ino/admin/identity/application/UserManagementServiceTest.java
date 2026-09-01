@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.identity.api.UserManagementUseCase.CreateUser;
 import com.ino.admin.identity.domain.User;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;

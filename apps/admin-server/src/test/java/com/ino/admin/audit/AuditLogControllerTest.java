@@ -12,7 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.ino.admin.AdminServerApplication;
 import com.ino.admin.config.ApplicationConfig;
 import com.ino.admin.web.GlobalExceptionHandler;
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.audit.AuditActor;
+import com.ino.spring.modules.audit.AuditCommand;
+import com.ino.spring.modules.audit.AuditResult;
+import com.ino.spring.modules.web.TraceIdFilter;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;

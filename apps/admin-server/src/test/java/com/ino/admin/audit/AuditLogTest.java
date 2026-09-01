@@ -2,6 +2,9 @@ package com.ino.admin.audit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.ino.spring.modules.audit.AuditActor;
+import com.ino.spring.modules.audit.AuditCommand;
+import com.ino.spring.modules.audit.AuditResult;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;

@@ -11,17 +11,23 @@ plugins {
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories { mavenCentral() }
+    repositories {
+        mavenCentral()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/inhole/ino-spring-modules")
+            credentials {
+                username = providers.gradleProperty("gpr.user")
+                    .orElse(providers.environmentVariable("GITHUB_ACTOR"))
+                    .orNull
+                password = providers.gradleProperty("gpr.token")
+                    .orElse(providers.environmentVariable("GITHUB_TOKEN"))
+                    .orNull
+            }
+        }
+    }
 }
 
 rootProject.name = "ino-admin"
 
 include("apps:admin-server")
-include("modules:common-core")
-include("modules:common-web")
-include("modules:common-security")
-include("modules:common-file")
-include("modules:common-file-s3")
-include("modules:common-audit")
-include("modules:common-excel")
-include("samples:common-modules-consumer")

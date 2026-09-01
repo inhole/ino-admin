@@ -8,6 +8,8 @@ Spring Boot 4.1 / Java 25 / React 기반 관리자 starter입니다. 현재 범�
 - Node.js 22 이상과 npm
 - Docker Desktop 또는 Docker Engine + Compose
 
+백엔드 빌드는 GitHub Packages의 `com.ino.spring.modules:common-*:0.1.0`을 사용합니다. 로컬에서는 `read:packages` 권한이 있는 `GITHUB_TOKEN`과 `GITHUB_ACTOR`를 설정하거나 `~/.gradle/gradle.properties`에 `gpr.user`/`gpr.token`을 설정하십시오. 토큰은 이 저장소의 `.env`에 넣지 않습니다.
+
 ## 로컬 실행
 
 ```powershell

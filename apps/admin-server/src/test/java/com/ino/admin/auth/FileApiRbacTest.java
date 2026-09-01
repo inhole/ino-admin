@@ -18,7 +18,7 @@ import com.ino.admin.file.FileController;
 import com.ino.admin.file.api.FileManagementUseCase;
 import com.ino.admin.file.api.FileNotFoundException;
 import com.ino.admin.web.GlobalExceptionHandler;
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.web.TraceIdFilter;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

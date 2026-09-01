@@ -1,19 +1,18 @@
 # 모듈 경계
 
-현재 의존 방향은 다음과 같다.
+현재 의존 방향은 다음과 같습니다.
 
 ```text
-apps/admin-server/{identity,menu,file,...} -> modules/common-*
-samples/common-modules-consumer ----------> modules/common-*
+ino-admin/apps/admin-server/{identity,menu,file,...}
+    -> com.ino.spring.modules:common-*:0.1.0
+    -> inhole/ino-spring-modules
 ```
 
-- `admin-server`는 HTTP API, 실행 설정과 migration뿐 아니라 identity, menu, file 등 앱 전용 업무 패키지를 소유한다.
-- 각 업무 패키지는 기존 `api`, `application`, `domain`, `infrastructure` 하위 경계를 유지한다.
-- 앱 전용 controller, DTO, entity와 정책은 `common-*`로 이동하지 않는다.
-- `common-*`는 `apps/*`를 참조하지 않는다.
-- 독립 consumer fixture는 `common-*`만 project dependency로 사용할 수 있다.
-- `common-file`은 `FileStorage` port와 Local adapter만 제공하며 AWS SDK에 의존하지 않는다. S3가 필요한 consumer만 `common-file-s3`를 추가해 S3 adapter와 client auto-configuration을 조립한다.
-- `common-audit`은 `AuditActor`의 generic attribute snapshot과 action/resource/result/trace 중심의 저장소 독립적 계약만 제공한다. servlet request attribute, 로그인 계정 전달과 저장 필드 allowlist는 `admin-server`가 소유한다.
-- `common-excel`은 POI 타입을 감춘 XLSX 표 reader/writer와 셀 안전성만 제공한다. 컬럼 정의, 파일 제한, 행별 업무 검증과 오류 문구는 `admin-server`가 소유한다.
+- `admin-server`는 HTTP API, 실행 설정과 migration 및 identity, menu, file 등 앱 전용 업무 패키지를 소유합니다.
+- 앱 전용 controller, DTO, entity와 정책은 공통 artifact로 이동하지 않습니다.
+- `common-file`은 Local adapter를 제공하고, S3가 필요한 이 앱은 `common-file-s3`를 명시적으로 추가합니다.
+- `common-audit`의 저장소 독립 계약만 사용하며 servlet 문맥과 저장 필드 allowlist는 `admin-server`가 소유합니다.
+- `common-excel`의 POI 비노출 API를 사용하고 컬럼·파일 제한·업무 검증은 앱이 소유합니다.
+- 공통 모듈 소스, sample consumer, publishing 및 API baseline은 `ino-spring-modules` 저장소가 소유합니다.
 
-`verifyModuleDependencies`는 common 모듈의 앱 역의존, consumer fixture의 비공통 의존과 별도 `features:*` Gradle project 재도입을 검사한다. `verifyCommonModulePublications`는 staged POM과 Local-only consumer의 compile/runtime classpath에 AWS SDK가 없는지 검사한다. `PackageBoundaryTest`는 identity/menu/file 업무 패키지 간 직접 참조와 domain의 외부 계층 역참조를 ArchUnit으로 검사한다. 모듈 의존성과 패키지 경계는 `architectureTest`에서, 배포 artifact 계약은 `verifyCommonModulePublications`로 CI에서 검증한다. 신규 업무 기능은 먼저 `apps/admin-server` 내부 패키지의 vertical slice로 구현하고, 검증된 범용 계약만 `common-*`로 추출한다.
+`verifyModuleDependencies`는 제거된 `:modules:common-*` project dependency의 재도입을 차단합니다. `PackageBoundaryTest`는 앱 내부 feature 및 계층 경계를 검사합니다. 공통 artifact 자체의 호환성과 독립 소비 검증은 `ino-spring-modules` CI가 담당합니다.

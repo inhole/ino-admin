@@ -30,13 +30,14 @@ tasks.named<BootRun>("bootRun") {
 }
 
 dependencies {
-    implementation(project(":modules:common-core"))
-    implementation(project(":modules:common-web"))
-    implementation(project(":modules:common-security"))
-    implementation(project(":modules:common-file"))
-    implementation(project(":modules:common-file-s3"))
-    implementation(project(":modules:common-audit"))
-    implementation(project(":modules:common-excel"))
+    val inoSpringModulesVersion = "0.1.0"
+    implementation("com.ino.spring.modules:common-core:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-web:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-security:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-file:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-file-s3:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-audit:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-excel:$inoSpringModulesVersion")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -59,7 +60,7 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
-    systemProperty("app.jwt.secret", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=")
+    systemProperty("ino.spring.modules.jwt.secret", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=")
 }
 
 tasks.named<Test>("test") {

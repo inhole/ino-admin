@@ -3,8 +3,8 @@ package com.ino.admin.file;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.ino.admin.file.storage.FileStorage;
-import com.ino.admin.file.storage.s3.S3FileStorageProperties;
+import com.ino.spring.modules.file.storage.FileStorage;
+import com.ino.spring.modules.file.storage.s3.S3FileStorageProperties;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

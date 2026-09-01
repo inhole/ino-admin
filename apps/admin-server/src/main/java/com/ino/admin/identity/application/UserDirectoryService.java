@@ -1,7 +1,7 @@
 package com.ino.admin.identity.application;
 
 import com.ino.admin.identity.api.UserDirectoryUseCase;
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.error.ErrorCode;
 import com.ino.admin.identity.domain.UserStatus;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;

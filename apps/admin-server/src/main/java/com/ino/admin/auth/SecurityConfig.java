@@ -1,6 +1,6 @@
 package com.ino.admin.auth;
 
-import com.ino.admin.security.jwt.JwtPermissionAuthenticationConverter;
+import com.ino.spring.modules.security.jwt.JwtPermissionAuthenticationConverter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,7 +1,7 @@
 package com.ino.admin.auth;
 
-import com.ino.admin.web.ApiError;
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.web.ApiError;
+import com.ino.spring.modules.web.TraceIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

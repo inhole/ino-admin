@@ -2,7 +2,10 @@ package com.ino.admin.audit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.audit.AuditCommand;
+import com.ino.spring.modules.audit.AuditResult;
+import com.ino.spring.modules.audit.AuditWriter;
+import com.ino.spring.modules.web.TraceIdFilter;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

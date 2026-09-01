@@ -2,7 +2,7 @@ package com.ino.admin.identity.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.error.ErrorCode;
 import org.junit.jupiter.api.Test;
 

@@ -7,7 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.identity.domain.Role;
 import com.ino.admin.identity.infrastructure.persistence.RoleRepository;
 import com.ino.admin.identity.infrastructure.persistence.UserRepository;

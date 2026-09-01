@@ -1,6 +1,6 @@
 package com.ino.admin.file.application;
 
-import com.ino.admin.file.storage.FileStorage;
+import com.ino.spring.modules.file.storage.FileStorage;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
