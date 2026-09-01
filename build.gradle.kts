@@ -149,3 +149,15 @@ tasks.register("verifyCommonModulePublications") {
         }
     }
 }
+
+tasks.register<GradleBuild>("verifyStagedCommonModuleConsumer") {
+    group = "verification"
+    description = "Verifies a standalone consumer using only staged common module artifacts."
+    dependsOn("verifyCommonModulePublications")
+    dir = file("samples/staged-common-modules-consumer")
+    tasks = listOf("clean", "test")
+    startParameter.projectProperties = mapOf(
+        "stagingRepository" to layout.buildDirectory.dir("staging-repository").get().asFile.absolutePath,
+        "commonModulesVersion" to project.version.toString(),
+    )
+}
