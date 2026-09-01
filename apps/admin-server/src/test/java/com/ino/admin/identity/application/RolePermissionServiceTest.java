@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.identity.domain.Role;
 import com.ino.admin.identity.infrastructure.persistence.RoleRepository;
 import java.util.Optional;

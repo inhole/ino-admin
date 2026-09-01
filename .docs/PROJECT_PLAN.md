@@ -101,6 +101,8 @@ MVP에서는 다음을 우선 구현하지 않는다.
 
 ## 4. 목표 저장소 및 디렉터리 구조
 
+> 2026-09-01 이후 검증된 `common-*` 소스와 publishing은 별도 저장소 `inhole/ino-spring-modules`가 소유한다. `ino-admin`에는 앱 소스만 두고 `com.ino.spring.modules:common-*:0.1.0` 배포 artifact를 소비한다.
+
 ```text
 admin-starter/
 ├─ AGENTS.md
@@ -130,15 +132,6 @@ admin-starter/
 │     ├─ src/
 │     ├─ tests/
 │     └─ package.json
-├─ modules/
-│  ├─ common-core/
-│  ├─ common-web/
-│  ├─ common-security/
-│  ├─ common-file/
-│  ├─ common-file-s3/
-│  ├─ common-audit/
-│  ├─ common-excel/
-│  └─ common-codegen/
 ├─ tools/
 │  ├─ codegen-cli/
 │  └─ scripts/
@@ -152,6 +145,8 @@ admin-starter/
 ```
 
 ### 4.1 모듈 책임
+
+아래 `common-*` 책임은 `inhole/ino-spring-modules` 저장소에서 관리하며 이 저장소는 릴리스 artifact만 조립한다.
 
 | 모듈 | 책임 | 포함하지 않는 것 |
 |---|---|---|
@@ -485,7 +480,7 @@ public interface FileStorage {
 - [ ] sample consumer 또는 별도 fixture app에서 적용 시험
 - [ ] 모듈별 README와 사용 예제 작성
 - [ ] dependency cycle/금지 의존 ArchUnit 검사
-- [ ] semantic versioning 및 publishing 전략 정의
+- [x] semantic versioning 및 publishing 전략 정의
 
 ### 완료 기준(DoD)
 

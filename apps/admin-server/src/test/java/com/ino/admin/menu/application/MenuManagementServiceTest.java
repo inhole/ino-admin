@@ -8,7 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.menu.api.MenuManagementUseCase;
 import com.ino.admin.menu.api.MenuManagementUseCase.SaveMenu;
 import com.ino.admin.menu.domain.Menu;

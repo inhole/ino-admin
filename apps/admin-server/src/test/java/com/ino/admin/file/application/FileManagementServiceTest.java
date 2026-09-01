@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.ino.admin.file.api.FileNotFoundException;
 import com.ino.admin.file.api.InvalidFileException;
-import com.ino.admin.file.storage.FileStorage;
+import com.ino.spring.modules.file.storage.FileStorage;
 import com.ino.admin.file.config.FileUploadProperties;
 import com.ino.admin.file.domain.StoredFile;
 import com.ino.admin.file.infrastructure.persistence.StoredFileRepository;

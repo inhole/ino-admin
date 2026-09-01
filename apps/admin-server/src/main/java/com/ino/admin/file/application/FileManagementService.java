@@ -3,7 +3,7 @@ package com.ino.admin.file.application;
 import com.ino.admin.file.api.FileManagementUseCase;
 import com.ino.admin.file.api.FileNotFoundException;
 import com.ino.admin.file.api.InvalidFileException;
-import com.ino.admin.file.storage.FileStorage;
+import com.ino.spring.modules.file.storage.FileStorage;
 import com.ino.admin.file.config.FileUploadProperties;
 import com.ino.admin.file.domain.FileStatus;
 import com.ino.admin.file.domain.StoredFile;

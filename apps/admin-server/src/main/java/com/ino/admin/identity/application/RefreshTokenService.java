@@ -33,7 +33,7 @@ public class RefreshTokenService implements RefreshTokenUseCase {
     private final UserRepository userRepository;
 
     public RefreshTokenService(RefreshTokenRepository repository, AccessTokenIssuer accessTokenIssuer, Clock clock,
-            @Value("${app.jwt.refresh-token-ttl:30d}") Duration ttl, RolePermissionService rolePermissionService,
+            @Value("${ino.spring.modules.jwt.refresh-token-ttl:30d}") Duration ttl, RolePermissionService rolePermissionService,
             UserRepository userRepository) {
         if (ttl.isZero() || ttl.isNegative()) throw new IllegalStateException("Refresh token TTL은 0보다 커야 합니다.");
         this.repository = repository;

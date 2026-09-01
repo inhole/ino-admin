@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.ino.admin.AdminServerApplication;
 import com.ino.admin.config.ApplicationConfig;
 import com.ino.admin.web.GlobalExceptionHandler;
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.web.TraceIdFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;

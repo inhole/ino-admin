@@ -1,6 +1,6 @@
 package com.ino.admin.menu.application;
 
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.error.ErrorCode;
 import com.ino.admin.menu.api.MenuManagementUseCase;
 import com.ino.admin.menu.domain.Menu;

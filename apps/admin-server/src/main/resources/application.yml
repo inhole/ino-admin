@@ -35,17 +35,31 @@ springdoc:
 app:
   login-security:
     max-failed-attempts: ${APP_LOGIN_MAX_FAILED_ATTEMPTS:5}
-  jwt:
-    secret: ${APP_JWT_SECRET:}
-    issuer: ${APP_JWT_ISSUER:ino-admin}
-    audience: ${APP_JWT_AUDIENCE:ino-admin-web}
-    access-token-ttl: ${APP_JWT_ACCESS_TOKEN_TTL:15m}
-    refresh-token-ttl: ${APP_JWT_REFRESH_TOKEN_TTL:30d}
   bootstrap-admin:
     enabled: ${APP_BOOTSTRAP_ADMIN_ENABLED:false}
     email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
     password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
     display-name: ${APP_BOOTSTRAP_ADMIN_DISPLAY_NAME:시스템 관리자}
+
+ino:
+  spring:
+    modules:
+      jwt:
+        secret: ${APP_JWT_SECRET:}
+        issuer: ${APP_JWT_ISSUER:ino-admin}
+        audience: ${APP_JWT_AUDIENCE:ino-admin-web}
+        access-token-ttl: ${APP_JWT_ACCESS_TOKEN_TTL:15m}
+        refresh-token-ttl: ${APP_JWT_REFRESH_TOKEN_TTL:30d}
+      file-storage:
+        type: ${APP_FILE_STORAGE_TYPE:local}
+        root: ${APP_FILE_STORAGE_ROOT:./data/files}
+        s3:
+          endpoint: ${APP_FILE_STORAGE_S3_ENDPOINT:}
+          region: ${APP_FILE_STORAGE_S3_REGION:us-east-1}
+          bucket: ${APP_FILE_STORAGE_S3_BUCKET:ino-admin-files}
+          access-key: ${APP_FILE_STORAGE_S3_ACCESS_KEY:}
+          secret-key: ${APP_FILE_STORAGE_S3_SECRET_KEY:}
+          path-style-access: ${APP_FILE_STORAGE_S3_PATH_STYLE_ACCESS:true}
 
 logging:
   pattern:

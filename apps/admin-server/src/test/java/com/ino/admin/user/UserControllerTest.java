@@ -19,7 +19,7 @@ import com.ino.admin.identity.api.UserDirectoryUseCase.UserSort;
 import com.ino.admin.identity.api.UserManagementUseCase;
 import com.ino.admin.identity.api.RoleCatalogUseCase;
 import com.ino.admin.web.GlobalExceptionHandler;
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.web.TraceIdFilter;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

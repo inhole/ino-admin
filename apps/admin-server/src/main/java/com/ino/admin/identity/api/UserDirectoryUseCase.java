@@ -1,6 +1,6 @@
 package com.ino.admin.identity.api;
 
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.error.ErrorCode;
 import java.time.Instant;
 import java.util.List;

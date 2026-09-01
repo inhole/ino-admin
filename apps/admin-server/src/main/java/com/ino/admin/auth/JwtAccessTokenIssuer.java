@@ -1,7 +1,7 @@
 package com.ino.admin.auth;
 
 import com.ino.admin.identity.application.port.AccessTokenIssuer;
-import com.ino.admin.security.jwt.JwtTokenService;
+import com.ino.spring.modules.security.jwt.JwtTokenService;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;

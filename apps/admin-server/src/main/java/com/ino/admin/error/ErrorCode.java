@@ -1,6 +1,6 @@
 package com.ino.admin.error;
 
-import com.ino.admin.core.ErrorDescriptor;
+import com.ino.spring.modules.core.ErrorDescriptor;
 
 public enum ErrorCode implements ErrorDescriptor {
     VALIDATION_ERROR("요청 값이 올바르지 않습니다."),
