@@ -565,10 +565,10 @@ public interface FileStorage {
 
 **목표:** project dependency가 가려 주는 POM scope, 누락 resource와 자동설정 문제를 배포 전 발견한다.
 
-- repository-local staging에 발행한 JAR/POM만 사용하는 별도 Gradle fixture를 구성한다.
-- 모듈별 최소 consumer와 전체 조합 consumer를 분리해 불필요한 전이 의존성을 검사한다.
-- auto-configuration imports, configuration properties binding, bean override와 누락 설정 실패 메시지를 검증한다.
-- public API 변경에는 binary/source compatibility 검사를 추가하고 semantic version 변경 기준과 연결한다.
+- [x] repository-local staging에 발행한 JAR/POM만 사용하는 별도 Gradle fixture를 구성한다.
+- [ ] 모듈별 최소 consumer와 전체 조합 consumer를 분리해 불필요한 전이 의존성을 검사한다.
+- [ ] auto-configuration imports, configuration properties binding, bean override와 누락 설정 실패 메시지를 검증한다.
+- [ ] public API 변경에는 binary/source compatibility 검사를 추가하고 semantic version 변경 기준과 연결한다.
 
 **완료 기준:** project dependency 없이 모든 공통 artifact의 단독·조합 소비가 통과하고 POM scope 및 public API 호환성 검증이 Dev CI에 포함된다.
 
