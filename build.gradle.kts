@@ -3,6 +3,8 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JavaToolchainService
+import org.gradle.jvm.tasks.Jar
+import java.util.jar.JarFile
 
 plugins {
     base
@@ -56,6 +58,71 @@ val commonModuleNames = listOf(
     "common-audit",
     "common-excel",
 )
+
+val apiBaselineVersion = buildVersion.removeSuffix("-SNAPSHOT")
+val apiBaselineDirectory = layout.projectDirectory.dir("config/api-baseline/$apiBaselineVersion")
+val renderApiSurface: (String) -> String = { moduleName ->
+    val moduleProject = project(":modules:$moduleName")
+    val jar = moduleProject.tasks.named<Jar>("jar").get().archiveFile.get().asFile
+    val classNames = JarFile(jar).use { archive ->
+        archive.entries().asSequence()
+            .map { it.name }
+            .filter { it.endsWith(".class") && it != "module-info.class" && !it.endsWith("package-info.class") }
+            .map { it.removeSuffix(".class").replace('/', '.') }
+            .sorted()
+            .toList()
+    }
+    val toolchains = moduleProject.extensions.getByType(JavaToolchainService::class.java)
+    val compiler = toolchains.compilerFor { languageVersion.set(JavaLanguageVersion.of(25)) }.get()
+    val executableName = if (System.getProperty("os.name").startsWith("Windows")) "javap.exe" else "javap"
+    val javap = compiler.executablePath.asFile.parentFile.resolve(executableName)
+    providers.exec {
+        commandLine(javap.absolutePath, "-public", "-s", "-classpath", jar.absolutePath, *classNames.toTypedArray())
+    }.standardOutput.asText.get().replace("\r\n", "\n").trim() + "\n"
+}
+
+val updateCommonModuleApiBaseline = tasks.register("updateCommonModuleApiBaseline") {
+    group = "build setup"
+    description = "Updates the checked-in common module public API baseline."
+    dependsOn(commonModuleNames.map { ":modules:$it:jar" })
+
+    doLast {
+        val existingBaselines = commonModuleNames
+            .map { apiBaselineDirectory.file("$it.api").asFile }
+            .filter { it.isFile }
+        check(existingBaselines.isEmpty()) {
+            "API baseline $apiBaselineVersion already exists. Bump releaseVersion after semantic version review " +
+                "instead of overwriting a published API baseline."
+        }
+        commonModuleNames.forEach { moduleName ->
+            apiBaselineDirectory.file("$moduleName.api").asFile.apply {
+                parentFile.mkdirs()
+                writeText(renderApiSurface(moduleName))
+            }
+        }
+    }
+}
+
+val verifyCommonModuleApiCompatibility = tasks.register("verifyCommonModuleApiCompatibility") {
+    group = "verification"
+    description = "Verifies common module source and binary API surfaces against the release baseline."
+    dependsOn(commonModuleNames.map { ":modules:$it:jar" })
+
+    doLast {
+        commonModuleNames.forEach { moduleName ->
+            val baseline = apiBaselineDirectory.file("$moduleName.api").asFile
+            check(baseline.isFile) {
+                "Missing API baseline for $moduleName. Run updateCommonModuleApiBaseline after semantic version review."
+            }
+            val expected = baseline.readText().replace("\r\n", "\n")
+            val actual = renderApiSurface(moduleName)
+            check(actual == expected) {
+                "$moduleName public API differs from baseline $apiBaselineVersion. " +
+                    "Review binary/source compatibility and semantic versioning before updating the baseline."
+            }
+        }
+    }
+}
 
 subprojects {
     if (path.startsWith(":modules:common-") && name in commonModuleNames) {
@@ -154,6 +221,7 @@ tasks.register<GradleBuild>("verifyStagedCommonModuleConsumer") {
     group = "verification"
     description = "Verifies a standalone consumer using only staged common module artifacts."
     dependsOn("verifyCommonModulePublications")
+    dependsOn(verifyCommonModuleApiCompatibility)
     dir = file("samples/staged-common-modules-consumer")
     tasks = listOf("clean", "test", "verifyMinimalCommonModuleConsumers")
     startParameter.projectProperties = mapOf(

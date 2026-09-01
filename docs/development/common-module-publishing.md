@@ -19,7 +19,7 @@ Phase 8 공통 모듈은 `com.ino.admin:<module-name>:<version>` Maven 좌표를
 .\gradlew.bat "-PreleaseVersion=0.1.0" verifyCommonModulePublications
 ```
 
-이 task는 `build/staging-repository`에 여섯 모듈의 JAR/POM을 실제 발행하고, 버전 일치와 `admin-server`·기존 feature artifact 역의존 부재를 검사합니다.
+이 task는 `build/staging-repository`에 일곱 모듈의 JAR/POM을 실제 발행하고, 버전 일치와 `admin-server`·기존 feature artifact 역의존 부재를 검사합니다.
 생성물은 검증용이며 Git에 커밋하지 않습니다.
 
 consumer 좌표 예시는 다음과 같습니다.
@@ -30,6 +30,22 @@ dependencies {
     implementation("com.ino.admin:common-web:0.1.0")
 }
 ```
+
+## public API 호환성 기준선
+
+```powershell
+.\gradlew.bat verifyCommonModuleApiCompatibility
+```
+
+각 모듈 JAR의 `javap -public -s` 결과를 `config/api-baseline/<version>`과 비교합니다. 공개 타입·메서드·필드 선언은 source surface로, JVM descriptor는 binary surface로 취급합니다. 추가를 포함해 공개 surface가 달라지면 검증이 보수적으로 실패하므로 변경의 하위 호환성과 semantic version을 검토해야 합니다.
+
+새 버전 기준선은 개발 기본 `releaseVersion`을 먼저 올린 뒤 한 번만 생성합니다.
+
+```powershell
+.\gradlew.bat updateCommonModuleApiBaseline
+```
+
+이미 존재하는 버전의 기준선은 덮어쓸 수 없습니다. 공개 API 변경 없이 내부 구현만 달라지는 경우에는 기준선을 갱신하지 않습니다.
 
 ## 외부 repository 승격 경계
 

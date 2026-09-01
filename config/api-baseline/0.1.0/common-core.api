@@ -1,0 +1,51 @@
+Compiled from "BusinessException.java"
+public class com.ino.admin.core.BusinessException extends java.lang.RuntimeException {
+  public com.ino.admin.core.BusinessException(java.lang.String, java.lang.String);
+    descriptor: (Ljava/lang/String;Ljava/lang/String;)V
+
+  public com.ino.admin.core.BusinessException(com.ino.admin.core.ErrorDescriptor);
+    descriptor: (Lcom/ino/admin/core/ErrorDescriptor;)V
+
+  public com.ino.admin.core.BusinessException(com.ino.admin.core.ErrorDescriptor, java.lang.String);
+    descriptor: (Lcom/ino/admin/core/ErrorDescriptor;Ljava/lang/String;)V
+
+  public java.lang.String code();
+    descriptor: ()Ljava/lang/String;
+}
+Compiled from "ErrorDescriptor.java"
+public interface com.ino.admin.core.ErrorDescriptor {
+  public abstract java.lang.String code();
+    descriptor: ()Ljava/lang/String;
+
+  public abstract java.lang.String message();
+    descriptor: ()Ljava/lang/String;
+}
+Compiled from "PageResponse.java"
+public final class com.ino.admin.core.PageResponse<T> extends java.lang.Record {
+  public com.ino.admin.core.PageResponse(java.util.List<T>, int, int, long, int);
+    descriptor: (Ljava/util/List;IIJI)V
+
+  public final java.lang.String toString();
+    descriptor: ()Ljava/lang/String;
+
+  public final int hashCode();
+    descriptor: ()I
+
+  public final boolean equals(java.lang.Object);
+    descriptor: (Ljava/lang/Object;)Z
+
+  public java.util.List<T> content();
+    descriptor: ()Ljava/util/List;
+
+  public int page();
+    descriptor: ()I
+
+  public int size();
+    descriptor: ()I
+
+  public long totalElements();
+    descriptor: ()J
+
+  public int totalPages();
+    descriptor: ()I
+}
