@@ -1,0 +1,60 @@
+Compiled from "S3FileStorage.java"
+public final class com.ino.admin.file.storage.s3.S3FileStorage implements com.ino.admin.file.storage.FileStorage {
+  public com.ino.admin.file.storage.s3.S3FileStorage(software.amazon.awssdk.services.s3.S3Client, java.lang.String);
+    descriptor: (Lsoftware/amazon/awssdk/services/s3/S3Client;Ljava/lang/String;)V
+
+  public void save(java.lang.String, byte[]);
+    descriptor: (Ljava/lang/String;[B)V
+
+  public byte[] load(java.lang.String);
+    descriptor: (Ljava/lang/String;)[B
+
+  public void delete(java.lang.String);
+    descriptor: (Ljava/lang/String;)V
+}
+Compiled from "S3FileStorageAutoConfiguration.java"
+public class com.ino.admin.file.storage.s3.S3FileStorageAutoConfiguration {
+  public com.ino.admin.file.storage.s3.S3FileStorageAutoConfiguration();
+    descriptor: ()V
+}
+Compiled from "S3FileStorageProperties.java"
+public class com.ino.admin.file.storage.s3.S3FileStorageProperties {
+  public com.ino.admin.file.storage.s3.S3FileStorageProperties();
+    descriptor: ()V
+
+  public java.lang.String getEndpoint();
+    descriptor: ()Ljava/lang/String;
+
+  public void setEndpoint(java.lang.String);
+    descriptor: (Ljava/lang/String;)V
+
+  public java.lang.String getRegion();
+    descriptor: ()Ljava/lang/String;
+
+  public void setRegion(java.lang.String);
+    descriptor: (Ljava/lang/String;)V
+
+  public java.lang.String getBucket();
+    descriptor: ()Ljava/lang/String;
+
+  public void setBucket(java.lang.String);
+    descriptor: (Ljava/lang/String;)V
+
+  public java.lang.String getAccessKey();
+    descriptor: ()Ljava/lang/String;
+
+  public void setAccessKey(java.lang.String);
+    descriptor: (Ljava/lang/String;)V
+
+  public java.lang.String getSecretKey();
+    descriptor: ()Ljava/lang/String;
+
+  public void setSecretKey(java.lang.String);
+    descriptor: (Ljava/lang/String;)V
+
+  public boolean isPathStyleAccess();
+    descriptor: ()Z
+
+  public void setPathStyleAccess(boolean);
+    descriptor: (Z)V
+}
