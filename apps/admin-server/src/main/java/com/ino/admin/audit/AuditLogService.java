@@ -1,5 +1,8 @@
 package com.ino.admin.audit;
 
+import com.ino.spring.modules.audit.AuditCommand;
+import com.ino.spring.modules.audit.AuditResult;
+import com.ino.spring.modules.audit.AuditWriter;
 import jakarta.persistence.criteria.Predicate;
 import java.time.Clock;
 import java.time.Instant;
@@ -29,13 +32,15 @@ class AuditLogService implements AuditWriter {
     }
 
     @Transactional(readOnly = true)
-    Page<AuditLog> find(UUID actorId, String action, AuditResult result, Instant from, Instant to,
+    Page<AuditLog> findAccessHistory(Instant from, Instant to,
             int page, int size) {
         return repository.findAll((root, ignored, builder) -> {
             var predicates = new ArrayList<Predicate>();
-            if (actorId != null) predicates.add(builder.equal(root.get("actorId"), actorId));
-            if (action != null) predicates.add(builder.equal(root.get("action"), action));
-            if (result != null) predicates.add(builder.equal(root.get("result"), result));
+            predicates.add(builder.equal(root.get("action"), "AUTH_LOGIN"));
+            predicates.add(builder.equal(root.get("result"), AuditResult.SUCCESS));
+            predicates.add(builder.isNotNull(root.get("loginEmail")));
+            predicates.add(builder.isNotNull(root.get("loginDisplayName")));
+            predicates.add(builder.isNotNull(root.get("loginRole")));
             if (from != null) predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
             if (to != null) predicates.add(builder.lessThan(root.get("createdAt"), to));
             return builder.and(predicates.toArray(Predicate[]::new));

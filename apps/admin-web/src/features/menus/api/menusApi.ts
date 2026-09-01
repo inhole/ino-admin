@@ -4,7 +4,7 @@ export interface MenuItem {
   id: string;
   label: string;
   route: string;
-  icon: "layout-dashboard" | "users" | "key-round" | "menu" | "file";
+  icon: "layout-dashboard" | "users" | "key-round" | "menu" | "file" | "history";
   order: number;
   children: MenuItem[];
 }
@@ -29,6 +29,12 @@ export function createMenu(input: ManagedMenu) {
 }
 export function updateMenu(id: string, input: ManagedMenu) {
   return request<ManagedMenu>(`/api/v1/menus/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+export function reorderMenus(input: Pick<ManagedMenu, "id" | "parentId" | "order">[]) {
+  return request<ManagedMenu[]>("/api/v1/menus/order", {
     method: "PATCH",
     body: JSON.stringify(input),
   });

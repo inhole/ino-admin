@@ -30,10 +30,14 @@ tasks.named<BootRun>("bootRun") {
 }
 
 dependencies {
-    implementation(project(":features:identity"))
-    implementation(project(":features:menu"))
-    implementation(project(":features:file-management"))
-    implementation(project(":modules:common-core"))
+    val inoSpringModulesVersion = "0.1.0"
+    implementation("com.ino.spring.modules:common-core:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-web:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-security:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-file:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-file-s3:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-audit:$inoSpringModulesVersion")
+    implementation("com.ino.spring.modules:common-excel:$inoSpringModulesVersion")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -50,13 +54,13 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("software.amazon.awssdk:s3:2.46.11")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
-    systemProperty("app.jwt.secret", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=")
+    systemProperty("ino.spring.modules.jwt.secret", "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=")
 }
 
 tasks.named<Test>("test") {

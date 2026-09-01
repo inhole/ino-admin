@@ -1,0 +1,46 @@
+diff --git a/node_modules/dnd-kit-sortable-tree/dist/dnd-kit-sortable-tree.cjs.development.js b/node_modules/dnd-kit-sortable-tree/dist/dnd-kit-sortable-tree.cjs.development.js
+index c316ee0..4f1a662 100644
+--- a/node_modules/dnd-kit-sortable-tree/dist/dnd-kit-sortable-tree.cjs.development.js
++++ b/node_modules/dnd-kit-sortable-tree/dist/dnd-kit-sortable-tree.cjs.development.js
+@@ -889,13 +889,11 @@ function SortableTree(_ref3) {
+       //   You take the node from the bottom and move it to the top
+       //   Without `setTimeout` when you drop the node the list gets scrolled to the bottom.
+ 
+-      setTimeout(function () {
+-        return onItemsChanged(newItems, {
+-          type: 'dropped',
+-          draggedItem: newActiveItem,
+-          draggedFromParent: draggedFromParent,
+-          droppedToParent: currentParent
+-        });
++      return onItemsChanged(newItems, {
++        type: 'dropped',
++        draggedItem: newActiveItem,
++        draggedFromParent: draggedFromParent,
++        droppedToParent: currentParent
+       });
+     }
+   }
+diff --git a/node_modules/dnd-kit-sortable-tree/dist/dnd-kit-sortable-tree.esm.js b/node_modules/dnd-kit-sortable-tree/dist/dnd-kit-sortable-tree.esm.js
+index 03fee9c..7b4acf5 100644
+--- a/node_modules/dnd-kit-sortable-tree/dist/dnd-kit-sortable-tree.esm.js
++++ b/node_modules/dnd-kit-sortable-tree/dist/dnd-kit-sortable-tree.esm.js
+@@ -882,13 +882,11 @@ function SortableTree(_ref3) {
+       //   You take the node from the bottom and move it to the top
+       //   Without `setTimeout` when you drop the node the list gets scrolled to the bottom.
+ 
+-      setTimeout(function () {
+-        return onItemsChanged(newItems, {
+-          type: 'dropped',
+-          draggedItem: newActiveItem,
+-          draggedFromParent: draggedFromParent,
+-          droppedToParent: currentParent
+-        });
++      return onItemsChanged(newItems, {
++        type: 'dropped',
++        draggedItem: newActiveItem,
++        draggedFromParent: draggedFromParent,
++        droppedToParent: currentParent
+       });
+     }
+   }

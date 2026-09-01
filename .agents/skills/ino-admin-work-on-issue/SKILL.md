@@ -1,6 +1,6 @@
 ---
 name: ino-admin-work-on-issue
-description: Use when INO Admin의 GitHub 이슈를 구현하거나 dev 직접 작업과 feature 브랜치 중 하나를 선택해야 할 때
+description: Use when INO Admin의 GitHub 이슈를 구현하며 작업 브랜치, TDD 검증, 현행 문서 동기화와 CI 완료 조건을 적용해야 할 때
 ---
 
 # INO Admin 이슈 작업
@@ -9,19 +9,36 @@ description: Use when INO Admin의 GitHub 이슈를 구현하거나 dev 직접 �
 
 1. 작업 전 Issue 번호, Milestone 배정, 완료 조건과 위험을 확인하고 변경 경로의 가장 가까운 `AGENTS.md`를 읽는다. Milestone이 없으면 배정 전에는 구현을 시작하지 않는다.
 2. 아래 기준으로 작업 위치를 정한다. `main`은 `dev → main` 배치 PR만 받으므로 일반 이슈나 feature 브랜치의 시작점으로 사용하지 않는다.
-3. 테스트를 구현보다 먼저 작성한다.
-4. 한 논리적 변경을 `type: 한글 변경사항`으로 커밋하고, 커밋 본문에 반드시 `Refs: #번호`를 넣는다.
-5. `dev`에 push한 뒤 `Dev CI`를 확인한다. `infra/**`를 변경했다면 `Dev Infra CI`도 확인한다.
-6. 빠른 CI가 실패하거나 Actions를 확인할 수 없으면 다음 Issue로 진행하지 말고 현재 Issue를 수정하거나 미검증 상태로 보고한다.
+3. 아래 TDD 기준에 따라 테스트 또는 검증을 구현보다 먼저 추가하고 의도한 원인으로 실패하는 RED를 관찰한다.
+4. 최소 구현으로 GREEN을 만든 뒤 필요한 리팩터링을 수행하고 영향받는 검증을 다시 통과시킨다.
+5. 아래 문서 동기화 기준에 따라 코드와 현재 상태 문서를 같은 변경에서 맞춘다.
+6. 한 논리적 변경을 `type: 한글 변경사항`으로 커밋하고, 커밋 본문에 반드시 `Refs: #번호`를 넣는다.
+7. feature/Codex 브랜치 작업이면 로컬 검증 후 최신 `dev`에 `--no-ff` merge commit으로 병합한다. `dev` 전달 PR은 만들지 않는다.
+8. `dev`를 push한 뒤 그 merge SHA의 `Dev CI`를 확인한다. `infra/**`를 변경했다면 `Dev Infra CI`도 확인한다.
+9. 빠른 CI가 실패하거나 Actions를 확인할 수 없으면 다음 Issue로 진행하지 말고 현재 Issue를 수정하거나 미검증 상태로 보고한다.
+
+## TDD와 회귀 검증
+
+- 동작 추가·변경·버그 수정은 실패하는 자동 테스트를 먼저 작성하고, 실패가 구현 누락이나 대상 결함 때문인지 확인한다.
+- 동작을 유지하는 구조 리팩터링은 characterization/regression test 또는 목표 아키텍처 검증을 먼저 추가하고 RED를 관찰한다.
+- 테스트가 처음부터 통과하거나 환경 문제로만 실패했다면 RED로 보고하지 않는다. 원인을 분리한 뒤 유효한 RED-GREEN 근거를 남긴다.
+- 순수 문서, 주석, Issue/PR 메타데이터처럼 실행 동작이 없는 변경에는 인위적인 테스트를 만들지 않는다. 대신 링크, 형식, 설정 구문 또는 skill validator처럼 실제로 의미 있는 검증만 수행한다.
+
+## 현행 문서 동기화
+
+- 완료 전에 변경 파일과 영향을 대조해 현재 사용법과 계약을 설명하는 문서를 같은 변경에서 갱신한다. 대상은 README, API·오류 계약, 설정 기본값과 예시, 아키텍처·모듈 경계, 운영 절차, 적용되는 `AGENTS.md`와 skill이다.
+- 코드와 무관한 문서를 새로 늘리지 않는다. 현행 문서에 영향이 없으면 문서 변경 없이 진행하고 완료 보고에 그 판단을 짧게 남긴다.
+- changelog, 작업 일지, Phase 완료 요약, 검증 이력 같은 이력성 문서는 자동 생성하거나 동기화하지 않는다. 추적 근거는 Issue, PR, commit과 CI 결과에 남긴다.
+- ADR은 현재 결정을 설명하는 기준 문서가 실제로 필요하거나 기존 결정을 대체할 때만 갱신한다. 단순 작업 이력을 남기기 위한 ADR은 만들지 않는다.
 
 ## 빠른 선택표
 
 | 변경 | 작업 위치 | 전달 |
 | --- | --- | --- |
 | 작은 기능, 격리된 버그, 테스트, 문서 | `dev` 직접 커밋 | `Dev CI` 통과 확인 |
-| migration, 보안 경계, 공개 API·공용 설정, 장기·병렬·고위험 작업 | `feature/Codex` 브랜치 | `dev` 대상 PR을 merge commit으로 병합 |
+| migration, 보안 경계, 공개 API·공용 설정, 장기·병렬·고위험 작업 | `feature/Codex` 브랜치 | 로컬 `dev`에 `--no-ff` 병합 후 push |
 
-feature 브랜치는 위 고위험 기준을 하나 이상 충족할 때만 선택하며, 이름은 사람은 `<type>/<issue>-<slug>`, Codex는 `codex/<issue>-<slug>`를 사용한다. feature 브랜치도 `dev`에서 시작해 `dev`로만 전달한다.
+feature 브랜치는 위 고위험 기준을 하나 이상 충족할 때만 선택하며, 이름은 사람은 `<type>/<issue>-<slug>`, Codex는 `codex/<issue>-<slug>`를 사용한다. feature 브랜치도 `dev`에서 시작해 `dev`로만 전달한다. 병합 전에 `dev`가 `origin/dev`와 fast-forward 가능한 최신 상태인지 확인하고, 충돌이 있으면 feature 브랜치에서 해결·재검증한 뒤 병합한다. `dev → main` 배치 전달에만 PR을 사용한다.
 
 ## 잘못된 요청의 교정
 

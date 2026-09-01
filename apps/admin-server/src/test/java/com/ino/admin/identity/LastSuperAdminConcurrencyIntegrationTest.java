@@ -3,7 +3,7 @@ package com.ino.admin.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.identity.application.UserManagementService;
 import com.ino.admin.identity.domain.User;
 import com.ino.admin.identity.domain.UserStatus;

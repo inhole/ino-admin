@@ -2,7 +2,10 @@ package com.ino.admin.audit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.audit.AuditCommand;
+import com.ino.spring.modules.audit.AuditResult;
+import com.ino.spring.modules.audit.AuditWriter;
+import com.ino.spring.modules.web.TraceIdFilter;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -37,12 +40,37 @@ class AuditRequestFilterTest {
 
         filter.doFilter(request, response, new MockFilterChain());
 
-        assertThat(writer.command.actorId()).isEqualTo(actorId);
+        assertThat(writer.command.actor().id()).isEqualTo(actorId);
         assertThat(writer.command.action()).isEqualTo("USER_UPDATE");
         assertThat(writer.command.resource()).matches("/api/v1/users/[0-9a-f-]+")
                 .doesNotContain("password", "secret");
         assertThat(writer.command.result()).isEqualTo(AuditResult.SUCCESS);
         assertThat(writer.command.traceId()).isEqualTo("audit-trace");
+    }
+
+    @Test
+    void recordsOnlyAllowlistedLoginAndRequestSnapshotFieldsWithinColumnLimits() throws Exception {
+        var writer = new CapturingAuditWriter();
+        var filter = new AuditRequestFilter(writer);
+        var request = new MockHttpServletRequest("POST", "/api/v1/auth/login");
+        LoginAuditContext.attach(request, "e".repeat(400), "d".repeat(150), "r".repeat(150));
+        request.setAttribute("password", "secret");
+        request.setRemoteAddr("1".repeat(60));
+        request.addHeader("User-Agent", "u".repeat(600));
+
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        assertThat(writer.command.actor().attributes())
+                .containsOnlyKeys(AuditAttributeKeys.LOGIN_EMAIL, AuditAttributeKeys.LOGIN_DISPLAY_NAME,
+                        AuditAttributeKeys.LOGIN_ROLE);
+        assertThat(writer.command.actor().attributes().get(AuditAttributeKeys.LOGIN_EMAIL)).hasSize(320);
+        assertThat(writer.command.actor().attributes().get(AuditAttributeKeys.LOGIN_DISPLAY_NAME)).hasSize(100);
+        assertThat(writer.command.actor().attributes().get(AuditAttributeKeys.LOGIN_ROLE)).hasSize(100);
+        assertThat(writer.command.contextAttributes())
+                .containsOnlyKeys(AuditAttributeKeys.IP_ADDRESS, AuditAttributeKeys.USER_AGENT);
+        assertThat(writer.command.contextAttributes().get(AuditAttributeKeys.IP_ADDRESS)).hasSize(45);
+        assertThat(writer.command.contextAttributes().get(AuditAttributeKeys.USER_AGENT)).hasSize(512);
+        assertThat(writer.command.toString()).doesNotContain("password", "secret");
     }
 
     @Test

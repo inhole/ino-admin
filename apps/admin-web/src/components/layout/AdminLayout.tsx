@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { File, History, KeyRound, LayoutDashboard, LogOut, Menu, Users } from "lucide-react";
 import { RiArrowDownSLine, RiUserLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { getMyMenus, menuKeys } from "@/features/menus";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -28,11 +28,13 @@ import { Separator } from "@/components/ui/separator";
 import {
   Sidebar, SidebarContent, SidebarHeader, SidebarInset,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSkeleton,
+  SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem,
   SidebarProvider, SidebarRail, SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/hook/useAuth";
 import { LanguageMenu, ThemeMenu } from "@/features/settings";
+import { cn } from "@/lib/utils";
 
 const iconMap = {
   users: Users,
@@ -45,11 +47,12 @@ const iconMap = {
 
 const menuLabelKeys = {
   dashboard: "navDashboard",
+  "user-management": "navUserManagement",
   users: "navUsers",
   permissions: "navPermissions",
   "menu-management": "navMenuManagement",
   files: "navFiles",
-  "audit-logs": "navAuditLogs",
+  "access-history": "navAccessHistory",
 } as const;
 
 function CloseMobileSidebarOnNavigation() {
@@ -65,12 +68,14 @@ export function AdminLayout() {
   const { logout, user } = useAuth();
   const queryClient = useQueryClient();
   const location = useLocation();
+  const [openMenuIds, setOpenMenuIds] = useState<Set<string>>(new Set());
   const menus = useQuery({
     queryKey: menuKeys.current,
     queryFn: getMyMenus,
     enabled: Boolean(user),
   });
-  const currentMenu = menus.data?.find((menu) =>
+  const allMenus = menus.data?.flatMap((menu) => [menu, ...menu.children]) ?? [];
+  const currentMenu = allMenus.find((menu) =>
     menu.route === "/"
       ? location.pathname === "/"
       : location.pathname.startsWith(menu.route),
@@ -79,6 +84,17 @@ export function AdminLayout() {
     const key = menuLabelKeys[menu.id as keyof typeof menuLabelKeys];
     return key ? t(key) : menu.label;
   };
+
+  useEffect(() => {
+    const activeParent = menus.data?.find((menu) =>
+      menu.children.some((child) => location.pathname.startsWith(child.route)),
+    );
+    if (!activeParent) return;
+    setOpenMenuIds((current) => {
+      if (current.has(activeParent.id)) return current;
+      return new Set(current).add(activeParent.id);
+    });
+  }, [location.pathname, menus.data]);
 
   const signOut = async () => {
     queryClient.clear();
@@ -103,17 +119,48 @@ export function AdminLayout() {
               const label = menuLabel(menu);
               const active = menu.route === "/"
                 ? location.pathname === "/"
-                : location.pathname.startsWith(menu.route);
+                : location.pathname.startsWith(menu.route)
+                  || menu.children.some((child) => location.pathname.startsWith(child.route));
+              const hasChildren = menu.children.length > 0;
+              const isOpen = openMenuIds.has(menu.id);
               return (
                 <SidebarMenuItem key={menu.id}>
                   <SidebarMenuButton
+                    aria-controls={hasChildren ? `${menu.id}-submenu` : undefined}
+                    aria-expanded={hasChildren ? isOpen : undefined}
                     isActive={active}
-                    render={<NavLink to={menu.route} />}
+                    onClick={hasChildren ? () => setOpenMenuIds((current) => {
+                      const next = new Set(current);
+                      if (next.has(menu.id)) next.delete(menu.id);
+                      else next.add(menu.id);
+                      return next;
+                    }) : undefined}
+                    render={hasChildren ? undefined : <NavLink to={menu.route} />}
                     tooltip={label}
                   >
                     <Icon aria-hidden="true" />
                     <span>{label}</span>
+                    {hasChildren && (
+                      <RiArrowDownSLine
+                        aria-hidden="true"
+                        className={cn("ml-auto transition-transform", isOpen && "rotate-180")}
+                      />
+                    )}
                   </SidebarMenuButton>
+                  {hasChildren && isOpen && (
+                    <SidebarMenuSub id={`${menu.id}-submenu`}>
+                      {menu.children.map((child) => (
+                        <SidebarMenuSubItem key={child.id}>
+                          <SidebarMenuSubButton
+                            isActive={location.pathname.startsWith(child.route)}
+                            render={<NavLink to={child.route} />}
+                          >
+                            <span>{menuLabel(child)}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  )}
                 </SidebarMenuItem>
               );
             })}

@@ -1,9 +1,11 @@
 package com.ino.admin.auth;
 
+import com.ino.admin.audit.LoginAuditContext;
 import com.ino.admin.identity.api.LoginUseCase;
 import com.ino.admin.identity.api.PasswordChangeUseCase;
 import com.ino.admin.identity.api.RefreshTokenUseCase;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -32,8 +34,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    LoginResponse login(@Valid @RequestBody LoginRequest request) {
+    LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
         var result = loginService.login(request.email(), request.password());
+        LoginAuditContext.attach(servletRequest, result.email(), result.displayName(), result.role());
         return new LoginResponse(result.accessToken(), "Bearer", result.expiresInSeconds(), result.refreshToken());
     }
 

@@ -1,13 +1,15 @@
 package com.ino.admin.web;
 
-import com.ino.admin.core.BusinessException;
-import com.ino.admin.core.ErrorCode;
+import com.ino.spring.modules.core.BusinessException;
+import com.ino.spring.modules.web.ApiError;
+import com.ino.spring.modules.web.ApiErrorFactory;
+import com.ino.spring.modules.web.TraceIdFilter;
+import com.ino.admin.error.ErrorCode;
 import com.ino.admin.identity.api.AuthenticationFailedException;
 import com.ino.admin.identity.api.InvalidRefreshTokenException;
 import com.ino.admin.file.api.FileNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Clock;
-import java.time.Instant;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +25,10 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-    private final Clock clock;
+    private final ApiErrorFactory apiErrorFactory;
 
     public GlobalExceptionHandler(Clock clock) {
-        this.clock = clock;
+        this.apiErrorFactory = new ApiErrorFactory(clock);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -91,7 +93,7 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ApiError> response(HttpStatus status, String code, String message, List<ApiError.FieldError> errors) {
-        var body = new ApiError(code, message, errors, MDC.get(TraceIdFilter.MDC_KEY), Instant.now(clock));
+        var body = apiErrorFactory.create(code, message, errors);
         return ResponseEntity.status(status).body(body);
     }
 

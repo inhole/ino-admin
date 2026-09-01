@@ -6,6 +6,7 @@ import com.ino.admin.identity.infrastructure.persistence.UserRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -140,12 +141,42 @@ class AuthFlowIntegrationTest {
         mockMvc.perform(get("/api/v1/menus/me").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].id").value(org.hamcrest.Matchers.contains(
-                        "dashboard", "users", "permissions", "menu-management", "files", "audit-logs")));
+                        "dashboard", "user-management", "menu-management", "files")))
+                .andExpect(jsonPath("$[1].children[*].id").value(org.hamcrest.Matchers.contains(
+                        "users", "permissions", "access-history")));
 
         var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
         mockMvc.perform(get("/api/v1/menus/me").header("Authorization", "Bearer " + viewerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].id").value(org.hamcrest.Matchers.contains("dashboard")));
+    }
+
+    @Test
+    void superAdminReordersThreeLevelMenusButViewerCannot() throws Exception {
+        bootstrapService.bootstrap(EMAIL, PASSWORD, "로그인 관리자");
+        String token = JsonPath.read(login(PASSWORD).getResponse().getContentAsString(), "$.accessToken");
+        var request = """
+                [
+                  {"id":"dashboard","parentId":null,"order":10},
+                  {"id":"user-management","parentId":null,"order":20},
+                  {"id":"users","parentId":"user-management","order":10},
+                  {"id":"permissions","parentId":"users","order":10},
+                  {"id":"access-history","parentId":"user-management","order":20},
+                  {"id":"menu-management","parentId":null,"order":40},
+                  {"id":"files","parentId":null,"order":50}
+                ]
+                """;
+
+        mockMvc.perform(patch("/api/v1/menus/order").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[3].parentId").value("users"));
+
+        var viewerToken = signedToken(Instant.now(), Instant.now().plusSeconds(60), "ino-admin-web", "VIEWER");
+        mockMvc.perform(patch("/api/v1/menus/order").header("Authorization", "Bearer " + viewerToken)
+                        .contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
     }
 
     @Test

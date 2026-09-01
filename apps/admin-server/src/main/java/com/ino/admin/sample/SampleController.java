@@ -1,6 +1,6 @@
 package com.ino.admin.sample;
 
-import com.ino.admin.core.PageResponse;
+import com.ino.spring.modules.core.PageResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.util.List;

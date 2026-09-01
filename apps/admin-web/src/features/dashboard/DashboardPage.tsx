@@ -12,7 +12,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { getMonitoringSummary } from "@/features/dashboard/api/dashboardApi";
 import { MetricCard } from "@/features/dashboard/component/MetricCard";
-import { MonitoringCharts } from "@/features/dashboard/component/MonitoringCharts";
 import { dashboardKeys } from "@/features/dashboard/hook/dashboardKeys";
 import {
   appendMonitoringPoint,
@@ -163,7 +162,6 @@ export function DashboardPage() {
           </div>
         )}
       </section>
-      <MonitoringCharts history={history} />
     </>
   );
 }

@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [dev]
 
+permissions:
+  contents: read
+  packages: read
+
 concurrency:
   group: dev-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -25,8 +29,19 @@ jobs:
           cache: gradle
       - name: Gradle 설정
         uses: gradle/actions/setup-gradle@v4
-      - name: 백엔드 테스트 및 아키텍처 검증
+      - name: 백엔드 테스트, 아키텍처 및 배포 artifact 소비 검증
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew test architectureTest
+      - name: 자동 테스트 결과 요약
+        if: always()
+        run: >-
+          node .github/scripts/test-summary.cjs
+          --title "백엔드 단위·아키텍처"
+          --include "build/test-results/test"
+          --include "build/test-results/architectureTest"
+          --status "${{ job.status }}"
+          --commit "$GITHUB_SHA"
 
   frontend-unit:
     name: 프론트엔드 단위 검증
@@ -51,3 +66,11 @@ jobs:
         run: npm run typecheck
       - name: 프론트엔드 테스트
         run: npm test
+      - name: 자동 테스트 결과 요약
+        if: always()
+        run: >-
+          node ../../.github/scripts/test-summary.cjs
+          --title "프론트엔드 단위"
+          --include "test-results/vitest"
+          --status "${{ job.status }}"
+          --commit "$GITHUB_SHA"

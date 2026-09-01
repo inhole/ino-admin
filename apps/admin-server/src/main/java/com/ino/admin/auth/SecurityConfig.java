@@ -1,5 +1,7 @@
 package com.ino.admin.auth;
 
+import com.ino.spring.modules.security.jwt.JwtPermissionAuthenticationConverter;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -7,16 +9,17 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, RestAuthenticationEntryPoint authenticationEntryPoint,
-            RestAccessDeniedHandler accessDeniedHandler)
+            RestAccessDeniedHandler accessDeniedHandler,
+            ObjectProvider<JwtPermissionAuthenticationConverter> jwtAuthenticationConverterProvider)
             throws Exception {
+        var jwtAuthenticationConverter = jwtAuthenticationConverterProvider
+                .getIfAvailable(JwtPermissionAuthenticationConverter::new);
         return http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
@@ -51,8 +54,8 @@ class SecurityConfig {
                                 .hasAuthority("file:write")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/monitoring/**")
                                 .hasAuthority("monitoring:read")
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/audit-logs/**")
-                                .hasAuthority("audit:read")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/access-history/**")
+                                .hasAuthority("access-history:read")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/excel/users/export")
                                 .hasAuthority("excel:export")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/excel/users/import-template")
@@ -61,9 +64,7 @@ class SecurityConfig {
                                 .hasAuthority("excel:import")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(token -> new JwtAuthenticationToken(token,
-                                java.util.Optional.ofNullable(token.getClaimAsStringList("permissions")).orElse(java.util.List.of())
-                                        .stream().map(SimpleGrantedAuthority::new).toList())))
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
                         .authenticationEntryPoint(authenticationEntryPoint))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)

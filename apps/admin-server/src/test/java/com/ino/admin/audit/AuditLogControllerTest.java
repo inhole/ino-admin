@@ -12,9 +12,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.ino.admin.AdminServerApplication;
 import com.ino.admin.config.ApplicationConfig;
 import com.ino.admin.web.GlobalExceptionHandler;
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.audit.AuditActor;
+import com.ino.spring.modules.audit.AuditCommand;
+import com.ino.spring.modules.audit.AuditResult;
+import com.ino.spring.modules.web.TraceIdFilter;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +34,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(AuditLogController.class)
+@WebMvcTest(AccessHistoryController.class)
 @Import({ApplicationConfig.class, GlobalExceptionHandler.class, TraceIdFilter.class,
         AuditLogControllerTest.SecurityBeans.class})
 class AuditLogControllerTest {
@@ -39,43 +43,39 @@ class AuditLogControllerTest {
     @MockitoBean JwtDecoder jwtDecoder;
 
     @Test
-    void requiresAuditReadPermission() throws Exception {
-        mockMvc.perform(get("/api/v1/audit-logs").with(jwt()))
+    void requiresAccessHistoryReadPermission() throws Exception {
+        mockMvc.perform(get("/api/v1/access-history").with(jwt()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
         verifyNoInteractions(service);
     }
 
     @Test
-    void returnsFilteredAuditPageForAuthorizedReader() throws Exception {
-        var actorId = UUID.randomUUID();
-        var command = new AuditCommand(actorId, "USER_UPDATE", "/api/v1/users/1", AuditResult.SUCCESS,
-                200, "127.0.0.1", "browser", "trace-1");
+    void returnsLoginHistoryForAuthorizedReader() throws Exception {
+        var command = new AuditCommand(new AuditActor(null, Map.of(
+                AuditAttributeKeys.LOGIN_EMAIL, "admin@example.com",
+                AuditAttributeKeys.LOGIN_DISPLAY_NAME, "관리자",
+                AuditAttributeKeys.LOGIN_ROLE, "SUPER_ADMIN")),
+                "AUTH_LOGIN", "/api/v1/auth/login", AuditResult.SUCCESS, 200, "trace-1", Map.of(
+                AuditAttributeKeys.IP_ADDRESS, "127.0.0.1",
+                AuditAttributeKeys.USER_AGENT, "browser"));
         var log = AuditLog.create(command, Instant.parse("2026-08-24T00:00:00Z"));
-        when(service.find(eq(actorId), eq("USER_UPDATE"), eq(AuditResult.SUCCESS), any(), any(), eq(0), eq(20)))
+        when(service.findAccessHistory(any(), any(), eq(0), eq(20)))
                 .thenReturn(new PageImpl<>(List.of(log), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/v1/audit-logs")
-                        .with(jwt().authorities(new SimpleGrantedAuthority("audit:read")))
-                        .queryParam("actorId", actorId.toString())
-                        .queryParam("action", "USER_UPDATE")
-                        .queryParam("result", "SUCCESS")
+        mockMvc.perform(get("/api/v1/access-history")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("access-history:read")))
                         .queryParam("createdFrom", "2026-08-01T00:00:00Z")
                         .queryParam("createdTo", "2026-09-01T00:00:00Z"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].actorId").value(actorId.toString()))
-                .andExpect(jsonPath("$.content[0].resource").value("/api/v1/users/1"))
+                .andExpect(jsonPath("$.content[0].email").value("admin@example.com"))
+                .andExpect(jsonPath("$.content[0].displayName").value("관리자"))
+                .andExpect(jsonPath("$.content[0].role").value("SUPER_ADMIN"))
+                .andExpect(jsonPath("$.content[0].createdAt").value("2026-08-24T00:00:00Z"))
+                .andExpect(jsonPath("$.content[0].ipAddress").doesNotExist())
+                .andExpect(jsonPath("$.content[0].userAgent").doesNotExist())
+                .andExpect(jsonPath("$.content[0].result").doesNotExist())
                 .andExpect(jsonPath("$.totalElements").value(1));
-    }
-
-    @Test
-    void rejectsUnsupportedAction() throws Exception {
-        mockMvc.perform(get("/api/v1/audit-logs")
-                        .with(jwt().authorities(new SimpleGrantedAuthority("audit:read")))
-                        .queryParam("action", "invalid-action"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
-        verifyNoInteractions(service);
     }
 
     @TestConfiguration

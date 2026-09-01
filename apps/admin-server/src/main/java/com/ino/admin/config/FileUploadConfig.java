@@ -1,6 +1,6 @@
 package com.ino.admin.config;
 
-import com.ino.admin.file.config.FileStorageProperties;
+import com.ino.admin.file.config.FileUploadProperties;
 import jakarta.servlet.MultipartConfigElement;
 import org.springframework.boot.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +12,7 @@ public class FileUploadConfig {
     private static final DataSize MULTIPART_OVERHEAD = DataSize.ofMegabytes(1);
 
     @Bean
-    MultipartConfigElement multipartConfigElement(FileStorageProperties properties) {
+    MultipartConfigElement multipartConfigElement(FileUploadProperties properties) {
         var factory = new MultipartConfigFactory();
         factory.setMaxFileSize(properties.getMaxSize());
         factory.setMaxRequestSize(DataSize.ofBytes(Math.addExact(

@@ -3,8 +3,8 @@ package com.ino.admin.file;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.ino.admin.file.application.port.FileStorage;
-import com.ino.admin.file.config.FileStorageProperties;
+import com.ino.spring.modules.file.storage.FileStorage;
+import com.ino.spring.modules.file.storage.s3.S3FileStorageProperties;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -22,10 +22,10 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 class S3FileStorageIntegrationTest {
     @Autowired S3Client client;
     @Autowired FileStorage storage;
-    @Autowired FileStorageProperties properties;
+    @Autowired S3FileStorageProperties properties;
 
     @Test void storesLoadsAndDeletesAgainstMinio() {
-        var bucket = properties.getS3().getBucket();
+        var bucket = properties.getBucket();
         createBucketIfMissing(bucket);
         var key = "contract/" + UUID.randomUUID();
         var content = "minio-contract".getBytes(java.nio.charset.StandardCharsets.UTF_8);

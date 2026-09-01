@@ -9,7 +9,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 import com.ino.admin.config.ApplicationConfig;
 import com.ino.admin.web.GlobalExceptionHandler;
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.web.TraceIdFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;

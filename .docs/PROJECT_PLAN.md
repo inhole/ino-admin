@@ -101,6 +101,8 @@ MVP에서는 다음을 우선 구현하지 않는다.
 
 ## 4. 목표 저장소 및 디렉터리 구조
 
+> 2026-09-01 이후 검증된 `common-*` 소스와 publishing은 별도 저장소 `inhole/ino-spring-modules`가 소유한다. `ino-admin`에는 앱 소스만 두고 `com.ino.spring.modules:common-*:0.1.0` 배포 artifact를 소비한다.
+
 ```text
 admin-starter/
 ├─ AGENTS.md
@@ -121,24 +123,15 @@ admin-starter/
 │  └─ prompts/
 ├─ apps/
 │  ├─ admin-server/
-│  │  └─ src/{main,test}/
+│  │  └─ src/{main,test}/java/com/ino/admin/
+│  │     ├─ identity/       # 사용자, 역할, 권한
+│  │     ├─ menu/
+│  │     ├─ file/
+│  │     └─ ...             # 앱 전용 업무 vertical slice
 │  └─ admin-web/
 │     ├─ src/
 │     ├─ tests/
 │     └─ package.json
-├─ modules/
-│  ├─ common-core/
-│  ├─ common-web/
-│  ├─ common-security/
-│  ├─ common-file/
-│  ├─ common-audit/
-│  ├─ common-excel/
-│  └─ common-codegen/
-├─ features/
-│  ├─ identity/          # 사용자, 역할, 권한
-│  ├─ menu/
-│  ├─ board/
-│  └─ file-management/
 ├─ tools/
 │  ├─ codegen-cli/
 │  └─ scripts/
@@ -153,31 +146,33 @@ admin-starter/
 
 ### 4.1 모듈 책임
 
+아래 `common-*` 책임은 `inhole/ino-spring-modules` 저장소에서 관리하며 이 저장소는 릴리스 artifact만 조립한다.
+
 | 모듈 | 책임 | 포함하지 않는 것 |
 |---|---|---|
 | `common-core` | 공통 오류 코드, 시간/ID 추상화, 페이지 모델, 기반 타입 | HTTP, Security, JPA Entity, 업무 정책 |
 | `common-web` | 공통 API 응답, 예외 변환, 요청 추적 ID, 웹 설정 | 업무 Controller, 화면별 DTO |
 | `common-security` | 인증 principal, JWT 처리, 보안 확장점, 권한 검사 기반 | 사용자 화면, 조직별 권한 정책 |
-| `common-file` | 저장소 port, Local/S3 adapter, 파일 검증, metadata 모델 | 관리자 전용 API와 화면 |
-| `common-audit` | 감사 이벤트 모델, publisher/store port, 공통 기록 지원 | 화면별 검색 정책 |
+| `common-file` | 저장소 port, Local adapter와 기본 auto-configuration | S3 SDK, 관리자 전용 API와 화면 |
+| `common-file-s3` | 선택적 S3 adapter, properties와 client auto-configuration | Local-only consumer에 필수적인 기본 계약 |
+| `common-audit` | 저장소 독립적 감사 actor/event 계약과 writer port | servlet 문맥, 로그인 계정 필드, 화면별 검색 정책 |
 | `common-excel` | export/import 기반 계약, 변환·검증 지원 | 특정 게시판/사용자 컬럼 정의 |
 | `common-codegen` | schema/template 처리, 생성 규칙, overwrite 보호 | 모든 업무 규칙 자동 추론 |
-| `features/*` | 도메인별 use case, entity, repository, 정책 | 범용 기반 기능 |
-| `admin-server` | 실행 조립, API, 프로젝트 설정 | 재사용 가능한 핵심 구현의 중복 |
+| `admin-server` 업무 패키지 | 도메인별 use case, entity, repository, 정책과 실행 조립 | 재사용 가능한 핵심 구현의 중복 |
 | `admin-web` | 관리자 UX, routing, 화면 권한, API 사용 | 서버 권한 판정 |
 
 ### 4.2 의존성 규칙
 
 ```text
-admin-server ──> features/* ──> common-*
-admin-server ─────────────────> common-*
+admin-server 업무 패키지 ─────> common-*
 common-web ───────────────────> common-core
 common-security ──────────────> common-core
 common-file/common-audit ─────> common-core
+common-file-s3 ─────────────> common-file
 ```
 
 - `common-*`는 `apps/*`를 참조하지 않는다.
-- feature 간 직접 참조는 최소화하고 공개 use case/event를 사용한다.
+- admin-server의 업무 패키지 간 직접 참조는 최소화하고 명시적인 use case/event를 사용한다.
 - 순환 의존은 허용하지 않는다.
 - 모듈 경계는 ArchUnit 테스트로 검사한다.
 
@@ -193,7 +188,7 @@ DB 테이블만 모두 만든 뒤 UI를 한꺼번에 만드는 방식 대신, �
 
 ### 5.2 앱 우선, 추출은 나중
 
-기능은 먼저 `admin-server` 또는 해당 `features/*` 안에서 구현한다. 다음 조건이 충족되면 `common-*`로 추출한다.
+기능은 먼저 `admin-server`의 업무 패키지 안에서 구현한다. 다음 조건이 충족되면 `common-*`로 추출한다.
 
 - 실제 통합 흐름이 테스트되었다.
 - API가 최소 한 차례 사용되며 불편한 점이 확인되었다.
@@ -470,7 +465,7 @@ public interface FileStorage {
 1. `common-core`: 기반 타입, clock/ID, 오류 code
 2. `common-web`: 오류 응답, pagination, trace
 3. `common-security`: JWT, principal, 권한 검사 확장점
-4. `common-file`: storage port와 Local/S3 adapter
+4. `common-file`: storage port와 Local adapter, `common-file-s3`: 선택적 S3 adapter
 5. `common-audit`: audit event와 기록 port
 6. `common-excel`: reader/writer와 검증 기반
 
@@ -485,7 +480,7 @@ public interface FileStorage {
 - [ ] sample consumer 또는 별도 fixture app에서 적용 시험
 - [ ] 모듈별 README와 사용 예제 작성
 - [ ] dependency cycle/금지 의존 ArchUnit 검사
-- [ ] semantic versioning 및 publishing 전략 정의
+- [x] semantic versioning 및 publishing 전략 정의
 
 ### 완료 기준(DoD)
 
@@ -493,6 +488,102 @@ public interface FileStorage {
 - 공통 모듈이 `admin-server`의 controller/entity/DTO에 의존하지 않는다.
 - 소비자가 필요한 설정과 확장 지점을 문서만으로 이해할 수 있다.
 - 최소 한 개의 독립 test application에서 모듈 사용이 검증된다.
+
+### Phase 8 경계 강화 실행 계획
+
+현재 Gradle project 역의존은 차단되어 있고 독립 consumer도 존재하지만, public API와 선택 의존성 및 애플리케이션 패키지 경계는 아래 순서로 추가 강화한다. 각 단계는 별도 Issue로 추적하고 이전 단계의 필수 CI가 통과한 뒤 다음 단계로 진행한다.
+
+#### 8.1 앱 오류 정책을 `common-core`에서 분리
+
+**목표:** 공통 기반 타입이 사용자·역할·메뉴·Excel 같은 관리자 업무 정책과 한국어 메시지를 소유하지 않게 한다.
+
+- [x] characterization test로 현재 오류 code/message와 HTTP 응답을 고정한다.
+- [x] `ErrorCode`의 업무별 항목을 `admin-server`가 소유하는 오류 catalog로 이동한다.
+- [x] `BusinessException`은 문자열 code/message 또는 최소 오류 descriptor 계약만 사용하게 하고 특정 enum 의존을 제거한다.
+- [x] `ApiErrorFactory`가 앱 오류 enum을 알지 않도록 문자열 기반 생성 계약만 유지한다.
+- [x] 독립 consumer에서 앱 오류 catalog의 부재와 최소 오류 descriptor 소비를 검증한다.
+- [x] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
+
+**완료 기준:** 기존 API 오류 응답 회귀 테스트가 유지되고, `common-core`와 `common-web`에 identity/menu/file/excel 업무 오류 상수가 없다.
+
+#### 8.2 `common-excel`의 POI 비노출 계약 완성
+
+**목표:** Apache POI를 구현 세부사항으로 격리하고 consumer compile classpath를 최소화한다.
+
+- [x] POI `Row`를 받는 `ExcelCellSafety.rejectFormulas`의 실제 consumer가 없는 상태를 확인하고 제거한다.
+- [x] `poi-ooxml` 의존성을 `api`에서 `implementation`으로 변경한다.
+- [x] staged artifact만 사용하는 외부 consumer compile test에서 POI 없이 `XlsxTableReader`/`XlsxTableWriter`를 사용할 수 있음을 검증한다.
+- [x] formula 거부, typed date, streaming export와 행 제한 회귀를 유지한다.
+- [x] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
+
+**완료 기준:** common-excel public signature에 `org.apache.poi.*`가 없고 생성 POM의 compile scope에 POI가 노출되지 않는다.
+
+#### 8.3 파일 adapter 선택 의존성 분리
+
+**목표:** Local 저장소만 사용하는 consumer가 AWS SDK를 내려받지 않게 한다.
+
+- [x] `FileStorage` port와 Local adapter를 경량 core artifact에 유지한다.
+- [x] S3 adapter, S3 properties와 client auto-configuration을 별도 선택 artifact로 분리한다.
+- [x] Local-only, S3, consumer override 세 구성을 각각 context/contract test로 검증한다.
+- [x] `admin-server`는 S3 기능이 필요하므로 두 artifact를 명시적으로 조립한다.
+- [x] Local-only consumer의 compile/runtime dependency graph에 AWS SDK가 없음을 검증한다.
+- [x] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
+
+**완료 기준:** Local-only consumer의 compile/runtime dependency graph에 AWS SDK가 없고 Local/S3 저장 계약 테스트가 동일하게 통과한다.
+
+#### 8.4 감사 계약에서 관리자 로그인 문맥 분리
+
+**목표:** 감사 port가 servlet request attribute와 관리자 로그인 전용 필드를 공통 계약으로 강제하지 않게 한다.
+
+- [x] 현재 로그인 성공 감사와 일반 변경 감사 결과를 characterization test로 고정한다.
+- [x] `LOGIN_ACCOUNT_ATTRIBUTE`와 로그인 계정 전달 방식은 `admin-server` 웹 계층으로 이동한다.
+- [x] 공통 감사 계약은 actor/action/resource/result/trace 등 저장소 독립적인 최소 이벤트만 유지하고, 필요한 actor snapshot 확장 방식은 명시적으로 정의한다.
+- [x] 개인정보 필드는 allowlist, 길이 제한과 저장 목적이 검증된 경우에만 앱 adapter에서 구성한다.
+- [x] 기존 감사 검색 데이터와 민감정보 회귀 테스트를 통과한다.
+- [x] 전체 backend test와 `architectureTest` 및 Dev CI를 통과한다.
+
+**완료 기준:** `common-audit`이 servlet·로그인 API 문맥을 알지 않고 기존 감사 검색 데이터와 민감정보 회귀 테스트가 통과한다.
+
+#### 8.5 애플리케이션 package 경계 자동 검증
+
+**목표:** Gradle project 검사만으로 놓치는 `admin-server` 내부 feature 간 결합과 계층 역참조를 CI에서 차단한다.
+
+- [x] ArchUnit을 추가해 identity/menu/file 업무 패키지 간 직접 참조를 차단한다.
+- [x] domain이 application/infrastructure/web/auth/config 외부 계층에 역참조하지 않는 규칙을 검사한다.
+- [x] `architectureTest`에서 실제 ArchUnit 경계 테스트를 실행한다.
+- [x] 의도적 위반 fixture로 RED를 확인한 뒤 예외 allowlist 없이 현행 production 경계를 GREEN으로 만든다.
+- [x] 전체 backend test와 Dev CI를 통과한다.
+
+**완료 기준:** 의도적인 위반 fixture가 RED가 되고, 전체 현행 코드가 규칙을 만족하도록 경계를 정리한 뒤 GREEN이 된다.
+
+#### 8.6 배포 artifact 기준 소비 검증
+
+**목표:** project dependency가 가려 주는 POM scope, 누락 resource와 자동설정 문제를 배포 전 발견한다.
+
+- [x] repository-local staging에 발행한 JAR/POM만 사용하는 별도 Gradle fixture를 구성한다.
+- [x] 모듈별 최소 consumer와 전체 조합 consumer를 분리해 불필요한 전이 의존성을 검사한다.
+- [x] auto-configuration imports, configuration properties binding, bean override와 누락 설정 실패 메시지를 검증한다.
+- [x] public API 변경에는 binary/source compatibility 검사를 추가하고 semantic version 변경 기준과 연결한다.
+
+**완료 기준:** project dependency 없이 모든 공통 artifact의 단독·조합 소비가 통과하고 POM scope 및 public API 호환성 검증이 Dev CI에 포함된다.
+
+#### 실행 우선순위와 범위 제한
+
+| 순서 | 작업 | 우선도 | 주요 위험 |
+|---|---|---|---|
+| 1 | 앱 오류 정책 분리 | P0 | 공개 오류 응답 회귀 |
+| 2 | Excel POI 비노출 완성 | P0 | published POM의 불필요한 compile 의존 |
+| 3 | package 경계 자동 검증 | P0 | 현재 숨은 feature 간 결합 발견 |
+| 4 | 파일 S3 선택 artifact 분리 | P1 | auto-configuration 조합과 설정 호환성 |
+| 5 | 감사 로그인 문맥 분리 | P1 | 기존 감사 데이터 의미 변경 |
+| 6 | 배포 artifact 소비·호환성 검증 | P1 | CI 시간과 fixture 유지비 |
+
+다음 항목은 실제 두 번째 사용처나 실패 사례가 생기기 전에는 진행하지 않는다.
+
+- `common-security`를 JWT core와 Spring adapter로 세분화
+- `common-web`의 일반 예외 handler를 자동설정으로 제공
+- 공통 clock/ID abstraction 추가
+- 업무 feature를 다시 별도 Gradle project로 분리
 
 ---
 
@@ -872,9 +963,9 @@ redis      MVP 이후 cache/rate limit용, 선택
 - 기본 브랜치: `main`, 항상 배포 가능 상태 유지
 - 장기 dev 통합 브랜치: `dev`, 완료된 이슈의 논리적 커밋을 누적한다.
 - 작은 기능, 격리된 버그, 테스트, 문서는 `dev`에 직접 커밋한다.
-- migration, 보안, 공개 API/공용 설정, 장기·병렬·고위험 작업은 feature branch를 사용한다.
+- migration, 보안, 공개 API/공용 설정, 장기·병렬·고위험 작업은 feature branch를 사용하고 로컬 검증 후 PR 없이 `dev`에 merge commit으로 병합한다.
 - 사람 브랜치 형식: `<type>/<issue-number>-<slug>`, Codex 브랜치 형식: `codex/<issue-number>-<slug>`
-- 최초 정책 부트스트랩 예외는 브랜치 전략 문서의 신뢰 경계를 따르며, 그 이후 feature branch는 `dev`로 merge commit 병합하고 `main`은 `dev → main` 배치 PR만 받는다.
+- 최초 정책 부트스트랩 예외는 브랜치 전략 문서의 신뢰 경계를 따르며, feature branch는 PR 없이 `dev`로 merge commit 병합하고 `main`은 `dev → main` 배치 PR만 받는다.
 
 ### 15.2 커밋 규칙
 

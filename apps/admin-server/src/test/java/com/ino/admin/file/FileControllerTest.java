@@ -13,7 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.ino.admin.config.ApplicationConfig;
 import com.ino.admin.file.api.FileManagementUseCase;
 import com.ino.admin.web.GlobalExceptionHandler;
-import com.ino.admin.web.TraceIdFilter;
+import com.ino.spring.modules.web.TraceIdFilter;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

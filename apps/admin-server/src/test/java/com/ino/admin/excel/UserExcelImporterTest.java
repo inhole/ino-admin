@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-import com.ino.admin.core.BusinessException;
+import com.ino.spring.modules.core.BusinessException;
 import com.ino.admin.identity.api.UserManagementUseCase;
 import java.io.ByteArrayOutputStream;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
