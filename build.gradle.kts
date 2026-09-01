@@ -155,7 +155,7 @@ tasks.register<GradleBuild>("verifyStagedCommonModuleConsumer") {
     description = "Verifies a standalone consumer using only staged common module artifacts."
     dependsOn("verifyCommonModulePublications")
     dir = file("samples/staged-common-modules-consumer")
-    tasks = listOf("clean", "test")
+    tasks = listOf("clean", "test", "verifyMinimalCommonModuleConsumers")
     startParameter.projectProperties = mapOf(
         "stagingRepository" to layout.buildDirectory.dir("staging-repository").get().asFile.absolutePath,
         "commonModulesVersion" to project.version.toString(),
