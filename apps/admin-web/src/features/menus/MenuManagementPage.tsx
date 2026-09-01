@@ -14,7 +14,7 @@ import { ApiClientError } from "@/api/client";
 import { menuKeys } from "@/features/menus/hook/menuKeys";
 import { LoadingPanel, PageHeader, StatusPanel } from "@/components/layout/Page";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import {
   Card,
@@ -48,23 +48,30 @@ const SortableMenuItem = forwardRef<HTMLDivElement, TreeItemComponentProps<Sorta
     <li
       className={cn("list-none", !props.clone && "mb-2 last:mb-0")}
       data-depth={props.depth + 1}
+      data-dragging={props.ghost ? "true" : undefined}
       data-menu-id={props.item.id}
       ref={props.wrapperRef}
       style={{ ...props.style, paddingInlineStart: props.clone ? 0 : props.depth * props.indentationWidth }}
     >
       <div
         className={cn(
-          "cursor-grab touch-none rounded-md active:cursor-grabbing",
+          "rounded-md",
           placeholder && "border border-dashed border-primary/50 bg-primary/5",
           props.clone && "translate-x-2 translate-y-2 shadow-xl",
         )}
         ref={ref}
         style={placeholder ? { minHeight: Math.max(72, (props.childCount ?? 1) * 81) } : undefined}
-        {...props.handleProps}
       >
         {!placeholder && (
           <Item className={cn("bg-background text-foreground", props.isOver && "border-primary ring-2 ring-primary/15")} variant="outline">
-            <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center text-muted-foreground"><GripVertical /></span>
+            <button
+              aria-label={t("dragHandle", { name: props.item.menu.label })}
+              className={buttonVariants({ className: "cursor-grab touch-none active:cursor-grabbing", size: "icon-sm", variant: "ghost" })}
+              type="button"
+              {...props.handleProps}
+            >
+              <GripVertical />
+            </button>
             <ItemContent>
               <ItemTitle>{props.item.menu.label}</ItemTitle>
               <ItemDescription className="break-all">{props.item.menu.route} · {props.item.menu.requiredPermission ?? t("public")}</ItemDescription>

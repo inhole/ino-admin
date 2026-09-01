@@ -141,7 +141,7 @@ test('SUPER_ADMIN이 dnd-kit으로 메뉴를 이동한다', async ({ page }) => 
   await source.hover({ position: { x: 8, y: sourceBox.height / 2 } })
   await page.mouse.down()
   await page.mouse.move(sourceBox.x + 8, sourceBox.y + sourceBox.height / 2 - 12, { steps: 2 })
-  await expect(page.locator('[data-menu-id="files"]')).toHaveAttribute('data-dragging', 'true')
+  await expect(page.locator('[data-menu-id="files"][data-dragging="true"]')).toHaveCount(1)
   await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 10 })
   await page.mouse.up()
   await page.getByRole('button', { name: '메뉴 구성 저장' }).click()
